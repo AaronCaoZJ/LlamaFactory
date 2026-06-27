@@ -1,0 +1,14 @@
+### LlamaFactory API server config — Qwen3.5-27B + LoRA
+# Start server:  bash scripts/eval/start_server.sh
+# Then eval:     python scripts/eval/eval.py --api-url http://localhost:8000
+
+model_name_or_path: /workspace1/zhijun/hf_download/models/Qwen3.5-27B
+adapter_name_or_path: /workspace1/zhijun/LlamaFactory/saves/qwen3.5-27b/robot/overfit
+finetuning_type: lora
+template: qwen3_5_nothink
+infer_backend: huggingface
+trust_remote_code: true
+
+# Multimodal settings
+image_max_pixels: 262144
+infer_dtype: bfloat16

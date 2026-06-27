@@ -1,4 +1,40 @@
 {
+    "mvtoken_0622_v1_affordance": {
+    "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_affordance.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mvtoken_0622_v1_lite": {
+    "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mvtoken_0622_v1_subgoal": {
+    "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_subgoal.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "overfit": {
+    "file_name": "agentrobot/overfit_test/rollout_000.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "identity": {
     "file_name": "identity.json"
   },

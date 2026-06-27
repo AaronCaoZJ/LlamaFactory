@@ -181,3 +181,9 @@ wandb/
 swanlog/
 generated_predictions.jsonl
 predictions_score.json
+
+# datasets
+/data/agentrobot/overfit_test
+/data/agentrobot/MVTOKEN
+/scripts/eval/id_sample
+/scripts/eval/ood_sample
