@@ -4,20 +4,18 @@
 set -euo pipefail
 
 VENV="/workspace1/zhijun/AgentRobot/.venv-vllm"
-BASE_MODEL="/workspace1/zhijun/hf_download/models/Qwen3.5-27B"
-SAVES="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-27b/robot"
+BASE_MODEL="/workspace1/zhijun/hf_download/models/Qwen3.5-9B"
+SAVES="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-9b/robot"
 
 # name=path，全部挂在同一个 --lora-modules 下（多个 --lora-modules 只会保留最后一个）。
 # 注意: adapter 的 base 必须是上面的 27B；9B 的 adapter 要单独起一个 9B-base server。
 # v2 = 仅 0622 rollout（3808 条，lite prompt）。
 LORA_MODULES=(
-  "mvtoken_0622_v0=${SAVES}/mvtoken_0622_v0"
-  "mvtoken_0622_v1=${SAVES}/mvtoken_0622_v1"
-  "mvtoken_0622_v2=${SAVES}/mvtoken_0622_v2"
+  "mvtoken_0622_v2_9=${SAVES}/mvtoken_0622_v2"
 )
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6}"
-PORT="${PORT:-8101}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-8192}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
+PORT="${PORT:-8109}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-8192}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"; ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 
 # gcc-12 on this node lacks cc1plus; use gcc-11 for CUDA JIT.

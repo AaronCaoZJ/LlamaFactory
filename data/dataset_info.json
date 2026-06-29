@@ -1,24 +1,24 @@
 {
+  "mix_22_27_v3_lite": {
+    "file_name": "agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mvtoken_0622_v2_lite": {
+    "file_name": "agentrobot/MVTOKEN/0622/v2/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
     "mvtoken_0622_v1_affordance": {
     "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_affordance.json",
-    "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "images": "images"
-    }
-  },
-  "mvtoken_0622_v1_lite": {
-    "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_lite.json",
-    "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "images": "images"
-    }
-  },
-  "mvtoken_0622_v1_subgoal": {
-    "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_subgoal.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",

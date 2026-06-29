@@ -1,0 +1,73 @@
+=== Eval Log ===
+Timestamp : 20260628_170948
+Model     : /workspace1/zhijun/hf_download/models/Qwen3.5-27B
+API_URL   : http://localhost:8101
+Evalset   : /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample/v0/rollout_lite.json
+Command   : python scripts/eval/infer.py eval --raw --no-stage -n 100 --evalset /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample/v0/rollout_lite.json
+================
+Server  : http://localhost:8101  model=/workspace1/zhijun/hf_download/models/Qwen3.5-27B
+Dataset : /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample/v0/rollout_lite.json  (49/49 samples, seed=42)
+Ablation: --no-stage 已开启（input 中的 'Stage:' 行已删除）
+────────────────────────────────────────────────────────────────────────────────────────
+  #       Label            Pred  Match  Full Response
+────────────────────────────────────────────────────────────────────────────────────────
+  1     MV_DOWN           MV_UP      ✗  'MV_UP'
+  2     MV_DOWN         MV_DOWN      ✓  'MV_DOWN'
+  3     MV_LEFT         MV_DOWN      ✗  'MV_DOWN'
+  4      MV_FWD           GRASP      ✗  'GRASP'
+  5      MV_FWD           GRASP      ✗  'GRASP'
+  6      MV_FWD           GRASP      ✗  'GRASP'
+  7     MV_DOWN           GRASP      ✗  'GRASP'
+  8      MV_FWD         MV_DOWN      ✗  'MV_DOWN'
+  9    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 10      MV_FWD         MV_DOWN      ✗  'MV_DOWN'
+ 11    MV_RIGHT           MV_UP      ✗  'MV_UP'
+ 12       MV_UP           GRASP      ✗  'GRASP'
+ 13     MV_LEFT          MV_FWD      ✗  'MV_FWD'
+ 14       MV_UP           GRASP      ✗  'GRASP'
+ 15     MV_DOWN         RELEASE      ✗  'RELEASE'
+ 16     MV_DOWN           GRASP      ✗  'GRASP'
+ 17     RELEASE           MV_UP      ✗  'MV_UP'
+ 18    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 19       MV_UP           GRASP      ✗  'GRASP'
+ 20     MV_DOWN           MV_UP      ✗  'MV_UP'
+ 21     MV_DOWN           GRASP      ✗  'GRASP'
+ 22     MV_DOWN           GRASP      ✗  'GRASP'
+ 23       MV_UP           MV_UP      ✓  'MV_UP'
+ 24    MV_RIGHT        MV_RIGHT      ✓  'MV_RIGHT'
+ 25    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 26       MV_UP           GRASP      ✗  'GRASP'
+ 27    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 28      MV_FWD           GRASP      ✗  'GRASP'
+ 29     MV_DOWN         RELEASE      ✗  'RELEASE'
+ 30     MV_LEFT         MV_DOWN      ✗  'MV_DOWN'
+ 31       MV_UP           GRASP      ✗  'GRASP'
+ 32       GRASP           GRASP      ✓  'GRASP'
+ 33     MV_DOWN           GRASP      ✗  'GRASP'
+ 34    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 35    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 36     MV_LEFT         MV_DOWN      ✗  'MV_DOWN'
+ 37     MV_DOWN           GRASP      ✗  'GRASP'
+ 38     MV_DOWN           GRASP      ✗  'GRASP'
+ 39    MV_RIGHT        MV_RIGHT      ✓  'MV_RIGHT'
+ 40      MV_FWD           GRASP      ✗  'GRASP'
+ 41    MV_RIGHT         MV_DOWN      ✗  'MV_DOWN'
+ 42     MV_DOWN         MV_DOWN      ✓  'MV_DOWN'
+ 43       MV_UP           MV_UP      ✓  'MV_UP'
+ 44       MV_UP           GRASP      ✗  'GRASP'
+ 45     MV_LEFT         MV_DOWN      ✗  'MV_DOWN'
+ 46     MV_DOWN           GRASP      ✗  'GRASP'
+ 47    MV_RIGHT           GRASP      ✗  'GRASP'
+ 48     MV_DOWN           GRASP      ✗  'GRASP'
+ 49       MV_UP           GRASP      ✗  'GRASP'
+────────────────────────────────────────────────────────────────────────────────────────
+Per-token accuracy:
+  GRASP          1/1  = 100.0%
+  MV_DOWN        2/15 =  13.3%
+  MV_FWD         0/7  =   0.0%
+  MV_LEFT        0/5  =   0.0%
+  MV_RIGHT       2/11 =  18.2%
+  MV_UP          2/9  =  22.2%
+  RELEASE        0/1  =   0.0%
+────────────────────────────────────────────────────────────────────────────────────────
+Overall : 7/49 = 14.3%

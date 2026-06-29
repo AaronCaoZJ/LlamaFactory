@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-5}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
 export API_URL="${API_URL:-http://localhost:8101}"
 
-# export MODEL_NAME="${MODEL_NAME:-OVERFIT}"
-export MODEL_NAME="${MODEL_NAME:-MVTOKEN_0622_v0}"
-# export MODEL_NAME="${MODEL_NAME:-REASONING}"
+# :8101 上 serve 的三个模型名（见 start_vllm_server.sh）：
+# export MODEL_NAME="${MODEL_NAME:-/workspace1/zhijun/hf_download/models/Qwen3.5-27B}"
+export MODEL_NAME="${MODEL_NAME:-mvtoken_0622_v2}"
+# export MODEL_NAME="${MODEL_NAME:-mvtoken_0622_v1}"
+# export MODEL_NAME="${MODEL_NAME:-mvtoken_0622_v0}"
 
-EVALSET="/workspace1/zhijun/LlamaFactory/scripts/eval/id_sample/rollout.json"  # 留空则用 infer.py 默认数据集；传入则覆盖
+# OOD 测试集（留空则用 infer.py 默认数据集；传入则覆盖）
+EVALSET="/workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample/v2/rollout_lite.json"
 EVALSET_ARG="${EVALSET:+--evalset ${EVALSET}}"
 
 cd /workspace1/zhijun/LlamaFactory

@@ -2,19 +2,26 @@ source /workspace1/zhijun/AgentRobot/.venv/bin/activate
 cd /workspace1/zhijun/LlamaFactory
 
 DATA_DIR=data/agentrobot/MVTOKEN/0622
+DATA_DIR_0627=data/agentrobot/MVTOKEN/0627_cleaned
+MIX_DIR=data/agentrobot/MVTOKEN/mix_22_27
 
-TASK_MAP=(
+TASK_MAP_0622=(
     "pap_banana=pick up the banana and place it on the blue plate"
     "pap_yellow_cup=pick up the yellow cup and place it on the green coaster"
     "pap_mango=pick up the mango and place it on the blue plate"
     "stack_white_bowl=pick up the white bowl and stack it on the pink bowl"
 )
-# TASK_MAP=(
-#     "pap_banana=pick up the banana and place it on the blue plate"
-#     "pap_pink_cup=pick up the pink cup and place it on the blue cup"
-#     "pap_gray_mug=pick up the gray mug and place it on the green coaster"
-#     "pap_mango=pick up the mango and place it on the blue plate"
-# )
+
+TASK_MAP_0627=(
+    "pap_banana=pick up the banana and place it on the blue plate"
+    "pap_mango=pick up the mango and place it on the blue plate"
+    "stack_pink_cup=pick up the pink cup and stack it on the blue cup"
+    "pap_gray_mug=pick up the gray mug and place it on the green coaster"
+)
+
+# --version <vX> selects the prompt folder AgentRobot/prompts/<vX>/ (fixed per-mode filenames:
+# lite=mvtoken_generator_lite.txt, affordance=mvtoken_generator_affordance.txt,
+# subgoal=mvtoken_generator.txt). Keep --version aligned with the output subdir below.
 
 # VLM for subgoal/affordance planning: drive the :8101 vLLM server but override --model to
 # its BASE model (the strong general VLM), NOT the mvtoken_0622_v0 action LoRA. The
@@ -26,34 +33,53 @@ VLM_ARGS=(--vlm-backend mvtoken_0622_v0 --model "$BASE_MODEL")
 
 : <<'EOF'
 # ========================================
-# Lite mode (no subgoal): merge all 4 tasks into one rollout.json
+# Clean the 0627 grasp/release raw rollouts -> MVTOKEN/0627_cleaned.
+# grasp/ drops every RELEASE step (reset), release/ drops every GRASP step (reset); kept
+# steps are re-indexed contiguously. grasp ids 000-007 + release ids 008-012 merge cleanly.
 # ========================================
 EOF
-python data/agentrobot/rollout_to_llamafactory.py \
-    "$DATA_DIR"/pap_banana \
-    "$DATA_DIR"/pap_yellow_cup \
-    "$DATA_DIR"/pap_mango \
-    "$DATA_DIR"/stack_white_bowl \
-    --task-map "${TASK_MAP[@]}" \
-    --output "$DATA_DIR"/rollout_v1.json
+# RAW_0627=/workspace1/zhijun/hf_download/datasets/MVTOKEN_RAW/0627
+# python data/agentrobot/clean_grasp_release.py \
+#     --grasp-dir   "$RAW_0627"/grasp \
+#     --release-dir "$RAW_0627"/release \
+#     --out-dir     data/agentrobot/MVTOKEN/0627_cleaned
 
 
 : <<'EOF'
 # ========================================
-# Subgoal mode: full prompt with per-step VLM subgoal info.
-# task_config.json is auto-generated (via generate_subgoals.py) for any rollout missing it,
-# using "${VLM_ARGS[@]}" below.
+# Lite mode (no subgoal): merge all 4 tasks into one rollout.json
 # ========================================
 EOF
-python data/agentrobot/rollout_to_llamafactory.py \
-    "$DATA_DIR"/pap_banana \
-    "$DATA_DIR"/pap_yellow_cup \
-    "$DATA_DIR"/pap_mango \
-    "$DATA_DIR"/stack_white_bowl \
-    --task-map "${TASK_MAP[@]}" \
-    --use-subgoal \
-    --output "$DATA_DIR"/rollout_subgoal.json \
-    "${VLM_ARGS[@]}"
+# python data/agentrobot/rollout_to_llamafactory.py \
+#     "$DATA_DIR"/pap_banana \
+#     "$DATA_DIR"/pap_yellow_cup \
+#     "$DATA_DIR"/pap_mango \
+#     "$DATA_DIR"/stack_white_bowl \
+#     --version v3 \
+#     --task-map "${TASK_MAP_0622[@]}" \
+#     --output "$DATA_DIR"/v3/rollout_lite.json
+
+# python data/agentrobot/rollout_to_llamafactory.py \
+#     "$DATA_DIR_0627"/pap_banana \
+#     "$DATA_DIR_0627"/stack_pink_cup \
+#     "$DATA_DIR_0627"/pap_mango \
+#     "$DATA_DIR_0627"/pap_gray_mug \
+#     --version v3 \
+#     --task-map "${TASK_MAP_0627[@]}" \
+#     --output "$DATA_DIR_0627"/v3/rollout_lite.json
+
+
+: <<'EOF'
+# ========================================
+# Mix the two v3 lite sets (0622 + 0627_cleaned) -> MVTOKEN/mix_22_27/rollout_lite.json.
+# Plain concatenation (samples carry absolute image paths); run the two lite commands above
+# first so both v3/rollout_lite.json exist.
+# ========================================
+EOF
+python data/agentrobot/merge_rollouts.py \
+    "$DATA_DIR"/v3/rollout_lite.json \
+    "$DATA_DIR_0627"/v3/rollout_lite.json \
+    --output "$MIX_DIR"/v3/rollout_lite.json
 
 
 : <<'EOF'
@@ -67,9 +93,29 @@ EOF
 #     "$DATA_DIR"/pap_yellow_cup \
 #     "$DATA_DIR"/pap_mango \
 #     "$DATA_DIR"/stack_white_bowl \
-#     --task-map "${TASK_MAP[@]}" \
+#     --version v1 \
+#     --task-map "${TASK_MAP_0622[@]}" \
 #     --use-affordance \
-#     --output "$DATA_DIR"/rollout_affordance.json \
+#     --output "$DATA_DIR"/v1/rollout_affordance.json \
+#     "${VLM_ARGS[@]}"
+
+
+: <<'EOF'
+# ========================================
+# Subgoal mode: full prompt with per-step VLM subgoal info.
+# task_config.json is auto-generated (via generate_subgoals.py) for any rollout missing it,
+# using "${VLM_ARGS[@]}" below.
+# ========================================
+EOF
+# python data/agentrobot/rollout_to_llamafactory.py \
+#     "$DATA_DIR"/pap_banana \
+#     "$DATA_DIR"/pap_yellow_cup \
+#     "$DATA_DIR"/pap_mango \
+#     "$DATA_DIR"/stack_white_bowl \
+#     --version v1 \
+#     --task-map "${TASK_MAP_0622[@]}" \
+#     --use-subgoal \
+#     --output "$DATA_DIR"/v1/rollout_subgoal.json \
 #     "${VLM_ARGS[@]}"
 
 
@@ -84,21 +130,6 @@ EOF
 #     --task "pick up the banana and place it on the blue plate" \
 #     "${VLM_ARGS[@]}"
 
-# python data/agentrobot/generate_subgoals.py \
-#     "$DATA_DIR"/pap_yellow_cup/rollout_053 \
-#     --task "pick up the yellow cup and place it on the green coaster" \
-#     "${VLM_ARGS[@]}"
-
-# python data/agentrobot/generate_subgoals.py \
-#     "$DATA_DIR"/pap_mango/rollout_038 \
-#     --task "pick up the mango and place it on the blue plate" \
-#     "${VLM_ARGS[@]}"
-
-# python data/agentrobot/generate_subgoals.py \
-#     "$DATA_DIR"/stack_white_bowl/rollout_000 \
-#     --task "pick up the white bowl and stack it on the pink bowl" \
-#     "${VLM_ARGS[@]}"
-
 
 : <<'EOF'
 # ========================================
@@ -111,21 +142,6 @@ EOF
 #     --task "pick up the banana and place it on the blue plate" \
 #     "${VLM_ARGS[@]}"
 
-# python data/agentrobot/generate_affordance.py \
-#     "$DATA_DIR"/pap_yellow_cup/rollout_053 \
-#     --task "pick up the yellow cup and place it on the green coaster" \
-#     "${VLM_ARGS[@]}"
-
-# python data/agentrobot/generate_affordance.py \
-#     "$DATA_DIR"/pap_mango/rollout_038 \
-#     --task "pick up the mango and place it on the blue plate" \
-#     "${VLM_ARGS[@]}"
-
-# python data/agentrobot/generate_affordance.py \
-#     "$DATA_DIR"/stack_white_bowl/rollout_000 \
-#     --task "pick up the white bowl and stack it on the pink bowl" \
-#     "${VLM_ARGS[@]}"
-
 
 : <<'EOF'
 # ========================================
@@ -134,14 +150,14 @@ EOF
 EOF
 # python data/agentrobot/rollout_to_llamafactory.py \
 #     /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample \
-#     --task "pick up the white cup and place it on the green coaster"
+#     --version v2 \
+#     --task "pick up the white cup and place it on the green coaster" \
+#     --output /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample/v2/rollout_lite.json
 
 # python data/agentrobot/rollout_to_llamafactory.py \
 #     /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample \
-#     --task "pick up the yellow cup and place it on the green coaster"
-
-# python data/agentrobot/rollout_to_llamafactory.py \
-#     /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample \
+#     --version v1 \
 #     --task "pick up the yellow cup and place it on the green coaster" \
-#     --use-subgoal \
+#     --use-affordance \
+#     --output /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample/v1/rollout_affordance.json \
 #     "${VLM_ARGS[@]}"

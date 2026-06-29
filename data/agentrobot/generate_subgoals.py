@@ -179,6 +179,7 @@ def generate_for_rollout(
         print(f"[{tag}] [dry-run] would write {out_path}:")
         print(json.dumps(task_config, indent=2, ensure_ascii=False))
     else:
+        out_dir.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w") as f:
             json.dump(task_config, f, indent=2, ensure_ascii=False)
         print(f"[{tag}] wrote {out_path}")
@@ -201,6 +202,11 @@ def main() -> None:
     parser.add_argument("--model",   default=None, help="Override model name or local path")
     parser.add_argument("--config",  type=Path, default=_DEFAULT_CONFIG,
                         help=f"AgentRobot robot config yaml (default: {_DEFAULT_CONFIG})")
+    parser.add_argument(
+        "--out-dir", type=Path, default=None,
+        help="Directory to write task_config.json into. Overrides the location derived from "
+             "the input path (the image source is still taken from the input path).",
+    )
     parser.add_argument("--agentrobot-root", type=Path, default=_DEFAULT_AGENTROBOT)
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--dry-run", action="store_true")
@@ -253,6 +259,8 @@ def main() -> None:
         if image_dir is None:
             print(f"[skip] {d}: not a rollout and no rollout subdirs", file=sys.stderr)
             continue
+        if args.out_dir is not None:
+            out_dir = args.out_dir
         generate_for_rollout(
             image_dir, out_dir, args.task, planner, dry_run=args.dry_run, debug=args.debug
         )

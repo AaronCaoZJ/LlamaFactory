@@ -11,7 +11,9 @@ converter only prepends the "<image><image>" markers -- so every sample looks li
                 synthesized DONE sample per episode on the final frame (all modes)
   images      : [agentview_abs_path, wrist_abs_path]
 
-Three prompt templates (AgentRobot/prompts/), all starting with the camera header:
+Prompt templates live under AgentRobot/prompts/<version>/ (selected by the required --version
+arg, e.g. v0/v1/v2). Within a version folder the per-mode filenames are fixed, all starting
+with the camera header:
   mvtoken_generator_lite.txt        — default (lite). STAGE-FREE: only {task} /
                                 {gripper_state} / {recent_moves}; no subgoal/affordance info.
   mvtoken_generator.txt             — used with --use-subgoal. Adds per-step
@@ -31,15 +33,17 @@ Recent moves are the last RECENT_WINDOW MV_* tokens, newest first (GRASP/RELEASE
 matching inference.
 
 Usage:
-    # Lite (stage-free) — single rollout
+    # Lite (stage-free) — single rollout (--version picks prompts/<version>/)
     python data/agentrobot/rollout_to_llamafactory.py \\
         data/agentrobot/MVTOKEN/0622/banana/rollout_030 \\
+        --version v1 \\
         --task "pick up the banana and place it on the blue plate"
 
     # Lite — parent dir auto-expands into rollout_* subdirs; multiple tasks via --task-map
     python data/agentrobot/rollout_to_llamafactory.py \\
         data/agentrobot/MVTOKEN/0622/banana \\
         data/agentrobot/MVTOKEN/0622/mango \\
+        --version v1 \\
         --task-map "banana=pick up the banana and place it on the blue plate" \\
                    "mango=pick up the mango and place it on the blue plate" \\
         --output data/agentrobot/MVTOKEN/0622/rollout.json
@@ -47,6 +51,7 @@ Usage:
     # Subgoal mode — full prompt with per-step VLM subgoal info (task_config.json auto-gen)
     python data/agentrobot/rollout_to_llamafactory.py \\
         data/agentrobot/MVTOKEN/0622/banana \\
+        --version v1 \\
         --use-subgoal \\
         --task "pick up the banana and place it on the blue plate" \\
         --vlm-backend mvtoken_0622_v0 \\
@@ -55,6 +60,7 @@ Usage:
     # Affordance mode — lite + a single grasp-point hint (affordance_config.json auto-gen)
     python data/agentrobot/rollout_to_llamafactory.py \\
         data/agentrobot/MVTOKEN/0622/banana \\
+        --version v1 \\
         --use-affordance \\
         --task "pick up the banana and place it on the blue plate" \\
         --vlm-backend mvtoken_0622_v0 \\
@@ -101,8 +107,8 @@ RELEASE_MOTION_KW = ("release", "open", "drop", "ungrip", "let_go", "letgo")
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _load_prompt(filename: str) -> str:
-    path = _PROMPTS_DIR / filename
+def _load_prompt(version: str, filename: str) -> str:
+    path = _PROMPTS_DIR / version / filename
     if not path.exists():
         raise FileNotFoundError(f"Prompt template not found: {path}")
     return path.read_text(encoding="utf-8")
@@ -218,42 +224,55 @@ def _assign_subgoals_to_steps(all_tokens: list[str], subgoals: list[dict]) -> di
     return mapping
 
 
-def _ensure_task_config(rollout_dir: Path, task: str | None, vlm_args: list[str]) -> None:
-    """Ensure a reusable task_config.json exists for this rollout's task folder.
+def _ensure_task_config(
+    rollout_dir: Path, config_dir: Path, src_path: Path, task: str | None, vlm_args: list[str]
+) -> None:
+    """Ensure task_config.json exists in ``config_dir`` for this rollout.
 
-    One task per folder, so the plan is generated ONCE at the task-folder (parent) level and
-    every rollout under it reuses it (convert_rollout searches [rollout_dir, parent]).
+    Images are read from ``src_path`` (the rollout itself for a single conversion, or the task
+    folder for a multi-folder run — generated ONCE from its first rollout and reused), while the
+    config is written into ``config_dir`` (next to the output json for single, a per-task
+    subfolder of the output dir for multi). convert_rollout searches [rollout_dir, config_dir].
     """
-    task_dir = rollout_dir.parent
-    if (rollout_dir / "task_config.json").exists() or (task_dir / "task_config.json").exists():
+    if (rollout_dir / "task_config.json").exists() or (config_dir / "task_config.json").exists():
         return
     if not task:
         raise ValueError(
-            f"No task_config.json found in {rollout_dir} (or its parent) "
+            f"No task_config.json found in {rollout_dir} (or {config_dir}) "
             "and --task was not provided. Cannot auto-generate subgoals."
         )
-    print(f"[subgoal] task_config.json missing for {task_dir.name}, generating once ...")
-    cmd = [sys.executable, str(_GENERATE_SUBGOALS), str(task_dir), "--task", task] + vlm_args
+    print(f"[subgoal] task_config.json missing for {rollout_dir.name}, generating once ...")
+    config_dir.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        sys.executable, str(_GENERATE_SUBGOALS), str(src_path),
+        "--task", task, "--out-dir", str(config_dir),
+    ] + vlm_args
     subprocess.run(cmd, check=True)
 
 
-def _ensure_affordance_config(rollout_dir: Path, task: str | None, vlm_args: list[str]) -> None:
-    """Ensure a reusable affordance_config.json exists for this rollout's task folder.
+def _ensure_affordance_config(
+    rollout_dir: Path, config_dir: Path, src_path: Path, task: str | None, vlm_args: list[str]
+) -> None:
+    """Ensure affordance_config.json exists in ``config_dir`` for this rollout.
 
-    Generated ONCE at the task-folder (parent) level and reused by every rollout under it.
+    Same placement rules as :func:`_ensure_task_config`: images from ``src_path``, config written
+    into ``config_dir``.
     """
-    task_dir = rollout_dir.parent
     if (rollout_dir / "affordance_config.json").exists() or (
-        task_dir / "affordance_config.json"
+        config_dir / "affordance_config.json"
     ).exists():
         return
     if not task:
         raise ValueError(
-            f"No affordance_config.json found in {rollout_dir} (or its parent) "
+            f"No affordance_config.json found in {rollout_dir} (or {config_dir}) "
             "and --task was not provided. Cannot auto-generate the affordance hint."
         )
-    print(f"[affordance] affordance_config.json missing for {task_dir.name}, generating once ...")
-    cmd = [sys.executable, str(_GENERATE_AFFORDANCE), str(task_dir), "--task", task] + vlm_args
+    print(f"[affordance] affordance_config.json missing for {rollout_dir.name}, generating once ...")
+    config_dir.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        sys.executable, str(_GENERATE_AFFORDANCE), str(src_path),
+        "--task", task, "--out-dir", str(config_dir),
+    ] + vlm_args
     subprocess.run(cmd, check=True)
 
 
@@ -281,11 +300,16 @@ def convert_rollout(
     mode: str = "lite",
     task_override: str | None = None,
     gripper_color: str = "black",
+    config_dir: Path | None = None,
 ) -> list[dict]:
     """Convert one rollout to LLaMA Factory samples.
 
     ``mode`` selects the prompt body: ``lite`` (stage-free), ``subgoal`` (per-step VLM
     subgoal), or ``affordance`` (a single grasp-point hint reused for every step).
+
+    ``config_dir`` is where the matching task/affordance config lives (next to the output json
+    for a single rollout, a per-task subfolder of the output dir for a multi-folder run); it is
+    searched after ``rollout_dir``.
     """
     actions_path = rollout_dir / "actions.jsonl"
     if not actions_path.exists():
@@ -296,7 +320,8 @@ def convert_rollout(
         "subgoal": "task_config.json",
         "affordance": "affordance_config.json",
     }.get(mode)
-    cfg = _load_config([rollout_dir, rollout_dir.parent], cfg_name) if cfg_name else {}
+    search_dirs = [rollout_dir, config_dir or rollout_dir.parent]
+    cfg = _load_config(search_dirs, cfg_name) if cfg_name else {}
     task_name = task_override or cfg.get("task", rollout_dir.parent.name)
 
     steps = []
@@ -402,9 +427,19 @@ def main() -> None:
         help="Rollout directories (or parent directories containing rollout subdirs)",
     )
     parser.add_argument(
+        "--version", required=True,
+        help="Prompt version subfolder under AgentRobot/prompts/ (e.g. v0, v1, v2). "
+             "The per-mode template is read from prompts/<version>/<mode_file>: "
+             "lite -> mvtoken_generator_lite.txt, affordance -> mvtoken_generator_affordance.txt, "
+             "subgoal -> mvtoken_generator.txt.",
+    )
+    parser.add_argument(
         "--output", type=Path, default=None,
         help="Output JSON path. Defaults to rollout[_subgoal].json inside the rollout dir "
-             "(single rollout) or the rollouts' parent dir (multiple rollouts).",
+             "(single rollout) or a 'process_out' folder under the task folders' parent dir "
+             "(multiple rollouts). The config (task/affordance) is written under this json's "
+             "folder: directly beside it for a single rollout, or in a per-task subfolder "
+             "(named after the source task folder) for a multi-folder run.",
     )
     parser.add_argument(
         "--task", default=None,
@@ -458,12 +493,15 @@ def main() -> None:
         mode, "rollout"
     )
     default_filename = stem + ext
+    single = len(rollout_dirs) == 1
     if args.output is not None:
         output_path = args.output
-    elif len(rollout_dirs) == 1:
+    elif single:
+        # Single rollout: write next to the rollout (its own folder).
         output_path = rollout_dirs[0] / default_filename
     else:
-        output_path = rollout_dirs[0].parent / default_filename
+        # Multiple: a 'process_out' folder under the task folders' shared parent.
+        output_path = rollout_dirs[0].parent.parent / "process_out" / default_filename
 
     # Build task map: dirname -> task description
     task_map: dict[str, str] = {}
@@ -477,7 +515,7 @@ def main() -> None:
         "subgoal": "mvtoken_generator.txt",
         "affordance": "mvtoken_generator_affordance.txt",
     }.get(mode, "mvtoken_generator_lite.txt")
-    prompt_template = _load_prompt(prompt_filename)
+    prompt_template = _load_prompt(args.version, prompt_filename)
 
     # Build VLM forwarding args for the subgoal-generation subprocess.
     vlm_args: list[str] = []
@@ -494,13 +532,23 @@ def main() -> None:
         """Return task string for this rollout: task_map > --task > None."""
         return task_map.get(rollout_dir.parent.name) or args.task or None
 
+    def _config_dir(rollout_dir: Path) -> Path:
+        """Where this rollout's config lives: next to the output json (single) or in a per-task
+        subfolder of the output dir, named after the source task folder (multi)."""
+        return output_path.parent if single else output_path.parent / rollout_dir.parent.name
+
+    def _src_path(rollout_dir: Path) -> Path:
+        """Image source for config generation: the rollout itself (single) or its task folder,
+        which generates once from its first rollout and is reused (multi)."""
+        return rollout_dir if single else rollout_dir.parent
+
     # Ensure the per-rollout config exists (auto-generates via the matching VLM script).
     if mode == "subgoal":
         for d in rollout_dirs:
-            _ensure_task_config(d, _resolve_task(d), vlm_args)
+            _ensure_task_config(d, _config_dir(d), _src_path(d), _resolve_task(d), vlm_args)
     elif mode == "affordance":
         for d in rollout_dirs:
-            _ensure_affordance_config(d, _resolve_task(d), vlm_args)
+            _ensure_affordance_config(d, _config_dir(d), _src_path(d), _resolve_task(d), vlm_args)
 
     all_samples: list[dict] = []
     for d in rollout_dirs:
@@ -510,6 +558,7 @@ def main() -> None:
             mode=mode,
             task_override=_resolve_task(d),
             gripper_color=args.gripper_color,
+            config_dir=_config_dir(d),
         )
         print(f"{d.name}: {len(samples)} action steps")
         all_samples.extend(samples)
