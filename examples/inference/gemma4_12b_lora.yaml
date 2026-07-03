@@ -1,0 +1,15 @@
+### LlamaFactory API server config — Gemma-4-12B + LoRA (HuggingFace backend)
+# Start server:  bash scripts/gemma4/eval/start_hf_server.sh
+# Then eval:     API_URL=http://localhost:8110 python scripts/gemma4/eval/infer.py eval -n 100
+
+model_name_or_path: /workspace1/zhijun/hf_download/models/gemma4-12B-it
+adapter_name_or_path: /workspace1/zhijun/LlamaFactory/saves/gemma4-12b/robot/mix_22_27_v3
+finetuning_type: lora
+template: gemma4n
+enable_thinking: false
+infer_backend: huggingface
+trust_remote_code: true
+
+# Multimodal settings
+image_max_pixels: 262144
+infer_dtype: bfloat16

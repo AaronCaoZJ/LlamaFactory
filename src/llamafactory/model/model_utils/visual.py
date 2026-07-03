@@ -242,6 +242,17 @@ _register_composite_model(
 )
 
 
+# Released gemma-4 checkpoints report model_type="gemma4_unified" with a different
+# module layout: vision backbone is `model.vision_embedder` (no `vision_tower`),
+# audio is projection-only (`model.embed_audio`, no `audio_tower`).
+_register_composite_model(
+    model_type="gemma4_unified",
+    projector_keys=["model.embed_vision", "model.embed_audio"],
+    vision_model_keys=["vision_embedder"],
+    lora_conflict_keys=["per_layer_projection_norm"],
+)
+
+
 # copied from qwen2vl
 _register_composite_model(
     model_type="glm4v",

@@ -717,7 +717,7 @@ class Gemma4Plugin(BasePlugin):
             mm_inputs.update(
                 feature_extractor(
                     audios,
-                    padding="max_length",
+                    padding="longest",  # gemma4_unified extractor requires max_length when padding="max_length"
                     return_tensors="pt",
                 )
             )
