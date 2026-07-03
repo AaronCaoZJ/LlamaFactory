@@ -56,9 +56,46 @@ uv pip install -r "${LLAMA_FACTORY_ROOT}/requirements/metrics.txt"
 uv pip install -r "${LLAMA_FACTORY_ROOT}/requirements/vllm.txt"
 
 uv pip install wandb
-# uv pip install flash-linear-attention
 uv pip install transformers==5.6.1
-# uv pip install tilelang
+# Qwen3.5 (gated-delta-net) needs fla; LF only uses fla-core, flash-linear-attention adds layers/models.
+# --no-deps keeps them from upgrading transformers past 5.6.1 (would break LF's Qwen3.5 patch).
+uv pip install "fla-core==0.5.1" "flash-linear-attention==0.5.1" --no-deps
+# On Hopper (H200) + Triton>=3.4 fla's triton GDN backward is broken -> fla requires the tilelang backend.
+# But tilelang 0.1.11 + apache-tvm-ffi 0.1.12 crash on import (tvm-ffi double registration);
+# pin apache-tvm-ffi to 0.1.11. Nothing else in this venv depends on apache-tvm-ffi.
+uv pip install "tilelang==0.1.11" "apache-tvm-ffi==0.1.11"
+
+# tilelang JIT-compiles kernels by calling `gcc`/`g++` directly (it ignores CC/CXX). It needs a
+# compiler whose cc1plus is actually installed. Rather than hardcode a version (this box's default
+# gcc-12 is missing cc1plus while gcc-11 works, but another machine differs), AUTO-DETECT: use the
+# default g++ if it compiles, else pick the newest working g++-N and shim gcc/g++ -> it on PATH.
+# The train scripts prepend ${LLAMA_FACTORY_ROOT}/.cc-shim to PATH only if it validates.
+# IMPORTANT: tilelang invokes `gcc -x c++` (the C driver on C++ source), so the probe must test
+# exactly that — NOT `g++`. On this box `g++` is v11 (works) but `gcc` is v12 whose cc1plus is
+# missing, so a g++-based probe would wrongly pass while tilelang still fails.
+SHIM_DIR="${LLAMA_FACTORY_ROOT}/.cc-shim"
+rm -rf "${SHIM_DIR}"   # drop any stale shim carried over from another machine
+_cc_probe() { echo 'int main(){return 0;}' | "$1" -x c++ - -o /dev/null >/dev/null 2>&1; }
+if _cc_probe gcc; then
+  echo "Default gcc compiles C++; no compiler shim needed for tilelang."
+else
+  _cc=""
+  for cand in gcc-13 gcc-12 gcc-11 gcc-10 gcc-9; do
+    if command -v "${cand}" >/dev/null 2>&1 && _cc_probe "${cand}"; then _cc="${cand}"; break; fi
+  done
+  if [ -n "${_cc}" ]; then
+    _cxx="${_cc/gcc/g++}"
+    mkdir -p "${SHIM_DIR}"
+    ln -sf "$(command -v "${_cc}")"                        "${SHIM_DIR}/gcc"
+    ln -sf "$(command -v "${_cxx}" || command -v "${_cc}")" "${SHIM_DIR}/g++"
+    ln -sf "$(command -v "${_cc}")"                        "${SHIM_DIR}/cc"
+    ln -sf "$(command -v "${_cxx}" || command -v "${_cc}")" "${SHIM_DIR}/c++"
+    echo "Default gcc can't compile C++; shimmed gcc/g++ -> ${_cc} at ${SHIM_DIR} (for tilelang JIT)."
+  else
+    echo "WARNING: no gcc that compiles C++ found (default + gcc-9..13 all failed). tilelang JIT" >&2
+    echo "         will fail; install a CUDA-compatible gcc/g++ (e.g. 'apt install g++-11') & rerun." >&2
+  fi
+fi
 
 cat <<EOF
 

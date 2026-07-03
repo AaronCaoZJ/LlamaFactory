@@ -122,6 +122,8 @@ celerybeat.pid
 # Environments
 .env
 .venv
+# machine-specific gcc/g++ shim built by scripts/env_setup.sh (tilelang JIT)
+.cc-shim/
 env/
 venv/
 ENV/
@@ -185,5 +187,9 @@ predictions_score.json
 # datasets
 /data/agentrobot/overfit_test
 /data/agentrobot/MVTOKEN
-/scripts/eval/id_sample
-/scripts/eval/ood_sample
+/data/agentrobot/id_sample
+/data/agentrobot/ood_sample
+
+/data/mikomiko_tag/img
+/data/mikomiko_tag/pornpic_tag_recognition_pornpic_tag_full_001.csv
+/data/mikomiko_tag/pornstars620_100k-sample-posts_category-tags.csv

@@ -17,7 +17,7 @@
       "images": "images"
     }
   },
-    "mvtoken_0622_v1_affordance": {
+  "mvtoken_0622_v1_affordance": {
     "file_name": "agentrobot/MVTOKEN/0622/v1/rollout_affordance.json",
     "columns": {
       "prompt": "instruction",
@@ -781,5 +781,23 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "mikomiko_tag_train": {
+    "file_name": "mikomiko_tag/mikomiko_train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_test": {
+    "file_name": "mikomiko_tag/mikomiko_test.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }
