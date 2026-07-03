@@ -13,7 +13,9 @@ freeze_multi_modal_projector: false
 
 ### dataset
 dataset: mikomiko_tag_train
-eval_dataset: mikomiko_tag_test
+# two complementary test sets (combined into one eval_loss during training; run separate
+# eval afterward for per-set metrics): unseen posts + tag-frequency stratified
+eval_dataset: mikomiko_tag_test_unseen,mikomiko_tag_test_stratified
 template: qwen3_5_nothink
 cutoff_len: 1024
 preprocessing_num_workers: 32

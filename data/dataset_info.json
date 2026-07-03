@@ -791,8 +791,17 @@
       "images": "images"
     }
   },
-  "mikomiko_tag_test": {
-    "file_name": "mikomiko_tag/mikomiko_test.json",
+  "mikomiko_tag_test_unseen": {
+    "file_name": "mikomiko_tag/mikomiko_test_unseen.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_test_stratified": {
+    "file_name": "mikomiko_tag/mikomiko_test_stratified.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",

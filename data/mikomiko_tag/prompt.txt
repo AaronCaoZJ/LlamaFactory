@@ -1,0 +1,1 @@
+Select the tags visible in this image from these candidates:\n{tags}

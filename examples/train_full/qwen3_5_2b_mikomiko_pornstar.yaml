@@ -13,7 +13,7 @@ freeze_multi_modal_projector: false
 
 ### dataset
 dataset: mikomiko_tag_train
-eval_dataset: mikomiko_tag_test
+eval_dataset: mikomiko_tag_test_unseen,mikomiko_tag_test_stratified
 template: qwen3_5_nothink
 cutoff_len: 2048
 preprocessing_num_workers: 32
