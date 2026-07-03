@@ -76,10 +76,10 @@ EOF
 # first so both v3/rollout_lite.json exist.
 # ========================================
 EOF
-python data/agentrobot/merge_rollouts.py \
-    "$DATA_DIR"/v3/rollout_lite.json \
-    "$DATA_DIR_0627"/v3/rollout_lite.json \
-    --output "$MIX_DIR"/v3/rollout_lite.json
+# python data/agentrobot/merge_rollouts.py \
+#     "$DATA_DIR"/v3/rollout_lite.json \
+#     "$DATA_DIR_0627"/v3/rollout_lite.json \
+#     --output "$MIX_DIR"/v3/rollout_lite.json
 
 
 : <<'EOF'
@@ -148,11 +148,11 @@ EOF
 # Scratch: single-sample conversions (eval ID/OOD probes).
 # ========================================
 EOF
-# python data/agentrobot/rollout_to_llamafactory.py \
-#     /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample \
-#     --version v2 \
-#     --task "pick up the white cup and place it on the green coaster" \
-#     --output /workspace1/zhijun/LlamaFactory/scripts/eval/ood_sample/v2/rollout_lite.json
+python data/agentrobot/rollout_to_llamafactory.py \
+    /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample \
+    --version v3 \
+    --task "pick up the white cup and place it on the green coaster" \
+    --output /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample/v3/rollout_lite.json
 
 # python data/agentrobot/rollout_to_llamafactory.py \
 #     /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample \

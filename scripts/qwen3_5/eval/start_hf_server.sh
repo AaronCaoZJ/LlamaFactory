@@ -22,7 +22,7 @@ BASE_MODEL="/workspace1/zhijun/hf_download/models/Qwen3.5-27B"
 LORA_DIR="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-27b/robot/overfit"
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4}"
-export API_PORT="${API_PORT:-8100}"
+export API_PORT="${API_PORT:-8111}"
 export SAFE_MEDIA_PATH="${SAFE_MEDIA_PATH:-/workspace1/zhijun}"  # 允许本地图片路径
 
 echo "Starting LlamaFactory HF API server on http://0.0.0.0:${API_PORT}"

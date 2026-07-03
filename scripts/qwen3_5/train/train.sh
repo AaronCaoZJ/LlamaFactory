@@ -6,9 +6,9 @@ LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
 VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv}"
 
 DATA_DIR="${LLAMA_FACTORY_ROOT}/data/agentrobot/MVTOKEN/0622"
-TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_27b_mix_22_27_v3.yaml"
+TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_9b_mix_22_27_v3.yaml"
 
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6,7}"
+CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-5,6}"
 
 # TASK_MAP=(
 #   "banana=pick up the banana and place it on the blue plate"
