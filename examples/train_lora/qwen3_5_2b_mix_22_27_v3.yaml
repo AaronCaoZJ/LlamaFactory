@@ -25,14 +25,14 @@ preprocessing_num_workers: 4
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/qwen3.5-9b/robot/mix_22_27_v3
+output_dir: saves/qwen3.5-2b/robot/mix_22_27_v3
 logging_steps: 2
 save_steps: 200
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
-run_name: qwen3.5-9b-robot-mix_22_27_v3
+run_name: qwen3.5-2b-robot-mix_22_27_v3
 
 ### train
 # 3738 samples, 2 H200, batch=4, grad_acc=4 -> eff_bs=32 -> ~117 steps/epoch
