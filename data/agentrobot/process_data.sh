@@ -3,7 +3,8 @@ cd /workspace1/zhijun/LlamaFactory
 
 DATA_DIR=data/agentrobot/MVTOKEN/0622
 DATA_DIR_0627=data/agentrobot/MVTOKEN/0627_cleaned
-MIX_DIR=data/agentrobot/MVTOKEN/mix_22_27
+DATA_DIR_0704=data/agentrobot/MVTOKEN/0704_cleaned
+MIX_DIR=data/agentrobot/MVTOKEN/mix_22_27_04
 
 TASK_MAP_0622=(
     "pap_banana=pick up the banana and place it on the blue plate"
@@ -19,6 +20,12 @@ TASK_MAP_0627=(
     "pap_gray_mug=pick up the gray mug and place it on the green coaster"
 )
 
+TASK_MAP_0704=(
+    "pap_orange_block=pick up the orange block and place it on the plate"
+    "pap_mango=pick up the mango and place it in the bowl"
+    "pap_pink_cube=pick up the pink cube and place it on the plate"
+    "rearrange_show=rearrange the letters to spell \"SHOW\""
+)
 # --version <vX> selects the prompt folder AgentRobot/prompts/<vX>/ (fixed per-mode filenames:
 # lite=mvtoken_generator_lite.txt, affordance=mvtoken_generator_affordance.txt,
 # subgoal=mvtoken_generator.txt). Keep --version aligned with the output subdir below.
@@ -38,11 +45,10 @@ VLM_ARGS=(--vlm-backend mvtoken_0622_v0 --model "$BASE_MODEL")
 # steps are re-indexed contiguously. grasp ids 000-007 + release ids 008-012 merge cleanly.
 # ========================================
 EOF
-# RAW_0627=/workspace1/zhijun/hf_download/datasets/MVTOKEN_RAW/0627
+# RAW_0704=/workspace1/zhijun/hf_download/datasets/MVTOKEN_RAW/0704
 # python data/agentrobot/clean_grasp_release.py \
-#     --grasp-dir   "$RAW_0627"/grasp \
-#     --release-dir "$RAW_0627"/release \
-#     --out-dir     data/agentrobot/MVTOKEN/0627_cleaned
+#     --grasp-dir   "$RAW_0704"/left_right \
+#     --out-dir     data/agentrobot/MVTOKEN/0704_cleaned
 
 
 : <<'EOF'
@@ -68,6 +74,15 @@ EOF
 #     --task-map "${TASK_MAP_0627[@]}" \
 #     --output "$DATA_DIR_0627"/v3/rollout_lite.json
 
+# python data/agentrobot/rollout_to_llamafactory.py \
+#     "$DATA_DIR_0704"/pap_orange_block \
+#     "$DATA_DIR_0704"/pap_mango \
+#     "$DATA_DIR_0704"/pap_pink_cube \
+#     "$DATA_DIR_0704"/rearrange_show \
+#     --version v3 \
+#     --task-map "${TASK_MAP_0704[@]}" \
+#     --output "$DATA_DIR_0704"/v3/rollout_lite.json
+
 
 : <<'EOF'
 # ========================================
@@ -76,10 +91,10 @@ EOF
 # first so both v3/rollout_lite.json exist.
 # ========================================
 EOF
-# python data/agentrobot/merge_rollouts.py \
-#     "$DATA_DIR"/v3/rollout_lite.json \
-#     "$DATA_DIR_0627"/v3/rollout_lite.json \
-#     --output "$MIX_DIR"/v3/rollout_lite.json
+python data/agentrobot/merge_rollouts.py \
+    "/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json" \
+    "$DATA_DIR_0704"/v3/rollout_lite.json \
+    --output "$MIX_DIR"/v3/rollout_lite.json
 
 
 : <<'EOF'
@@ -148,11 +163,11 @@ EOF
 # Scratch: single-sample conversions (eval ID/OOD probes).
 # ========================================
 EOF
-python data/agentrobot/rollout_to_llamafactory.py \
-    /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample \
-    --version v3 \
-    --task "pick up the white cup and place it on the green coaster" \
-    --output /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample/v3/rollout_lite.json
+# python data/agentrobot/rollout_to_llamafactory.py \
+#     /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample \
+#     --version v3 \
+#     --task "pick up the white cup and place it on the green coaster" \
+#     --output /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample/v3/rollout_lite.json
 
 # python data/agentrobot/rollout_to_llamafactory.py \
 #     /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample \

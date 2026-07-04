@@ -117,13 +117,19 @@ def process_folder(src_dir: Path, drop_token: str, out_root: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Clean 0627 grasp/release rollouts.")
     parser.add_argument("--grasp-dir", type=Path, required=True, help="Raw grasp/ folder (RELEASE dropped).")
-    parser.add_argument("--release-dir", type=Path, required=True, help="Raw release/ folder (GRASP dropped).")
+    parser.add_argument(
+        "--release-dir",
+        type=Path,
+        default=None,
+        help="Optional raw release/ folder (GRASP dropped). Omit to process grasp only.",
+    )
     parser.add_argument("--out-dir", type=Path, required=True, help="Output 0627_cleaned folder.")
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     process_folder(args.grasp_dir, drop_token="RELEASE", out_root=args.out_dir)
-    process_folder(args.release_dir, drop_token="GRASP", out_root=args.out_dir)
+    if args.release_dir is not None:
+        process_folder(args.release_dir, drop_token="GRASP", out_root=args.out_dir)
 
     total = sorted(d.name for d in args.out_dir.iterdir() if d.is_dir())
     print(f"\nWrote {len(total)} cleaned rollout(s) -> {args.out_dir}")

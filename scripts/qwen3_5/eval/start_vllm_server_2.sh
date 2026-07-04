@@ -4,15 +4,15 @@
 set -euo pipefail
 
 VENV="/workspace1/zhijun/AgentRobot/.venv-vllm"
-BASE_MODEL="/workspace1/zhijun/hf_download/models/Qwen3.5-9B"
-SAVES="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-9b/robot"
+BASE_MODEL="/workspace1/zhijun/hf_download/models/Qwen3.5-2B"
+SAVES="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-2b/robot"
 
 LORA_MODULES=(
-  "mix_22_27_v3_9=${SAVES}/mix_22_27_v3"
+  "mix_22_27_v3_2=${SAVES}/mix_22_27_v3"
 )
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
-PORT="${PORT:-8109}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-8192}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6}"
+PORT="${PORT:-8102}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-8192}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"; ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 
 # gcc-12 on this node lacks cc1plus; use gcc-11 for CUDA JIT.

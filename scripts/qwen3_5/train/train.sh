@@ -6,9 +6,18 @@ LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
 VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv}"
 
 DATA_DIR="${LLAMA_FACTORY_ROOT}/data/agentrobot/MVTOKEN/0622"
-TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_9b_mix_22_27_v3.yaml"
+TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_9b_mix_22_27_04_v3.yaml"
 
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-5,6}"
+CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4,7}"
+
+export DISABLE_VERSION_CHECK=1  # transformers 5.6.1 > LF 硬编码上限 5.6.0；Qwen3.5 需新版，绕过版本闸
+
+# Qwen3.5 的 GDN 反向用 tilelang JIT，nvcc 会用 gcc 当宿主编译器；系统默认 gcc-12 缺 cc1plus
+# (报 "cannot execute cc1plus")。用 env_setup.sh 建的 gcc-11 垫片，且仅在其确实能编译时前置 PATH。
+_SHIM="${LLAMA_FACTORY_ROOT}/.cc-shim"
+if [ -x "${_SHIM}/gcc" ] && echo 'int main(){return 0;}' | "${_SHIM}/gcc" -x c++ - -o /dev/null >/dev/null 2>&1; then
+  export PATH="${_SHIM}:${PATH}"
+fi
 
 # TASK_MAP=(
 #   "banana=pick up the banana and place it on the blue plate"
