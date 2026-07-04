@@ -38,18 +38,19 @@ HERE         = os.path.dirname(os.path.abspath(__file__))
 GEMINI_CSV   = os.path.join(HERE, "pornpic_tag_recognition_pornpic_tag_full_001.csv")
 CATALOG_CSV  = os.path.join(HERE, "pornstars620_100k-sample-posts_category-tags.csv")
 IMG_DIR      = os.path.join(HERE, "img")
+JSONL_DIR    = os.path.join(HERE, "jsonl")   # all dataset/candidate/mini jsonl live here
 
-# Three output splits (candidate jsonl -> downloaded json). See do_plan() for semantics.
+# Three output splits (candidate jsonl -> downloaded jsonl). See do_plan() for semantics.
 #   train           -- everything not held out
 #   test_unseen     -- WHOLE posts held out (unseen post/person/scene generalization)
 #   test_stratified -- images sampled by tag-frequency band (per-exposure tagging probe)
 SPLITS = {
-    "train":           ("train_candidates.jsonl",           "mikomiko_train.json"),
-    "test_unseen":     ("test_unseen_candidates.jsonl",     "mikomiko_test_unseen.json"),
-    "test_stratified": ("test_stratified_candidates.jsonl", "mikomiko_test_stratified.json"),
+    "train":           ("train_candidates.jsonl",           "train.jsonl"),
+    "test_unseen":     ("test_unseen_candidates.jsonl",     "test_unseen.jsonl"),
+    "test_stratified": ("test_stratified_candidates.jsonl", "test_stratified.jsonl"),
 }
-CAND = {k: os.path.join(HERE, v[0]) for k, v in SPLITS.items()}
-JSON = {k: os.path.join(HERE, v[1]) for k, v in SPLITS.items()}
+CAND = {k: os.path.join(JSONL_DIR, v[0]) for k, v in SPLITS.items()}
+JSON = {k: os.path.join(JSONL_DIR, v[1]) for k, v in SPLITS.items()}
 
 # ── split knobs ───────────────────────────────────────────────────────────────
 SPLIT_SEED        = 0        # deterministic split
@@ -62,18 +63,16 @@ STRAT_BANDS       = [("very_rare", 1, 10), ("rare", 10, 100), ("mid", 100, 1000)
                      ("common", 1000, 10000), ("very_common", 10000, 10**12)]
 STRAT_PER_BAND    = 400
 
-# ── task framing: candidate-selection ─────────────────────────────────────────
-# The model sees the IMAGE + the post's candidate tags, and must SELECT the ones actually
-# visible (mirrors how GEMINI produced the labels). Candidate pool = union of these post-level
-# columns; verified that 100% of Gemini labels fall inside category ∪ post_tag (post_tag alone
-# covers only ~31%), so BOTH are required.
-CANDIDATE_FIELDS = ("category", "post_tag")
-# Selection prompt from the colleague; `{tags}` is replaced by the candidate list. Until that
-# file exists, DEFAULT_PROMPT is used. Content is "<image>" + prompt  (image first, text after).
+# ── task framing: direct image -> tags ────────────────────────────────────────
+# The model sees only the IMAGE and outputs the tags directly (open-vocabulary tagging).
+# Label = GEMINI per-image tags. The tagging prompt lives in PROMPT_FILE (editable); if absent
+# or empty, DEFAULT_PROMPT is used. Content is "<image>" + prompt (image first, text after).
 PROMPT_FILE    = os.path.join(HERE, "prompt.txt")
-DEFAULT_PROMPT = ("Below are candidate tags from this image's source post. Select ONLY the tags "
-                  "that are actually visible in this image and output them as a comma-separated "
-                  "list.\nCandidate tags: {tags}")
+DEFAULT_PROMPT = ("You are an expert tagger for an adult image board. Look at the image and output "
+                  "a comma-separated list of board-style tags describing what is visible: the people "
+                  "(ethnicity/nationality, apparent age group, body type, hair), their clothing and "
+                  "accessories, exposed body parts, the sexual acts or poses, and the setting. Prefer "
+                  "concise established tags. Output only the tags, comma-separated, with no other text.")
 
 
 def post_of(name):
@@ -86,43 +85,26 @@ def tag_list(tags_str):
     return [t.strip() for t in tags_str.split(",") if t.strip()]
 
 
-def parse_tags(raw):
-    """'[Sexy, Asian, Mom]' or 'Sexy, Asian' -> ordered, de-duped ['Sexy','Asian','Mom']."""
-    raw = (raw or "").strip()
-    if raw.startswith("[") and raw.endswith("]"):
-        raw = raw[1:-1]
-    seen, out = set(), []
-    for t in raw.split(","):
-        t = " ".join(t.split()).strip().strip('"').strip()
-        if t and t.lower() not in seen:
-            seen.add(t.lower())
-            out.append(t)
-    return out
-
-
 _PROMPT = None
 
 
 def load_prompt():
-    """Read the colleague's selection prompt from PROMPT_FILE once; fall back to DEFAULT_PROMPT."""
+    """Read the tagging prompt from PROMPT_FILE once; fall back to DEFAULT_PROMPT if empty/missing."""
     global _PROMPT
     if _PROMPT is None:
         content = ""
         if os.path.exists(PROMPT_FILE):
             content = open(PROMPT_FILE, encoding="utf-8").read().strip()
-        _PROMPT = content or DEFAULT_PROMPT   # empty/missing file -> default
+        _PROMPT = content or DEFAULT_PROMPT
     return _PROMPT
 
 
-def build_instruction(candidates):
-    """Content = image first, then text. `{tags}` in the prompt is replaced by the candidate list;
-    if the prompt has no placeholder, the candidates are appended."""
-    p = load_prompt()
-    body = p.replace("{tags}", candidates) if "{tags}" in p else f"{p}\n\nCandidate tags: {candidates}"
-    return "<image>" + body
+def build_instruction():
+    """Content = image first, then the tagging prompt."""
+    return "<image>" + load_prompt()
 
 # ── download knobs (same as the e621 builder) ──────────────────────────────────
-CONCURRENCY  = 16
+CONCURRENCY  = int(os.environ.get("MIKOMIKO_CONCURRENCY", "16"))  # override for big bulk downloads
 TIMEOUT      = 30
 RETRIES      = 2
 UA           = {"User-Agent": "Mozilla/5.0 (dataset-probe; research)"}
@@ -150,53 +132,43 @@ def clean_tags(raw):
     return ", ".join(out)
 
 
-def load_catalog():
-    """Build {image_key: (url, candidates)} from CATALOG_CSV, where image_key == '{post_id}_{image_name}'
-    (== GEMINI custom_id) and candidates = comma-joined union of CANDIDATE_FIELDS (the selection pool).
-    Streamed; ~1.24M entries."""
-    catalog = {}
+def load_url_map():
+    """Build {image_key: url} from CATALOG_CSV, where image_key == '{post_id}_{image_name}'
+    (== GEMINI custom_id). Streamed; ~1.24M entries."""
+    url_of = {}
     with open(CATALOG_CSV, "r", encoding="utf-8-sig", errors="replace", newline="") as f:
         for row in csv.DictReader(f):
             pid = (row.get("post_id") or "").strip()
             img = (row.get("image_name") or "").strip()
             url = (row.get("url") or "").strip()
-            if not (pid and img and url):
-                continue
-            seen, cands = set(), []
-            for fld in CANDIDATE_FIELDS:
-                for t in parse_tags(row.get(fld)):
-                    if t.lower() not in seen:
-                        seen.add(t.lower())
-                        cands.append(t)
-            catalog[f"{pid}_{img}"] = (url, ", ".join(cands))
-    return catalog
+            if pid and img and url:
+                url_of[f"{pid}_{img}"] = url
+    return url_of
 
 
 def iter_records():
-    """Join GEMINI per-image tags (label) with CATALOG (url + candidate tags). Yields
-    {name,url,candidates,tags} for images with a Gemini tag list, no error, a URL, and candidates."""
-    catalog = load_catalog()
-    print(f"[join] catalog entries loaded: {len(catalog)}", flush=True)
+    """Join GEMINI per-image tags (label) with CATALOG URLs (image). Yields {name,url,tags}
+    for images with a Gemini tag list, no error, and a matching URL."""
+    url_of = load_url_map()
+    print(f"[join] catalog urls loaded: {len(url_of)}", flush=True)
     with open(GEMINI_CSV, "r", encoding="utf-8-sig", errors="replace", newline="") as f:
         for row in csv.DictReader(f):
             if (row.get("error") or "").strip():
                 continue
             name = (row.get("custom_id") or "").strip()   # already '{post_id}_{image_name}'
-            hit = catalog.get(name)
-            if not name or not hit:                         # no download link / candidates -> skip
-                continue
-            url, candidates = hit
-            if not candidates:                              # no candidate pool -> can't select
+            url = url_of.get(name)
+            if not name or not url:                         # no download link -> skip
                 continue
             tags = clean_tags(row.get("tags") or "")
             if not tags:                                    # Gemini found nothing visible -> skip
                 continue
-            yield {"name": name, "url": url, "candidates": candidates, "tags": tags}
+            yield {"name": name, "url": url, "tags": tags}
 
 
 # ── plan phase: parse + two-test-set split ───────────────────────────────────────
 def do_plan(args):
     os.makedirs(IMG_DIR, exist_ok=True)
+    os.makedirs(JSONL_DIR, exist_ok=True)
     print(f"[plan] label csv = {GEMINI_CSV}  (Gemini per-image tags)")
     print(f"[plan] url   csv = {CATALOG_CSV}  (download URLs)")
     print(f"[plan] test = whole-post holdout {POST_HOLDOUT_FRAC:.0%} + tag-freq stratified "
@@ -290,7 +262,7 @@ def worker(cand_q, results, lock, counters):
         except queue.Empty:
             return
         dst = os.path.join(IMG_DIR, c["name"])
-        rec = {"candidates": c["candidates"], "tags": c["tags"], "image": dst}
+        rec = {"tags": c["tags"], "image": dst}
         # resume: valid image already on disk -> keep, skip network
         if os.path.exists(dst):
             try:
@@ -338,22 +310,45 @@ def download_split(cand_path, out_json, tag_label):
     random.seed(1234)
     random.shuffle(results)
     # alpaca format, matching the repo's MVTOKEN convention (instruction/input/output/images).
-    # instruction = image first + selection prompt with the post's candidate tags injected.
+    # instruction = image first + the tagging prompt; output = Gemini per-image tags.
+    instr = build_instruction()
     rows = [{
-        "instruction": build_instruction(r["candidates"]),
+        "instruction": instr,
         "input": "",
         "output": r["tags"],
         "images": [r["image"]],
     } for r in results]
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(rows, f, ensure_ascii=False, indent=2)
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
     print(f"[dl] {tag_label}: kept={len(results)} (tried={counters['tried']}) -> {out_json}", flush=True)
     return len(results)
 
 
+MINI_EVAL_N = 200   # per-test-set sample used for fast in-loop eval during training
+
+
+def write_mini_evals():
+    """Write a MINI_EVAL_N-sample of each test split (*_mini.jsonl) for fast in-loop eval.
+    The full test sets are for final post-training evaluation."""
+    for key in ("test_unseen", "test_stratified"):
+        src = JSON[key]
+        if not os.path.exists(src):
+            continue
+        lines = open(src, encoding="utf-8").read().splitlines()
+        random.seed(42)
+        random.shuffle(lines)
+        mini = os.path.join(JSONL_DIR, os.path.basename(src).replace(".jsonl", "_mini.jsonl"))
+        with open(mini, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines[:MINI_EVAL_N]) + "\n")
+        print(f"[mini] {os.path.basename(mini)}: {min(MINI_EVAL_N, len(lines))} samples", flush=True)
+
+
 def do_download(args):
     os.makedirs(IMG_DIR, exist_ok=True)
+    os.makedirs(JSONL_DIR, exist_ok=True)
     counts = {k: download_split(CAND[k], JSON[k], k) for k in SPLITS}
+    write_mini_evals()
     print(f"[dl] DONE " + "  ".join(f"{k}={n}" for k, n in counts.items()), flush=True)
 
 
@@ -361,7 +356,7 @@ def main():
     ap = argparse.ArgumentParser(description="Build pornstar image-tag SFT dataset for LlamaFactory.")
     ap.add_argument("--plan", action="store_true", help="parse CSV + two-test-set split, no download")
     ap.add_argument("--download", action="store_true",
-                    help="download images -> mikomiko_{train,test_unseen,test_stratified}.json")
+                    help="download images -> {train,test_unseen,test_stratified}.jsonl")
     ap.add_argument("--limit", type=int, default=None, help="cap total records scanned (spot-check)")
     args = ap.parse_args()
     if args.limit:

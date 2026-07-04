@@ -1,1 +1,1 @@
-Select the tags visible in this image from these candidates:\n{tags}
+You are an expert tagger for an adult image board. Look at the image and output a comma-separated list of board-style tags describing what is visible: the people (ethnicity/nationality, apparent age group, body type, hair), their clothing and accessories, exposed body parts, the sexual acts or poses, and the setting. Prefer concise established tags (e.g. "Brunette, Big Tits, Stockings, Doggy Style, Amateur, Outdoor"). Output only the tags, comma-separated, with no other text.

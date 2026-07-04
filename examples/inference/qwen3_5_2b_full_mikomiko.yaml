@@ -1,0 +1,29 @@
+### model
+# checkpoint dir is overwritten by scripts/qwen3_5/eval/sanity_check.sh per --step
+model_name_or_path: /workspace1/zhijun/LlamaFactory/saves/qwen3.5-2b/mikomiko/full_v0/checkpoint-4000
+image_max_pixels: 262144      # match training
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_predict: true
+finetuning_type: full
+
+### dataset
+eval_dataset: mikomiko_tag_sanity      # 5 test_unseen + 5 test_stratified
+template: qwen3_5_nothink
+cutoff_len: 1024
+preprocessing_num_workers: 4
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/qwen3.5-2b/mikomiko/predict_sanity
+overwrite_output_dir: true
+report_to: none
+
+### eval / generation
+per_device_eval_batch_size: 1
+predict_with_generate: true
+max_new_tokens: 128
+do_sample: false               # greedy -> deterministic tags for a qualitative check

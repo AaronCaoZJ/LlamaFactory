@@ -1,4 +1,13 @@
 {
+  "mix_22_27_04_v3_lite": {
+    "file_name": "agentrobot/MVTOKEN/mix_22_27_04/v3/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mix_22_27_v3_lite": {
     "file_name": "agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json",
     "columns": {
@@ -783,7 +792,7 @@
     "folder": "python"
   },
   "mikomiko_tag_train": {
-    "file_name": "mikomiko_tag/mikomiko_train.json",
+    "file_name": "mikomiko_tag/jsonl/train.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -792,7 +801,7 @@
     }
   },
   "mikomiko_tag_test_unseen": {
-    "file_name": "mikomiko_tag/mikomiko_test_unseen.json",
+    "file_name": "mikomiko_tag/jsonl/test_unseen.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -801,7 +810,34 @@
     }
   },
   "mikomiko_tag_test_stratified": {
-    "file_name": "mikomiko_tag/mikomiko_test_stratified.json",
+    "file_name": "mikomiko_tag/jsonl/test_stratified.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_test_unseen_mini": {
+    "file_name": "mikomiko_tag/jsonl/test_unseen_mini.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_test_stratified_mini": {
+    "file_name": "mikomiko_tag/jsonl/test_stratified_mini.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_sanity": {
+    "file_name": "mikomiko_tag/jsonl/sanity_10.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",

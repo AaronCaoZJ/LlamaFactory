@@ -13,38 +13,42 @@ freeze_multi_modal_projector: false
 
 ### dataset
 dataset: mikomiko_tag_train
-# two complementary test sets (combined into one eval_loss during training; run separate
-# eval afterward for per-set metrics): unseen posts + tag-frequency stratified
-eval_dataset: mikomiko_tag_test_unseen,mikomiko_tag_test_stratified
+# In-loop eval = 200-sample minis of EACH test set (fast monitoring). Run the FULL test_unseen
+# (122,870) + test_stratified (1,945) separately after training for real per-set metrics.
+eval_dataset: mikomiko_tag_test_unseen_mini,mikomiko_tag_test_stratified_mini
 template: qwen3_5_nothink
 cutoff_len: 1024
 preprocessing_num_workers: 32
 dataloader_num_workers: 16
+# cache tokenized dataset -> first run tokenizes 1.1M once, later runs load instantly.
+# DELETE this dir if you change dataset/template/cutoff_len (cache is keyed to raw text only).
+tokenized_path: saves/qwen3.5-2b/mikomiko/tokenized_full_v0
 
 ### output
-output_dir: saves/qwen3.5-2b/mikomiko/pornstar-2k
+output_dir: saves/qwen3.5-2b/mikomiko/full_v0
 logging_steps: 10
-save_steps: 500
+save_steps: 2000
+save_total_limit: 3          # bound disk: keep only 3 latest ckpts (full-SFT ckpt ~29GB each)
 plot_loss: true
 overwrite_output_dir: true
-save_only_model: false
+save_only_model: false       # keep optimizer state -> resumable (drop to true to save ~24GB/ckpt)
 report_to: wandb
-run_name: qwen3.5-2b-mikomiko-pornstar-2k
+run_name: qwen3.5-2b-mikomiko-full_v0
 
 ### train
 per_device_train_batch_size: 32
 gradient_accumulation_steps: 1
 learning_rate: 1.0e-5            # full finetune -> smaller LR than LoRA
-num_train_epochs: 5.0
+num_train_epochs: 1.0            # 1.1M samples; 1 epoch (~17.3k steps, ~8h) to start. raise if underfit
 lr_scheduler_type: cosine
 warmup_ratio: 0.05
 bf16: true
 ddp_timeout: 180000000
 
 ### eval
-per_device_eval_batch_size: 4
+per_device_eval_batch_size: 32
 eval_strategy: steps
-eval_steps: 50
+eval_steps: 1000
 
 ### distributed (ZeRO-0 for full-parameter finetuning)
 deepspeed: examples/deepspeed/ds_z0_config.json
