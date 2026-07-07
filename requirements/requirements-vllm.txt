@@ -1,0 +1,9 @@
+# --- gemma4_unified 支持所需（2026-07-01 更新，原 pin 注释保留在下方） ---
+# vllm==0.22.0            # 旧版不支持 gemma4_unified 架构
+vllm==0.24.0              # gemma4_unified serving 需 >=0.24.0
+transformers==5.12.1      # gemma4_unified 架构需 transformers>=5.10
+huggingface-hub==1.17.0
+# fastapi 0.130+ 的 _IncludedRouter 曾使 prometheus-fastapi-instrumentator 8.0.0
+# 每次请求抛 AttributeError;8.0.1 已修复(trallnag/prometheus-fastapi-instrumentator#371),
+# 故不再钉旧版 fastapi(vllm==0.24.0 要求 fastapi>=0.133,与 0.115.12 无解)。
+prometheus-fastapi-instrumentator>=8.0.1
