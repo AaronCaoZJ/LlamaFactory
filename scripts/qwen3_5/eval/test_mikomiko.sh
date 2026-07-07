@@ -8,7 +8,7 @@ set -euo pipefail
 # They are concatenated into eval_mini.jsonl with an added `_src` field so the scorer can split
 # unseen vs stratified. Built once and reused, so every checkpoint is scored on the SAME 400 images.
 #
-# Scoring is delegated to score_mikomiko.py (shared with the vLLM path so metrics are identical).
+# Scoring is delegated to metrics_mikomiko.py (shared with the vLLM path so metrics are identical).
 #   KEPT   : micro P/R/F1, macro F1, atomF1, compEx, compSub, tokF1 + over-generation diagnostic.
 #   DROPPED: BLEU-4 / ROUGE-* (LlamaFactory seq2seq auto-metrics, meaningless for unordered tags).
 #
@@ -101,7 +101,7 @@ mkdir -p "${RUN_DIR}"
 cp "${PRED_DIR}/generated_predictions.jsonl" "${RUN_DIR}/predictions.jsonl"
 cp "${CONFIG_RUN}" "${RUN_DIR}/config.yaml" 2>/dev/null || true
 
-python3 "${SCRIPT_DIR}/score_mikomiko.py" \
+python3 "${SCRIPT_DIR}/metrics_mikomiko.py" \
   "${RUN_DIR}/predictions.jsonl" "${META}" "${STEP}" "${HISTORY}" "${RUN_DIR}/metrics.json" \
   | tee "${RUN_DIR}/report.txt"
 

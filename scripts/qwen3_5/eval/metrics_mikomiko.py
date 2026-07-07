@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-score_mikomiko.py — shared scorer for the mikomiko image->tag eval.
+metrics_mikomiko.py — shared scorer for the mikomiko image->tag eval.
 
 Same metric definitions as the hf-predict path in test_mikomiko.sh, factored out so the vLLM
 client (eval_vllm_mikomiko.py) reports IDENTICAL numbers. All metrics are on normalized,
@@ -10,7 +10,7 @@ order-invariant tag SETS.
            coverage), tokF1 (word-level) + over-generation diagnostic (pred vs gold tags/img).
   DROPPED: BLEU-4 / ROUGE-* — seq2seq metrics, meaningless for an unordered tag list.
 
-CLI:  python score_mikomiko.py PRED.jsonl META.jsonl STEP HISTORY.tsv METRICS.json
+CLI:  python metrics_mikomiko.py PRED.jsonl META.jsonl STEP HISTORY.tsv METRICS.json
   PRED : jsonl with {"label","predict"} per line, aligned to META order.
   META : the eval set jsonl (carries "_src" for unseen/stratified grouping).
 """

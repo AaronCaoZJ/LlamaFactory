@@ -4,7 +4,7 @@ eval_vllm_mikomiko.py — fast mikomiko image->tag eval against a vLLM OpenAI se
 
 Sends each eval image to the server with the SAME prompt shape as training (image FIRST, then the
 tagging prompt — the mikomiko builder emits instruction = "<image>" + prompt), greedy / no-think,
-collects predictions, and scores them with score_mikomiko (identical metrics to the hf path).
+collects predictions, and scores them with metrics_mikomiko (identical metrics to the hf path).
 
 Prereq: start the server first ->
     bash scripts/qwen3_5/eval/start_vllm_server_mikomiko.sh [STEP]
@@ -108,7 +108,7 @@ def main():
     print(f"[eval] predictions -> {pred_path}")
 
     history = root / "saves/qwen3.5-2b/mikomiko/predict_sanity/evalmini_history.tsv"
-    score_mikomiko.score(str(pred_path), args.evalset, f"{args.step}(vllm)",
+    metrics_mikomiko.score(str(pred_path), args.evalset, f"{args.step}(vllm)",
                          str(history), str(out_dir / "metrics.json"))
     print(f"[eval] saved -> {out_dir}/")
 

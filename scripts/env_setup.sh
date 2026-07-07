@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
-VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv}"
+# machine-agnostic paths via workspace_dir.sh -> .env.paths (create .env.paths first; see .env.paths.example)
+_d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_d" != "/" ] && [ ! -f "$_d/scripts/workspace_dir.sh" ]; do _d="$(dirname "$_d")"; done
+source "$_d/scripts/workspace_dir.sh"
+LLAMA_FACTORY_ROOT="${LF_ROOT}"
+VENV_PATH="${LF_VENV}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.12}"
 
 if ! command -v uv >/dev/null 2>&1; then
