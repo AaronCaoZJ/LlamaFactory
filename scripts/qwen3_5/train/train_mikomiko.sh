@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── Paths ────────────────────────────────────────────────────────────────────
-LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
-VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv}"
+# ── Paths (machine-agnostic; see scripts/workspace_dir.sh) ─────────────────────────────
+_d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_d" != "/" ] && [ ! -f "$_d/scripts/workspace_dir.sh" ]; do _d="$(dirname "$_d")"; done
+source "$_d/scripts/workspace_dir.sh"
+LLAMA_FACTORY_ROOT="${LF_ROOT}"
+VENV_PATH="${LF_VENV}"
 
 DATA_DIR="${LLAMA_FACTORY_ROOT}/data/mikomiko_tag"
 BUILDER="${DATA_DIR}/dataset_builder.py"
@@ -41,4 +43,4 @@ fi
 echo "Starting training on CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} ..."
 cd "${LLAMA_FACTORY_ROOT}"
 exec env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
-  llamafactory-cli train "${TRAIN_CONFIG}"
+  llamafactory-cli train "${TRAIN_CONFIG}" model_name_or_path="${MODELS_DIR}/Qwen3.5-2B"

@@ -1,4 +1,40 @@
 {
+  "mix_22-06_fk-pp_01_flip_img": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/01_flip_img/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_02_exchange_token": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_03_just_mix": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "piper_0705_v4_lite": {
+    "file_name": "agentrobot/MVTOKEN/0705_piper/v4/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mix_22_27_04_v3_lite": {
     "file_name": "agentrobot/MVTOKEN/mix_22_27_04/v3/rollout_lite.json",
     "columns": {
@@ -836,8 +872,8 @@
       "images": "images"
     }
   },
-  "mikomiko_tag_sanity": {
-    "file_name": "mikomiko_tag/jsonl/sanity_10.jsonl",
+  "mikomiko_tag_eval_mini": {
+    "file_name": "mikomiko_tag/jsonl/eval_mini.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",

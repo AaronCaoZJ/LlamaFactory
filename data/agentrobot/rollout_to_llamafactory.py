@@ -433,6 +433,15 @@ def main() -> None:
              "lite -> mvtoken_generator_lite.txt, affordance -> mvtoken_generator_affordance.txt, "
              "subgoal -> mvtoken_generator.txt.",
     )
+    view_group = parser.add_mutually_exclusive_group()
+    view_group.add_argument(
+        "--franka", action="store_const", const="franka", dest="embodiment_view",
+        help="Lite mode: use the Franka (exocentric) prompt prompts/<version>/franka_mvtoken_lite.txt.",
+    )
+    view_group.add_argument(
+        "--piper", action="store_const", const="piper", dest="embodiment_view",
+        help="Lite mode: use the Piper (egocentric) prompt prompts/<version>/piper_mvtoken_lite.txt.",
+    )
     parser.add_argument(
         "--output", type=Path, default=None,
         help="Output JSON path. Defaults to rollout[_subgoal].json inside the rollout dir "
@@ -511,11 +520,15 @@ def main() -> None:
         dirname, _, task_desc = entry.partition("=")
         task_map[dirname.strip()] = task_desc.strip()
 
-    prompt_filename = {
-        "subgoal": "mvtoken_generator.txt",
-        "affordance": "mvtoken_generator_affordance.txt",
-    }.get(mode, "mvtoken_generator_lite.txt")
-    prompt_template = _load_prompt(args.version, prompt_filename)
+    if mode == "lite" and args.embodiment_view:
+        # --franka / --piper select the embodiment-specific lite prompt under prompts/<version>/.
+        prompt_template = _load_prompt(args.version, f"{args.embodiment_view}_mvtoken_lite.txt")
+    else:
+        prompt_filename = {
+            "subgoal": "mvtoken_generator.txt",
+            "affordance": "mvtoken_generator_affordance.txt",
+        }.get(mode, "mvtoken_generator_lite.txt")
+        prompt_template = _load_prompt(args.version, prompt_filename)
 
     # Build VLM forwarding args for the subgoal-generation subprocess.
     vlm_args: list[str] = []

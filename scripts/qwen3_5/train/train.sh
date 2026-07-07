@@ -6,7 +6,7 @@ LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
 VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv}"
 
 DATA_DIR="${LLAMA_FACTORY_ROOT}/data/agentrobot/MVTOKEN/0622"
-TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_9b_mix_22_27_04_v3.yaml"
+TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_9b_piper_0705_v4.yaml"
 
 CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4,7}"
 

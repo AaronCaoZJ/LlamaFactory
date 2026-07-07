@@ -5,6 +5,7 @@ DATA_DIR=data/agentrobot/MVTOKEN/0622
 DATA_DIR_0627=data/agentrobot/MVTOKEN/0627_cleaned
 DATA_DIR_0704=data/agentrobot/MVTOKEN/0704_cleaned
 MIX_DIR=data/agentrobot/MVTOKEN/mix_22_27_04
+PIPER_DIR_0705=data/agentrobot/MVTOKEN/0705_piper
 
 TASK_MAP_0622=(
     "pap_banana=pick up the banana and place it on the blue plate"
@@ -24,6 +25,17 @@ TASK_MAP_0704=(
     "pap_orange_block=pick up the orange block and place it on the plate"
     "pap_mango=pick up the mango and place it in the bowl"
     "pap_pink_cube=pick up the pink cube and place it on the plate"
+    "rearrange_show=rearrange the letters to spell \"SHOW\""
+)
+
+TASK_MAP_0705_PIPER=(
+    "pap_banana=pick up the banana and place it on the plate"
+    "pap_blue_block=pick up the blue block and place it on the plate"
+    "pap_orange_block=pick up the orange block and place it on the plate"
+    "pap_tennis=pick up the tennis ball and place it on the green coaster"
+    "pap_wrench=pick up the wrench and insert it into the socket"
+    "pap_mango=pick up the mango and place it in the bowl"
+    "stack_gray_cup=pick up the gray cup and stack it on the yellow cup"
     "rearrange_show=rearrange the letters to spell \"SHOW\""
 )
 # --version <vX> selects the prompt folder AgentRobot/prompts/<vX>/ (fixed per-mode filenames:
@@ -91,10 +103,33 @@ EOF
 # first so both v3/rollout_lite.json exist.
 # ========================================
 EOF
-python data/agentrobot/merge_rollouts.py \
-    "/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json" \
-    "$DATA_DIR_0704"/v3/rollout_lite.json \
-    --output "$MIX_DIR"/v3/rollout_lite.json
+# python data/agentrobot/merge_rollouts.py \
+#     "/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json" \
+#     "$DATA_DIR_0704"/v3/rollout_lite.json \
+#     --output "$MIX_DIR"/v3/rollout_lite.json
+
+
+: <<'EOF'
+# ========================================
+# Piper (ego) 0705 — v3 lite, PIPER-ONLY training set.
+# Straight from the sorted raw task folders (no clean_grasp_release: continuous pick-place).
+# Images stay referenced in-place under hf_download; only the json is written under MVTOKEN.
+# Output: MVTOKEN/0705_piper/v3/rollout_lite.json (registered as mvtoken_0705_piper_v3_lite).
+# ========================================
+EOF
+python data/agentrobot/rollout_to_llamafactory.py \
+    "$PIPER_DIR_0705"/pap_banana \
+    "$PIPER_DIR_0705"/pap_blue_block \
+    "$PIPER_DIR_0705"/pap_orange_block \
+    "$PIPER_DIR_0705"/pap_tennis \
+    "$PIPER_DIR_0705"/pap_wrench \
+    "$PIPER_DIR_0705"/pap_mango \
+    "$PIPER_DIR_0705"/stack_gray_cup \
+    "$PIPER_DIR_0705"/rearrange_show \
+    --version v4 \
+    --piper \
+    --task-map "${TASK_MAP_0705_PIPER[@]}" \
+    --output "$PIPER_DIR_0705"/v4/rollout_lite.json
 
 
 : <<'EOF'

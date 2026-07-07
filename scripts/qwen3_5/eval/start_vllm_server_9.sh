@@ -9,9 +9,11 @@ SAVES="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-9b/robot"
 
 LORA_MODULES=(
   "mix_22_27_v3_9=${SAVES}/mix_22_27_v3"
+  "mix_22_27_04_v3_9=${SAVES}/mix_22_27_04_v3"
+  "piper_0705_v4_9=${SAVES}/piper_0705_v4"
 )
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6}"
 PORT="${PORT:-8109}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-8192}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"; ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 
