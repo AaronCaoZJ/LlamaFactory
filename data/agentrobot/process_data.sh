@@ -1,5 +1,8 @@
-source /workspace1/zhijun/AgentRobot/.venv/bin/activate
-cd /workspace1/zhijun/LlamaFactory
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
+source ${AGENTROBOT_ROOT}/.venv/bin/activate
+cd ${LF_ROOT}
 
 DATA_DIR=data/agentrobot/MVTOKEN/0622
 DATA_DIR_0627=data/agentrobot/MVTOKEN/0627_cleaned
@@ -46,7 +49,7 @@ TASK_MAP_0705_PIPER=(
 # its BASE model (the strong general VLM), NOT the mvtoken_0622_v0 action LoRA. The
 # mvtoken_0622_v0 backend only supplies the connection (provider=vllm / base_url / no-think
 # template); --model swaps the served model to the base for planning.
-BASE_MODEL=/workspace1/zhijun/hf_download/models/Qwen3.5-27B
+BASE_MODEL=${MODELS_DIR}/Qwen3.5-27B
 VLM_ARGS=(--vlm-backend mvtoken_0622_v0 --model "$BASE_MODEL")
 
 
@@ -57,7 +60,7 @@ VLM_ARGS=(--vlm-backend mvtoken_0622_v0 --model "$BASE_MODEL")
 # steps are re-indexed contiguously. grasp ids 000-007 + release ids 008-012 merge cleanly.
 # ========================================
 EOF
-# RAW_0704=/workspace1/zhijun/hf_download/datasets/MVTOKEN_RAW/0704
+# RAW_0704=${HF_HOME}/datasets/MVTOKEN_RAW/0704
 # python data/agentrobot/clean_grasp_release.py \
 #     --grasp-dir   "$RAW_0704"/left_right \
 #     --out-dir     data/agentrobot/MVTOKEN/0704_cleaned
@@ -104,7 +107,7 @@ EOF
 # ========================================
 EOF
 # python data/agentrobot/merge_rollouts.py \
-#     "/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json" \
+#     "${LF_ROOT}/data/agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite.json" \
 #     "$DATA_DIR_0704"/v3/rollout_lite.json \
 #     --output "$MIX_DIR"/v3/rollout_lite.json
 
@@ -199,15 +202,15 @@ EOF
 # ========================================
 EOF
 # python data/agentrobot/rollout_to_llamafactory.py \
-#     /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample \
+#     ${LF_ROOT}/data/agentrobot/ood_sample \
 #     --version v3 \
 #     --task "pick up the white cup and place it on the green coaster" \
-#     --output /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample/v3/rollout_lite.json
+#     --output ${LF_ROOT}/data/agentrobot/ood_sample/v3/rollout_lite.json
 
 # python data/agentrobot/rollout_to_llamafactory.py \
-#     /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample \
+#     ${LF_ROOT}/scripts/eval/id_sample \
 #     --version v1 \
 #     --task "pick up the yellow cup and place it on the green coaster" \
 #     --use-affordance \
-#     --output /workspace1/zhijun/LlamaFactory/scripts/eval/id_sample/v1/rollout_affordance.json \
+#     --output ${LF_ROOT}/scripts/eval/id_sample/v1/rollout_affordance.json \
 #     "${VLM_ARGS[@]}"

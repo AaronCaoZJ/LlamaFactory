@@ -2,10 +2,22 @@
 # vLLM OpenAI server: Qwen3.5-27B + MVTOKEN LoRA adapters (default :8101, foreground / Ctrl-C 停).
 # 覆盖项: CUDA_VISIBLE_DEVICES PORT GPU_UTIL MAX_LEN MAX_NUM_SEQS ENFORCE_EAGER
 set -euo pipefail
+# ═══ GPU / runtime knobs (edit here) ═══
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-5}"
 
-VENV="/workspace1/zhijun/AgentRobot/.venv-vllm"
-BASE_MODEL="/workspace1/zhijun/hf_download/models/Qwen3.5-27B"
-SAVES="/workspace1/zhijun/LlamaFactory/saves/qwen3.5-27b/robot"
+PORT="${PORT:-8101}"
+GPU_UTIL="${GPU_UTIL:-0.7}"
+MAX_LEN="${MAX_LEN:-8192}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"
+ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
+
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
+
+VENV="${VLLM_VENV}"
+BASE_MODEL="${MODELS_DIR}/Qwen3.5-27B"
+SAVES="${LF_ROOT}/saves/qwen3.5-27b/robot"
 
 # name=path，全部挂在同一个 --lora-modules 下（多个 --lora-modules 只会保留最后一个）。
 # 注意: adapter 的 base 必须是上面的 27B；9B 的 adapter 要单独起一个 9B-base server。
@@ -16,9 +28,6 @@ LORA_MODULES=(
   "mix_22_27_v3=${SAVES}/mix_22_27_v3"
 )
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-5}"
-PORT="${PORT:-8101}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-8192}"
-MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"; ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 
 # gcc-12 on this node lacks cc1plus; use gcc-11 for CUDA JIT.
 export CC=/usr/bin/gcc-11 CXX=/usr/bin/g++-11 CUDAHOSTCXX=/usr/bin/g++-11

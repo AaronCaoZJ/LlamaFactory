@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: /workspace1/zhijun/hf_download/models/gemma4-12B-it
+model_name_or_path: ../hf_download/models/gemma4-12B-it
 image_max_pixels: 65536    # 256x256; matches rollout image resolution
 trust_remote_code: true
 # flash_attn: fa2

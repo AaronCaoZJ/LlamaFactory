@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# machine-agnostic paths via workspace_dir.sh -> .env.paths (create .env.paths first; see .env.paths.example)
-_d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_d" != "/" ] && [ ! -f "$_d/scripts/workspace_dir.sh" ]; do _d="$(dirname "$_d")"; done
-source "$_d/scripts/workspace_dir.sh"
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
+
 LLAMA_FACTORY_ROOT="${LF_ROOT}"
 VLLM_VENV_PATH="${LF_ROOT}/.venv-vllm"
 PYTHON_VERSION="${PYTHON_VERSION:-3.12}"

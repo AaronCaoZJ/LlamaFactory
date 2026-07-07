@@ -6,21 +6,26 @@
 # Usage:  bash scripts/qwen3_5/eval/start_vllm_server_mikomiko.sh [STEP]
 # Env override: CUDA_VISIBLE_DEVICES PORT GPU_UTIL MAX_LEN MAX_NUM_SEQS MAX_PIXELS ENFORCE_EAGER
 set -euo pipefail
+# ═══ GPU / runtime knobs (edit here) ═══
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 
-# machine-agnostic paths: LF_ROOT / MODELS_DIR / VLLM_VENV come from .env.paths (see scripts/workspace_dir.sh)
-_d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-while [ "$_d" != "/" ] && [ ! -f "$_d/scripts/workspace_dir.sh" ]; do _d="$(dirname "$_d")"; done
-source "$_d/scripts/workspace_dir.sh"
+PORT="${PORT:-8110}"
+GPU_UTIL="${GPU_UTIL:-0.7}"
+MAX_LEN="${MAX_LEN:-4096}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-64}"
+ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
+MAX_PIXELS="${MAX_PIXELS:-262144}"   # match training image_max_pixels for eval parity
+
+
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
 VENV="${VLLM_VENV}"
 BASE_MODEL="${MODELS_DIR}/Qwen3.5-2B"
 
 STEP="${1:-11530}"
 CKPT="${LF_ROOT}/saves/qwen3.5-2b/mikomiko/full_v0/checkpoint-${STEP}"
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
-PORT="${PORT:-8110}"; GPU_UTIL="${GPU_UTIL:-0.7}"; MAX_LEN="${MAX_LEN:-4096}"
-MAX_NUM_SEQS="${MAX_NUM_SEQS:-64}"; ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
-MAX_PIXELS="${MAX_PIXELS:-262144}"   # match training image_max_pixels for eval parity
 
 # gcc-12 on this node lacks cc1plus; use gcc-11 for CUDA JIT (same as the robot servers).
 export CC=/usr/bin/gcc-11 CXX=/usr/bin/g++-11 CUDAHOSTCXX=/usr/bin/g++-11

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ═══ args / GPU (pass as: bash test_mikomiko.sh [STEP] [GPU], or edit defaults) ═══
+STEP="${1:-11530}"
+GPU="${2:-1}"
+EVAL_BS="${EVAL_BS:-16}"
+
 # Large-scale eval of a training checkpoint on the mikomiko image->tag task (hf-predict path).
 # For the faster vLLM path see start_vllm_server_mikomiko.sh + eval_vllm_mikomiko.py.
 #
@@ -18,16 +23,13 @@ set -euo pipefail
 # Env override: EVAL_BS (default 16) per-device eval batch size.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# machine-agnostic paths via the central workspace_dir.sh (no hardcoded /workspace1)
-_d="$SCRIPT_DIR"; while [ "$_d" != "/" ] && [ ! -f "$_d/scripts/workspace_dir.sh" ]; do _d="$(dirname "$_d")"; done
-source "$_d/scripts/workspace_dir.sh"
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
 LLAMA_FACTORY_ROOT="${LF_ROOT}"
 VENV_PATH="${LF_VENV}"
 BASE_MODEL="${MODELS_DIR}/Qwen3.5-2B"
 
-STEP="${1:-11530}"
-GPU="${2:-1}"
-EVAL_BS="${EVAL_BS:-16}"
 
 CKPT="${LLAMA_FACTORY_ROOT}/saves/qwen3.5-2b/mikomiko/full_v0/checkpoint-${STEP}"
 CONFIG_TMPL="${LLAMA_FACTORY_ROOT}/examples/inference/qwen3_5_2b_full_mikomiko.yaml"

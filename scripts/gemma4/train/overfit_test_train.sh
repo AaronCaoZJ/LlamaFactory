@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ═══ GPU / runtime knobs (edit here) ═══
+CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6,7}"
+
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
 
 # ── Paths ────────────────────────────────────────────────────────────────────
-LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
+LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-${LF_ROOT}}"
 VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv-gemma4}"
 
 ROLLOUT_DIR="${LLAMA_FACTORY_ROOT}/data/agentrobot/overfit_test/rollout_000"
 DATASET_JSON="${LLAMA_FACTORY_ROOT}/data/agentrobot/overfit_test/rollout_000.json"
 TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_lora/gemma4_12b_overfit.yaml"
 
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6,7}"
 
 # ── Activate venv ────────────────────────────────────────────────────────────
 if [ ! -f "${VENV_PATH}/bin/activate" ]; then

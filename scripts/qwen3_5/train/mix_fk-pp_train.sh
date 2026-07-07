@@ -10,8 +10,11 @@
 # needs FORCE_TORCHRUN (set below); each job gets a pinned distinct MASTER_PORT so the three
 # torchrun rendezvous do not collide.
 set -uo pipefail
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
 
-LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-/workspace1/zhijun/LlamaFactory}"
+LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-${LF_ROOT}}"
 VENV_PATH="${LLAMA_FACTORY_VENV:-${LLAMA_FACTORY_ROOT}/.venv}"
 CFG_DIR="${LLAMA_FACTORY_ROOT}/examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp"
 LOG_DIR="${LLAMA_FACTORY_ROOT}/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/logs"

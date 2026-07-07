@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ═══ GPU / runtime knobs (edit here) ═══
+CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3,4,7}"
+
 
 # ── Paths (machine-agnostic; see scripts/workspace_dir.sh) ─────────────────────────────
-_d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_d" != "/" ] && [ ! -f "$_d/scripts/workspace_dir.sh" ]; do _d="$(dirname "$_d")"; done
-source "$_d/scripts/workspace_dir.sh"
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
 LLAMA_FACTORY_ROOT="${LF_ROOT}"
 VENV_PATH="${LF_VENV}"
 
@@ -11,7 +15,6 @@ DATA_DIR="${LLAMA_FACTORY_ROOT}/data/mikomiko_tag"
 BUILDER="${DATA_DIR}/dataset_builder.py"
 TRAIN_CONFIG="${LLAMA_FACTORY_ROOT}/examples/train_full/qwen3_5_2b_mikomiko_tag.yaml"
 
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3,4,7}"
 
 export DISABLE_VERSION_CHECK=1  # transformers 5.6.1 > LF 硬编码上限 5.6.0；Qwen3.5 需新版，绕过版本闸
 

@@ -11,13 +11,18 @@
 #   API_URL=http://localhost:8110 python scripts/gemma4/eval/infer.py eval -n 100 --raw
 
 set -euo pipefail··
+# ═══ GPU / runtime knobs (edit here) ═══
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4}"
+
+# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
+_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
+source "$_wsd/scripts/workspace_dir.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+REPO_ROOT="${LF_ROOT}"   # repo root from workspace_dir.sh (was SCRIPT_DIR/../../..)
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4}"
 export API_PORT="${API_PORT:-8114}"
-export SAFE_MEDIA_PATH="${SAFE_MEDIA_PATH:-/workspace1/zhijun}"  # 允许本地图片路径
+export SAFE_MEDIA_PATH="${SAFE_MEDIA_PATH:-$(dirname "${LF_ROOT}")}"  # 允许本地图片路径
 
 INFER_CONFIG="${REPO_ROOT}/examples/inference/gemma4_12b_lora.yaml"
 
