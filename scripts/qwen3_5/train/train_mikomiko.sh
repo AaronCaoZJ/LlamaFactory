@@ -5,9 +5,8 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3,4,7}"
 
 
 # ── Paths (machine-agnostic; see scripts/workspace_dir.sh) ─────────────────────────────
-# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
-_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
-source "$_wsd/scripts/workspace_dir.sh"
+# machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
+source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
 LLAMA_FACTORY_ROOT="${LF_ROOT}"
 VENV_PATH="${LF_VENV}"
 

@@ -1,46 +1,58 @@
 #!/usr/bin/env bash
-# vLLM OpenAI server: Qwen3.5-9B + MVTOKEN LoRA adapters (default :8109, foreground / Ctrl-C 停).
-# 覆盖项: CUDA_VISIBLE_DEVICES PORT GPU_UTIL MAX_LEN MAX_NUM_SEQS ENFORCE_EAGER
+# vLLM OpenAI server: Qwen3.5-2B + MVTOKEN LoRA adapters (default :8102, foreground / Ctrl-C 停).
+# 覆盖项: CUDA_VISIBLE_DEVICES PORT GPU_UTIL MAX_LEN MAX_NUM_SEQS TEMPERATURE ENFORCE_EAGER
 set -euo pipefail
-# ═══ GPU / runtime knobs (edit here) ═══
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
 
+# ============================================================
+#! GPU / runtime knobs (edit here)
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
 PORT="${PORT:-8102}"
 GPU_UTIL="${GPU_UTIL:-0.7}"
 MAX_LEN="${MAX_LEN:-8192}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"
+# TEMPERATURE="${TEMPERATURE:-0}"
 ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
 
-# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
-_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
-source "$_wsd/scripts/workspace_dir.sh"
-
-VENV="${VLLM_VENV}"
+# ============================================================
+#! Paths (machine-agnostic; see scripts/workspace_dir.sh)
+# machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
+source "$(
+  d="$(dirname "${BASH_SOURCE[0]}")"
+  until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done
+  echo "$d"
+)/scripts/workspace_dir.sh"
+VLLM_VENV="${VLLM_VENV}"
 BASE_MODEL="${MODELS_DIR}/Qwen3.5-2B"
 SAVES="${LF_ROOT}/saves/qwen3.5-2b/robot"
-
 LORA_MODULES=(
   "mix_22_27_v3_2=${SAVES}/mix_22_27_v3"
 )
 
+# ============================================================
+#! CUDA JIT compiler (machine-adaptive)
+# Use env_setup's validated .cc-shim only if the default compiler can't build C++;
+# otherwise leave the system default alone.
+_shim="${LF_ROOT}/.cc-shim"
+if [ -x "${_shim}/g++" ] && echo 'int main(){return 0;}' | "${_shim}/g++" -x c++ - -o /dev/null >/dev/null 2>&1; then
+  export CC="${_shim}/gcc" CXX="${_shim}/g++" CUDAHOSTCXX="${_shim}/g++" NVCC_PREPEND_FLAGS="-ccbin ${_shim}/g++"
+fi
 
-# gcc-12 on this node lacks cc1plus; use gcc-11 for CUDA JIT.
-export CC=/usr/bin/gcc-11 CXX=/usr/bin/g++-11 CUDAHOSTCXX=/usr/bin/g++-11
-export NVCC_PREPEND_FLAGS="-ccbin /usr/bin/g++-11"
+source "${VLLM_VENV}/bin/activate"
 
-source "${VENV}/bin/activate"
-
+# ============================================================
+#! Launch
 SEP="================================================================================"
 echo "Starting vllm server on http://0.0.0.0:${PORT}"
 echo "  GPU                 : ${CUDA_VISIBLE_DEVICES}"
 echo "  GPU util            : ${GPU_UTIL}"
 echo "  Max seq len         : ${MAX_LEN}"
 echo "  Max num seqs        : ${MAX_NUM_SEQS}"
+# echo "  Temperature         : ${TEMPERATURE}"
 echo "  Enforce eager       : ${ENFORCE_EAGER}"
 echo "${SEP}"
 echo "  Base model          : ${BASE_MODEL}"
 echo "${SEP}"
-for m in "${LORA_MODULES[@]}"; do p="${m#*=}"; printf "  %-18s: %s\n" "${m%%=*}" "saves/${p#*/saves/}"; done
+for m in "${LORA_MODULES[@]}"; do printf "  %-22s: %s\n" "${m%%=*}" "${m#*=}"; done
 echo "${SEP}"
 
 CMD=(
@@ -51,6 +63,7 @@ CMD=(
   --max-num-seqs "${MAX_NUM_SEQS}"
   --enable-lora --max-lora-rank 64
   --lora-modules "${LORA_MODULES[@]}"
+  # --override-generation-config "{\"temperature\": ${TEMPERATURE}, \"top_p\": 1.0, \"top_k\": -1}"
   --trust-remote-code
   --port "${PORT}"
 )

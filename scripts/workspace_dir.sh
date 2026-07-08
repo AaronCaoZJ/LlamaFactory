@@ -9,8 +9,7 @@
 #     cp .env.paths.example .env.paths   # then edit the paths for this machine
 #
 # Sourced by scripts via this depth-independent bootstrap:
-#     _wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
-#     source "$_wsd/scripts/workspace_dir.sh"
+#     source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
 #
 # Debug:  WORKSPACE_DIR_DEBUG=1 <script>   -> print every resolved path
 # Bypass: WORKSPACE_DIR_SKIP_CHECK=1       -> skip the sanity checks (e.g. odd one-off setups)

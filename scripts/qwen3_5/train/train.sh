@@ -3,9 +3,8 @@ set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
 CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4,7}"
 
-# resolve machine paths: locate & source scripts/workspace_dir.sh (sets LF_ROOT, MODELS_DIR, LF_VENV, VLLM_VENV, AGENTROBOT_ROOT, HF_HOME)
-_wsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ "$_wsd" != "/" ] && [ ! -f "$_wsd/scripts/workspace_dir.sh" ]; do _wsd="$(dirname "$_wsd")"; done
-source "$_wsd/scripts/workspace_dir.sh"
+# machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
+source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 LLAMA_FACTORY_ROOT="${LLAMA_FACTORY_ROOT:-${LF_ROOT}}"
