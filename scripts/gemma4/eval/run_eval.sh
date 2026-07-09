@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-5}"
+GPU="${GPU:-5}"
+export CUDA_VISIBLE_DEVICES="${GPU}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
 source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"

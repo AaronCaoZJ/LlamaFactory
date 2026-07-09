@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4,7}"
+GPU="${GPU:-4,7}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
 source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
@@ -39,17 +39,17 @@ fi
 source "${VENV_PATH}/bin/activate"
 
 # ── Generate dataset ─────────────────────────────────────────────────────────
-# echo "Generating dataset from ${DATA_DIR} ..."
-# python "${LLAMA_FACTORY_ROOT}/data/agentrobot/rollout_to_llamafactory.py" \
-#   "${DATA_DIR}/banana" \
-#   "${DATA_DIR}/yellow_cup" \
-#   "${DATA_DIR}/mango" \
-#   "${DATA_DIR}/white_bowl" \
-#   --task-map "${TASK_MAP[@]}" \
-#   --output "${DATA_DIR}/rollout.json"
+echo "Generating dataset from ${DATA_DIR} ..."
+python "${LLAMA_FACTORY_ROOT}/data/agentrobot/rollout_to_llamafactory.py" \
+  "${DATA_DIR}/banana" \
+  "${DATA_DIR}/yellow_cup" \
+  "${DATA_DIR}/mango" \
+  "${DATA_DIR}/white_bowl" \
+  --task-map "${TASK_MAP[@]}" \
+  --output "${DATA_DIR}/rollout.json"
 
 # ── Launch training ───────────────────────────────────────────────────────────
-echo "Starting training on CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} ..."
+echo "Starting training on GPU=${GPU} ..."
 cd "${LLAMA_FACTORY_ROOT}"
-exec env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
+exec env CUDA_VISIBLE_DEVICES="${GPU}" \
   llamafactory-cli train "${TRAIN_CONFIG}"

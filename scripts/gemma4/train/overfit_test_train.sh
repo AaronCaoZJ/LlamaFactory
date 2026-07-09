@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6,7}"
+GPU="${GPU:-6,7}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
 source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
@@ -31,7 +31,7 @@ export DISABLE_VERSION_CHECK=1  # gemma4 需 transformers>=5.10，绕过 LF 硬�
 #   --output "${DATASET_JSON}"
 
 # ── Launch training ───────────────────────────────────────────────────────────
-echo "Starting overfit test on CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} ..."
+echo "Starting overfit test on GPU=${GPU} ..."
 cd "${LLAMA_FACTORY_ROOT}"
-exec env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
+exec env CUDA_VISIBLE_DEVICES="${GPU}" \
   llamafactory-cli train "${TRAIN_CONFIG}"

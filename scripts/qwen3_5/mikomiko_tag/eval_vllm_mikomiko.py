@@ -7,11 +7,11 @@ tagging prompt — the mikomiko builder emits instruction = "<image>" + prompt),
 collects predictions, and scores them with metrics_mikomiko (identical metrics to the hf path).
 
 Prereq: start the server first ->
-    bash scripts/qwen3_5/eval/start_vllm_server_mikomiko.sh [STEP]
+    bash scripts/qwen3_5/mikomiko_tag/start_vllm_server_mikomiko.sh [STEP]
 
 Usage:
-    python scripts/qwen3_5/eval/eval_vllm_mikomiko.py --step 11530
-    python scripts/qwen3_5/eval/eval_vllm_mikomiko.py --evalset data/mikomiko_tag/jsonl/eval_mini.jsonl \
+    python scripts/qwen3_5/mikomiko_tag/eval_vllm_mikomiko.py --step 11530
+    python scripts/qwen3_5/mikomiko_tag/eval_vllm_mikomiko.py --evalset data/mikomiko_tag/jsonl/eval_mini.jsonl \
         --api http://localhost:8110 --model mikomiko --concurrency 32 -n 400
 """
 import argparse, base64, json, os, sys, time

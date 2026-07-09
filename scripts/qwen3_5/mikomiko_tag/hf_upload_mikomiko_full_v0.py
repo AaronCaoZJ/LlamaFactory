@@ -9,9 +9,9 @@ the `latest` DeepSpeed pointer, and all tokenizer/processor/config files.
 Auth: HF_TOKEN env var or the cached huggingface token (no token hardcoded here).
 
 Usage:
-    python scripts/hf_upload_mikomiko_full_v0.py                 # step 11530 (default)
-    STEP=8000 python scripts/hf_upload_mikomiko_full_v0.py       # a different checkpoint
-    python scripts/hf_upload_mikomiko_full_v0.py --step 8000     # same, via flag
+    python scripts/qwen3_5/mikomiko_tag/hf_upload_mikomiko_full_v0.py                 # step 11530 (default)
+    STEP=8000 python scripts/qwen3_5/mikomiko_tag/hf_upload_mikomiko_full_v0.py       # a different checkpoint
+    python scripts/qwen3_5/mikomiko_tag/hf_upload_mikomiko_full_v0.py --step 8000     # same, via flag
 
 Resume note: DeepSpeed ZeRO-0 stores the optimizer state inside global_step*/mp_rank_00_model_states.pt.
 After downloading on the target machine, resume by pointing the trainer at the checkpoint dir
@@ -26,8 +26,8 @@ from huggingface_hub import HfApi, create_repo
 
 REPO_ID = "aaroncaozj/Mikomiko_pornpic_tagger"
 PRIVATE = True
-# machine-agnostic: this script lives at <repo>/scripts/, so parents[1] is the repo root.
-LF_ROOT = Path(__file__).resolve().parents[1]
+# machine-agnostic: this script lives at <repo>/scripts/qwen3_5/mikomiko_tag/, so parents[3] is the repo root.
+LF_ROOT = Path(__file__).resolve().parents[3]
 CKPT_ROOT = str(LF_ROOT / "saves/qwen3.5-2b/mikomiko/full_v0")
 
 # resume-critical files we assert are present (warn loudly if any is missing).

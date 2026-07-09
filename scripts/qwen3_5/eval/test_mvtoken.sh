@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-7}"
+GPU="${GPU:-7}"
+export CUDA_VISIBLE_DEVICES="${GPU}"
 export API_URL="${API_URL:-http://localhost:8101}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)

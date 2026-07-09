@@ -1,29 +1,35 @@
 #!/usr/bin/env bash
-# vLLM OpenAI server: Qwen3.5-9B + MVTOKEN LoRA adapters (default :8109, foreground / Ctrl-C 停).
-# 覆盖项: CUDA_VISIBLE_DEVICES PORT GPU_UTIL MAX_LEN MAX_NUM_SEQS TEMPERATURE ENFORCE_EAGER
+# vLLM OpenAI server: Qwen3.5-9B + MVTOKEN LoRA adapters (default :8109).
 set -euo pipefail
 
-# ============================================================
-#! GPU / runtime knobs (edit here)
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-6}"
-PORT="${PORT:-8109}"
-GPU_UTIL="${GPU_UTIL:-0.7}"
-MAX_LEN="${MAX_LEN:-8192}"
-MAX_NUM_SEQS="${MAX_NUM_SEQS:-256}"
-# TEMPERATURE="${TEMPERATURE:-0}"
-ENFORCE_EAGER="${ENFORCE_EAGER:-0}"
-
-# ============================================================
-#! Paths (machine-agnostic; see scripts/workspace_dir.sh)
-# machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
+# ================================================================================
+# Paths (machine-agnostic; see scripts/workspace_dir.sh)
+#* Exports: LF_ROOT | MODELS_DIR | LF_VENV | VLLM_VENV | HF_HOME | AGENTROBOT_ROOT
 source "$(
   d="$(dirname "${BASH_SOURCE[0]}")"
   until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done
   echo "$d"
 )/scripts/workspace_dir.sh"
-VLLM_VENV="${VLLM_VENV}"
+
+# ================================================================================
+#! Cuda device / runtime knobs (edit here)
+GPU="${GPU:-6}"
+export CUDA_VISIBLE_DEVICES="${GPU}"
+
+# ================================================================================
+#! Args (server knobs / model / LoRA)
+#* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
+PORT="${PORT:-8109}"
+GPU_UTIL="${GPU_UTIL:-0.7}"
+TEMPERATURE="${TEMPERATURE:-0}"
+
+MAX_LEN=8192
+MAX_NUM_SEQS=256
+ENFORCE_EAGER=0
+
 BASE_MODEL="${MODELS_DIR}/Qwen3.5-9B"
 SAVES="${LF_ROOT}/saves/qwen3.5-9b/robot"
+
 LORA_MODULES=(
   "mix_22_27_v3_9=${SAVES}/mix_22_27_v3"
   "mix_22_27_04_v3_9=${SAVES}/mix_22_27_04_v3"
@@ -33,26 +39,27 @@ LORA_MODULES=(
   "mix_22-06_fk-pp_03=${SAVES}/mix_22-06_fk-pp/03_just_mix"
 )
 
-# ============================================================
-#! CUDA JIT compiler (machine-adaptive)
-# Use env_setup's validated .cc-shim only if the default compiler can't build C++;
-# otherwise leave the system default alone.
+# ================================================================================
+# CUDA JIT compiler (machine-adaptive)
 _shim="${LF_ROOT}/.cc-shim"
 if [ -x "${_shim}/g++" ] && echo 'int main(){return 0;}' | "${_shim}/g++" -x c++ - -o /dev/null >/dev/null 2>&1; then
   export CC="${_shim}/gcc" CXX="${_shim}/g++" CUDAHOSTCXX="${_shim}/g++" NVCC_PREPEND_FLAGS="-ccbin ${_shim}/g++"
 fi
 
+# ================================================================================
+#! Source venv
+VLLM_VENV="${VLLM_VENV}"
 source "${VLLM_VENV}/bin/activate"
 
-# ============================================================
+# ================================================================================
 #! Launch
 SEP="================================================================================"
 echo "Starting vllm server on http://0.0.0.0:${PORT}"
-echo "  GPU                 : ${CUDA_VISIBLE_DEVICES}"
+echo "  GPU                 : ${GPU}"
 echo "  GPU util            : ${GPU_UTIL}"
+# echo "  Temperature         : ${TEMPERATURE}"
 echo "  Max seq len         : ${MAX_LEN}"
 echo "  Max num seqs        : ${MAX_NUM_SEQS}"
-# echo "  Temperature         : ${TEMPERATURE}"
 echo "  Enforce eager       : ${ENFORCE_EAGER}"
 echo "${SEP}"
 echo "  Base model          : ${BASE_MODEL}"
@@ -73,4 +80,5 @@ CMD=(
   --port "${PORT}"
 )
 [ "${ENFORCE_EAGER}" = "1" ] && CMD+=(--enforce-eager)
+
 exec "${CMD[@]}"

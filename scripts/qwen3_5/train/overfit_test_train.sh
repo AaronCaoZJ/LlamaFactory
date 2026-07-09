@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3}"
+GPU="${GPU:-0,1,2,3}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
 source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
@@ -32,7 +32,7 @@ python "${LLAMA_FACTORY_ROOT}/data/agentrobot/rollout_to_llamafactory.py" \
   --output "${DATASET_JSON}"
 
 # ── Launch training ───────────────────────────────────────────────────────────
-echo "Starting overfit test on CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} ..."
+echo "Starting overfit test on GPU=${GPU} ..."
 cd "${LLAMA_FACTORY_ROOT}"
-exec env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
+exec env CUDA_VISIBLE_DEVICES="${GPU}" \
   llamafactory-cli train "${TRAIN_CONFIG}"

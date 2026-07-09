@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
-CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4,5}"
+GPU="${GPU:-4,5}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
 source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
@@ -24,7 +24,7 @@ source "${VENV_PATH}/bin/activate"
 export DISABLE_VERSION_CHECK=1  # gemma4 需 transformers>=5.10，绕过 LF 硬编码上限
 
 # ── Launch training ───────────────────────────────────────────────────────────
-echo "Starting training on CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} ..."
+echo "Starting training on GPU=${GPU} ..."
 cd "${LLAMA_FACTORY_ROOT}"
-exec env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
+exec env CUDA_VISIBLE_DEVICES="${GPU}" \
   llamafactory-cli train "${TRAIN_CONFIG}"

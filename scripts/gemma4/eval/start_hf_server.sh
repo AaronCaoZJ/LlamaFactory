@@ -12,7 +12,8 @@
 
 set -euo pipefail··
 # ═══ GPU / runtime knobs (edit here) ═══
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-4}"
+GPU="${GPU:-4}"
+export CUDA_VISIBLE_DEVICES="${GPU}"
 
 # machine paths: find & source scripts/workspace_dir.sh -> .env.paths (see that file)
 source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done; echo "$d")/scripts/workspace_dir.sh"
@@ -26,7 +27,7 @@ export SAFE_MEDIA_PATH="${SAFE_MEDIA_PATH:-$(dirname "${LF_ROOT}")}"  # 允许�
 INFER_CONFIG="${REPO_ROOT}/examples/inference/gemma4_12b_lora.yaml"
 
 echo "Starting LlamaFactory HF API server on http://0.0.0.0:${API_PORT}"
-echo "  GPU     : ${CUDA_VISIBLE_DEVICES}"
+echo "  GPU     : ${GPU}"
 echo "  Port    : ${API_PORT}"
 echo "  Config  : ${INFER_CONFIG}"
 
