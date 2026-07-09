@@ -124,6 +124,7 @@ celerybeat.pid
 # per-machine paths for our scripts (.env.paths.example stays tracked as the template)
 .env.paths
 .venv
+.venv-vllm
 # machine-specific gcc/g++ shim built by scripts/env_setup.sh (tilelang JIT)
 .cc-shim/
 env/
