@@ -880,5 +880,14 @@
       "response": "output",
       "images": "images"
     }
+  },
+  "mikomiko_tag_train_seen_mini": {
+    "file_name": "mikomiko_tag/jsonl/train_seen_mini.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }

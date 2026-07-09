@@ -20,7 +20,7 @@ set -euo pipefail
 # ============================================================
 #! args / GPU (edit defaults or pass positionally)
 GPU="${2:-1}"
-CKPT_STEP="${CKPT_STEP:-17296}"
+CKPT_STEP="${CKPT_STEP:-11530}"
 EVAL_BS="${EVAL_BS:-16}"
 
 # ============================================================
@@ -32,9 +32,11 @@ source "$(
   until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done
   echo "$d"
 )/scripts/workspace_dir.sh"
+
 VENV_PATH="${LF_VENV}"
 BASE_MODEL="${MODELS_DIR}/Qwen3.5-2B"
-CKPT="${LF_ROOT}/saves/qwen3.5-2b/mikomiko/full_v0_resume11530/checkpoint-${CKPT_STEP}"
+# CKPT="${LF_ROOT}/saves/qwen3.5-2b/mikomiko/full_v0_resume11530/checkpoint-${CKPT_STEP}"
+CKPT="${MODELS_DIR}/Mikomiko_pornpic_tagger/checkpoint-${CKPT_STEP}"
 CONFIG_TMPL="${LF_ROOT}/examples/inference/qwen3_5_2b_full_mikomiko.yaml"
 CONFIG_RUN="${LF_ROOT}/saves/qwen3.5-2b/mikomiko/predict_sanity/_run_evalmini_${CKPT_STEP}.yaml"
 PRED_DIR="${LF_ROOT}/saves/qwen3.5-2b/mikomiko/predict_sanity"
