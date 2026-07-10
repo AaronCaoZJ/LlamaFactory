@@ -6,11 +6,13 @@ set -euo pipefail
 # ================================================================================
 # Paths (machine-agnostic; see scripts/workspace_dir.sh)
 #* Exports: LF_ROOT | MODELS_DIR | LF_VENV | VLLM_VENV | HF_HOME | AGENTROBOT_ROOT
-source "$(
-  d="$(dirname "${BASH_SOURCE[0]}")"
-  until [ -e "$d/scripts/workspace_dir.sh" ] || [ "$d" = / ]; do d="$(dirname "$d")"; done
-  echo "$d"
-)/scripts/workspace_dir.sh"
+# Walk up from the ABSOLUTE script dir (dirname "." == "." would loop forever when the script is
+# invoked as `bash start_vllm_server_mikomiko.sh` from its own directory).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_d="${SCRIPT_DIR}"
+until [ -e "${_d}/scripts/workspace_dir.sh" ] || [ "${_d}" = / ]; do _d="$(dirname "${_d}")"; done
+[ -e "${_d}/scripts/workspace_dir.sh" ] || { echo "ERROR: repo root not found above ${SCRIPT_DIR}" >&2; exit 1; }
+source "${_d}/scripts/workspace_dir.sh"
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
@@ -75,6 +77,13 @@ echo "  Max num seqs        : ${MAX_NUM_SEQS}"
 echo "  Image max pixels    : ${MAX_PIXELS}"
 echo "${SEP}"
 
+# Training parity: the checkpoint's own jinja injects an empty "<think>\n\n</think>\n\n" block
+# after "assistant\n", which LlamaFactory's qwen3_5_nothink (the SFT template) never emitted.
+# Those 4 tokens cost 1.2pt microF1 and inflate composite over-generation, so serve the patched
+# template instead. Both render token-for-token identical to the training prompt.
+CHAT_TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/chat_template_train_parity.jinja"
+[ -f "${CHAT_TEMPLATE}" ] || { echo "[server] ERROR: ${CHAT_TEMPLATE} missing" >&2; exit 1; }
+
 CMD=(
   vllm serve "${CKPT}"
   --served-model-name mikomiko
@@ -86,6 +95,7 @@ CMD=(
   --mm-processor-kwargs "{\"max_pixels\": ${MAX_PIXELS}}"
   --override-generation-config "{\"temperature\": ${TEMPERATURE}, \"top_p\": 1.0, \"top_k\": -1}"
   --trust-remote-code
+  --chat-template "${CHAT_TEMPLATE}"
   --port "${PORT}"
 )
 [ "${ENFORCE_EAGER}" = "1" ] && CMD+=(--enforce-eager)

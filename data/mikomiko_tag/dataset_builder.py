@@ -13,6 +13,10 @@ Two source CSVs joined on image key `{post_id}_{image_name}` (== GEMINI custom_i
   - CATALOG_CSV -- post catalog; `url` gives the webp download link -> the IMAGE
   (CATALOG's own category/post_tag are POST-level, NOT used as labels.)
 
+A Gemini row is usable only if it has no `error`, DID NOT hit the output cap (see
+MAX_OUTPUT_TOKENS -- a capped row is truncated or stuck repeating, and 13 such rows sneak a
+28,672-char garbage "tag" past every other check), has a URL, and has non-empty tags.
+
 Split -> three sets (see do_plan): train, plus TWO complementary test sets:
   - test_unseen      : whole posts held out  (unseen post/person/scene generalization)
   - test_stratified  : images sampled per tag-frequency band (per-exposure tagging probe)
@@ -27,6 +31,16 @@ import os, io, sys, csv, json, time, queue, random, threading, argparse
 import urllib.request
 from collections import Counter, defaultdict
 from PIL import Image
+
+# Gemini's per-request output cap. A row that hits it did not stop on its own: it was truncated
+# mid-list, or (worse) fell into a repetition loop. 166 of 1,240,421 rows hit the cap; 153 emit
+# nothing parseable and die on the empty-tags check below, but 13 emit ONE 28,672-char token
+# ("aminase" x 4096) that looks like a perfectly legal single tag -- `error` is empty, `tags` is
+# non-empty, so both original filters wave it through. 11 of those reached train.jsonl.
+MAX_OUTPUT_TOKENS = 4096
+
+# Filled by iter_records(), printed by do_plan() -- a silent filter is a filter nobody audits.
+DROPPED = Counter()
 
 # ── paths (anchored to this file: data/mikomiko_tag/) ───────────────────────────
 # Two source CSVs, joined on image key `{post_id}_{image_name}` (== GEMINI's custom_id):
@@ -146,22 +160,38 @@ def load_url_map():
     return url_of
 
 
+def hit_output_cap(row):
+    """True if Gemini stopped because it ran out of budget, not because it was done."""
+    try:
+        return float(row.get("output_tokens") or 0) >= MAX_OUTPUT_TOKENS
+    except (TypeError, ValueError):
+        return False
+
+
 def iter_records():
     """Join GEMINI per-image tags (label) with CATALOG URLs (image). Yields {name,url,tags}
-    for images with a Gemini tag list, no error, and a matching URL."""
+    for images with a Gemini tag list, no error, no output-cap hit, and a matching URL."""
     url_of = load_url_map()
     print(f"[join] catalog urls loaded: {len(url_of)}", flush=True)
     with open(GEMINI_CSV, "r", encoding="utf-8-sig", errors="replace", newline="") as f:
         for row in csv.DictReader(f):
+            DROPPED["scanned"] += 1
             if (row.get("error") or "").strip():
+                DROPPED["error"] += 1
+                continue
+            if hit_output_cap(row):                         # truncated / repetition loop -> unusable
+                DROPPED["output_cap"] += 1
                 continue
             name = (row.get("custom_id") or "").strip()   # already '{post_id}_{image_name}'
             url = url_of.get(name)
             if not name or not url:                         # no download link -> skip
+                DROPPED["no_url"] += 1
                 continue
             tags = clean_tags(row.get("tags") or "")
             if not tags:                                    # Gemini found nothing visible -> skip
+                DROPPED["empty_tags"] += 1
                 continue
+            DROPPED["kept"] += 1
             yield {"name": name, "url": url, "tags": tags}
 
 
@@ -185,6 +215,13 @@ def do_plan(args):
             break
         if len(records) % 100000 == 0:
             print(f"  [plan] usable records={len(records)}  ({time.time()-t0:.0f}s)", flush=True)
+
+    print(f"[plan] funnel: scanned={DROPPED['scanned']:,}"
+          f"  -error={DROPPED['error']:,}"
+          f"  -output_cap={DROPPED['output_cap']:,}"      # truncated / repetition-loop rows
+          f"  -no_url={DROPPED['no_url']:,}"
+          f"  -empty_tags={DROPPED['empty_tags']:,}"
+          f"  = kept {DROPPED['kept']:,} ({len(records):,} after de-dup)", flush=True)
 
     # ── (a) test_unseen: hold out whole POSTS (no image of a held post ever trains) ──
     by_post = defaultdict(list)

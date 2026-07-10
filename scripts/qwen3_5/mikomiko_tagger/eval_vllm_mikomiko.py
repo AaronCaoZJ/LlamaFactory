@@ -1,64 +1,26 @@
 #!/usr/bin/env python3
-"""
-eval_vllm_mikomiko.py — fast mikomiko image->tag eval against a vLLM OpenAI server.
+"""eval_vllm_mikomiko.py — thin wrapper: eval the 400-image set against a running vLLM server.
 
-Sends each eval image to the server with the SAME prompt shape as training (image FIRST, then the
-tagging prompt — the mikomiko builder emits instruction = "<image>" + prompt), greedy / no-think,
-collects predictions, and scores them with metrics_mikomiko (identical metrics to the hf path).
+Generation and scoring both live elsewhere now, so every path reports identical numbers:
+  generation -> infer_mikomiko.py (backend=vllm)   scoring -> metrics_mikomiko.py
+This file only wires the two together with the historical CLI + output layout.
 
-Prereq: start the server first ->
-    bash scripts/qwen3_5/mikomiko_tag/start_vllm_server_mikomiko.sh [STEP]
+Prereq: bash scripts/qwen3_5/mikomiko_tagger/start_vllm_server_mikomiko.sh [STEP]
+That script serves chat_template_train_parity.jinja. Pointed at a server running the checkpoint's
+stock template, infer_mikomiko.check_prompt_parity() aborts: the stock template appends an empty
+"<think>\n\n</think>\n\n" after "assistant\n", 4 tokens absent from the SFT prompt, worth -1.2pt
+microF1.
 
 Usage:
-    python scripts/qwen3_5/mikomiko_tag/eval_vllm_mikomiko.py --step 11530
-    python scripts/qwen3_5/mikomiko_tag/eval_vllm_mikomiko.py --evalset data/mikomiko_tag/jsonl/eval_mini.jsonl \
+    python scripts/qwen3_5/mikomiko_tagger/eval_vllm_mikomiko.py --step 11530
+    python scripts/qwen3_5/mikomiko_tagger/eval_vllm_mikomiko.py --evalset data/mikomiko_tag/jsonl/eval_mini.jsonl \
         --api http://localhost:8110 --model mikomiko --concurrency 32 -n 400
 """
-import argparse, base64, json, os, sys, time
-import urllib.error, urllib.request
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import argparse, os
 from pathlib import Path
 
-import metrics_mikomiko  # same directory
-
-IMAGE_TOKEN = "<image>"
-
-
-def encode_image(path):
-    suffix = Path(path).suffix.lstrip(".").lower()
-    mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp"}.get(suffix, "jpeg")
-    with open(path, "rb") as f:
-        return f"data:image/{mime};base64," + base64.b64encode(f.read()).decode()
-
-
-def chat(api, model, text, image_path, max_tokens, retries=3):
-    # image FIRST, then text -> matches training ("<image>" + prompt). This ordering is what the
-    # gemma4 eval-mismatch bug was about; keep image before text for parity.
-    content = [
-        {"type": "image_url", "image_url": {"url": encode_image(image_path)}},
-        {"type": "text", "text": text},
-    ]
-    payload = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": content}],
-        "max_tokens": max_tokens,
-        "temperature": 0.0,
-        "chat_template_kwargs": {"enable_thinking": False},
-    }).encode()
-    last = ""
-    for _ in range(retries):
-        try:
-            req = urllib.request.Request(f"{api}/v1/chat/completions", data=payload,
-                                         headers={"Content-Type": "application/json"}, method="POST")
-            with urllib.request.urlopen(req, timeout=180) as resp:
-                return json.loads(resp.read().decode())["choices"][0]["message"]["content"]
-        except urllib.error.HTTPError as e:
-            last = f"HTTP {e.code}: {e.read().decode(errors='replace')[:200]}"
-        except Exception as e:
-            last = repr(e)
-        time.sleep(1.0)
-    print(f"[warn] request failed after {retries} tries: {last}", file=sys.stderr)
-    return ""   # empty prediction -> scored as a miss, keeps alignment
+import infer_mikomiko  # same directory
+import metrics_mikomiko
 
 
 def main():
@@ -75,41 +37,24 @@ def main():
     ap.add_argument("--out-dir", default=None)
     args = ap.parse_args()
 
-    rows = [json.loads(l) for l in open(args.evalset, encoding="utf-8")]
+    rows, raw, kind = infer_mikomiko.load_rows(args.evalset)
     if args.max_samples:
-        rows = rows[: args.max_samples]
+        rows, raw = rows[: args.max_samples], raw[: args.max_samples]
     print(f"[eval] {len(rows)} samples -> {args.api} (model={args.model}, concurrency={args.concurrency})")
 
-    def one(row):
-        text = row["instruction"].replace(IMAGE_TOKEN, "").strip()
-        return chat(args.api, args.model, text, row["images"][0], args.max_tokens)
-
-    t0 = time.time()
-    preds = [None] * len(rows)
-    done = 0
-    with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
-        futs = {ex.submit(one, r): i for i, r in enumerate(rows)}
-        for fut in as_completed(futs):
-            i = futs[fut]
-            preds[i] = fut.result()
-            done += 1
-            if done % 50 == 0 or done == len(rows):
-                print(f"  [eval] {done}/{len(rows)}  ({time.time()-t0:.0f}s)", flush=True)
-    dt = time.time() - t0
-    print(f"[eval] generated {len(rows)} predictions in {dt:.0f}s ({len(rows)/dt:.1f}/s)")
+    preds = infer_mikomiko.generate_vllm(rows, api=args.api, model=args.model,
+                                         concurrency=args.concurrency, max_new_tokens=args.max_tokens)
 
     out_dir = Path(args.out_dir) if args.out_dir else \
         root / f"saves/qwen3.5-2b/mikomiko/predict_sanity/runs/vllm_step_{args.step}"
     out_dir.mkdir(parents=True, exist_ok=True)
     pred_path = out_dir / "predictions.jsonl"
-    with open(pred_path, "w", encoding="utf-8") as f:
-        for r, pd in zip(rows, preds):
-            f.write(json.dumps({"label": r["output"], "predict": pd or ""}, ensure_ascii=False) + "\n")
+    infer_mikomiko.save_preds(pred_path, preds, raw, kind)
     print(f"[eval] predictions -> {pred_path}")
 
     history = root / "saves/qwen3.5-2b/mikomiko/predict_sanity/evalmini_history.tsv"
     metrics_mikomiko.score(str(pred_path), args.evalset, f"{args.step}(vllm)",
-                         str(history), str(out_dir / "metrics.json"))
+                           str(history), str(out_dir / "metrics.json"))
     print(f"[eval] saved -> {out_dir}/")
 
 

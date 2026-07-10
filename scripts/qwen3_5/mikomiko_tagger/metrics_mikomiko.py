@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-metrics_mikomiko.py — shared scorer for the mikomiko image->tag eval.
+metrics_mikomiko.py — the single scorer for the mikomiko image->tag task.
 
-Same metric definitions as the hf-predict path in test_mikomiko.sh, factored out so the vLLM
-client (eval_vllm_mikomiko.py) reports IDENTICAL numbers. All metrics are on normalized,
-order-invariant tag SETS.
+Every consumer (test_mikomiko.sh, infer_mikomiko.py --score, the review page in visualization/)
+goes through per_image() + aggregate() here, so the numbers are identical by construction.
+All metrics are on normalized, order-invariant tag SETS.
 
   KEPT   : micro P/R/F1, macro F1, atomF1 (1-word), compEx (exact >=2-word), compSub (concept
            coverage), tokF1 (word-level) + over-generation diagnostic (pred vs gold tags/img).
   DROPPED: BLEU-4 / ROUGE-* — seq2seq metrics, meaningless for an unordered tag list.
+
+API:  per_image(gold, pred, src) -> per-image counts + tag/word P,R,F1  (one dict per image)
+      aggregate(rows)            -> micro/macro/atom/comp/tok F1 over a list of those dicts
+      score(...)                 -> the CLI path: read predictions, group, print, persist
 
 CLI:  python metrics_mikomiko.py PRED.jsonl META.jsonl STEP HISTORY.tsv METRICS.json
   PRED : jsonl with {"label","predict"} per line, aligned to META order.
@@ -40,6 +44,50 @@ def prf(tp, npred, ngt):
     return p, r, (2 * p * r / (p + r) if (p + r) else 0.0)
 
 
+def per_image(gold, pred, src="?"):
+    """Score one image. Returns the counts `aggregate` needs plus the per-image tag/word P,R,F1
+    the review page shows on each card (`tagP/tagR/tagF1`, `tokP/tokR/tokF1`)."""
+    g, p = tagset(gold), tagset(pred)
+    ga, pa = {t for t in g if " " not in t}, {t for t in p if " " not in t}
+    gc, pc = {t for t in g if " " in t}, {t for t in p if " " in t}
+    gw, pw = words(g), words(p)
+    tagP, tagR, tagF1 = prf(len(g & p), len(p), len(g))
+    tokP, tokR, tokF1 = prf(len(gw & pw), len(pw), len(gw))
+    return dict(
+        src=src,
+        tp=len(g & p), npred=len(p), ngt=len(g),
+        atp=len(ga & pa), anp=len(pa), ang=len(ga),
+        ctp=len(gc & pc), cnp=len(pc), cng=len(gc),
+        cs_tp_r=sum(1 for t in gc if set(t.split()) <= pw),
+        cs_tp_p=sum(1 for t in pc if set(t.split()) <= gw),
+        ttp=len(gw & pw), tnp=len(pw), tng=len(gw),
+        npred_all=len(p), ngt_all=len(g), npred_c=len(pc), ngt_c=len(gc),
+        tagP=tagP, tagR=tagR, tagF1=tagF1, tokP=tokP, tokR=tokR, tokF1=tokF1,
+        gold_set=g, pred_set=p,
+    )
+
+
+def aggregate(sub):
+    """Micro/macro/atom/comp/tok F1 over a list of per_image() dicts. None if the list is empty."""
+    if not sub:
+        return None
+    S = lambda k: sum(r[k] for r in sub)
+    mf = lambda a, b, c: prf(S(a), S(b), S(c))
+    miP, miR, miF = mf("tp", "npred", "ngt")
+    maF = sum(r["tagF1"] for r in sub) / len(sub)
+    csP = S("cs_tp_p") / S("cnp") if S("cnp") else 0.0
+    csR = S("cs_tp_r") / S("cng") if S("cng") else 0.0
+    csF = 2 * csP * csR / (csP + csR) if (csP + csR) else 0.0
+    return dict(
+        n=len(sub), microP=miP, microR=miR, microF1=miF, macroF1=maF,
+        atomF1=mf("atp", "anp", "ang")[2], compF1_exact=mf("ctp", "cnp", "cng")[2],
+        compF1_subset=csF, tokF1=mf("ttp", "tnp", "tng")[2],
+        macroTokF1=sum(r["tokF1"] for r in sub) / len(sub),
+        pred_tpi=S("npred_all") / len(sub), gold_tpi=S("ngt_all") / len(sub),
+        pred_cpi=S("npred_c") / len(sub), gold_cpi=S("ngt_c") / len(sub),
+    )
+
+
 def score(pred_path, meta_path, step, history_file, metrics_out):
     preds = [json.loads(l) for l in open(pred_path, encoding="utf-8")]
     try:
@@ -50,47 +98,14 @@ def score(pred_path, meta_path, step, history_file, metrics_out):
     if not use_meta:
         print(f"[warn] meta({len(meta)}) != preds({len(preds)}) -> group split disabled, ALL-only.")
 
-    rows = []
-    for i, pr in enumerate(preds):
-        g, p = tagset(pr.get("label", "")), tagset(pr.get("predict", ""))
-        ga, pa = {t for t in g if " " not in t}, {t for t in p if " " not in t}
-        gc, pc = {t for t in g if " " in t}, {t for t in p if " " in t}
-        gw, pw = words(g), words(p)
-        csub_tp_r = sum(1 for t in gc if set(t.split()) <= pw)
-        csub_tp_p = sum(1 for t in pc if set(t.split()) <= gw)
-        rows.append(dict(
-            src=(meta[i].get("_src", "?") if use_meta else "?"),
-            tp=len(g & p), npred=len(p), ngt=len(g),
-            atp=len(ga & pa), anp=len(pa), ang=len(ga),
-            ctp=len(gc & pc), cnp=len(pc), cng=len(gc),
-            cs_tp_r=csub_tp_r, cs_tp_p=csub_tp_p,
-            ttp=len(gw & pw), tnp=len(pw), tng=len(gw),
-            npred_all=len(p), ngt_all=len(g), npred_c=len(pc), ngt_c=len(gc),
-        ))
-
-    def agg(sel):
-        sub = [r for r in rows if sel(r)]
-        if not sub:
-            return None
-        S = lambda k: sum(r[k] for r in sub)
-        mf = lambda a, b, c: prf(S(a), S(b), S(c))
-        miP, miR, miF = mf("tp", "npred", "ngt")
-        maF = sum(prf(r["tp"], r["npred"], r["ngt"])[2] for r in sub) / len(sub)
-        csP = S("cs_tp_p") / S("cnp") if S("cnp") else 0.0
-        csR = S("cs_tp_r") / S("cng") if S("cng") else 0.0
-        csF = 2 * csP * csR / (csP + csR) if (csP + csR) else 0.0
-        return dict(
-            n=len(sub), microP=miP, microR=miR, microF1=miF, macroF1=maF,
-            atomF1=mf("atp", "anp", "ang")[2], compF1_exact=mf("ctp", "cnp", "cng")[2],
-            compF1_subset=csF, tokF1=mf("ttp", "tnp", "tng")[2],
-            pred_tpi=S("npred_all") / len(sub), gold_tpi=S("ngt_all") / len(sub),
-            pred_cpi=S("npred_c") / len(sub), gold_cpi=S("ngt_c") / len(sub),
-        )
+    rows = [per_image(pr.get("label", ""), pr.get("predict", ""),
+                      meta[i].get("_src", "?") if use_meta else "?")
+            for i, pr in enumerate(preds)]
 
     groups = {"ALL": lambda r: True,
               "unseen": lambda r: r["src"] == "unseen",
               "stratified": lambda r: r["src"] == "strat"}
-    results = {name: agg(sel) for name, sel in groups.items()}
+    results = {name: aggregate([r for r in rows if sel(r)]) for name, sel in groups.items()}
 
     print("\n" + "=" * 118)
     print(f"mikomiko image->tag  eval @ step {step}   (n={len(rows)})")

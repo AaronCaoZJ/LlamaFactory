@@ -125,6 +125,7 @@ celerybeat.pid
 .env.paths
 .venv
 .venv-vllm
+.venv-gemma4
 # machine-specific gcc/g++ shim built by scripts/env_setup.sh (tilelang JIT)
 .cc-shim/
 env/
@@ -193,7 +194,10 @@ predictions_score.json
 /data/agentrobot/id_sample
 /data/agentrobot/ood_sample
 
-/data/mikomiko_tag/img
+/.ai/agent_todo/
+
+/data/mikomiko_tag/img/
 /data/mikomiko_tag/pornpic_tag_recognition_pornpic_tag_full_001.csv
 /data/mikomiko_tag/pornstars620_100k-sample-posts_category-tags.csv
-/data/mikomiko_tag/jsonl
+/data/mikomiko_tag/jsonl/
+/data/mikomiko_tag/onlyfans/
