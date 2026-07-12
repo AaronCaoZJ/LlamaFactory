@@ -10,7 +10,7 @@
 # 推理:
 #   API_URL=http://localhost:8110 python scripts/gemma4/eval/infer.py eval -n 100 --raw
 
-set -euo pipefail··
+set -euo pipefail
 # ═══ GPU / runtime knobs (edit here) ═══
 GPU="${GPU:-4}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
@@ -24,11 +24,17 @@ REPO_ROOT="${LF_ROOT}"   # repo root from workspace_dir.sh (was SCRIPT_DIR/../..
 export API_PORT="${API_PORT:-8114}"
 export SAFE_MEDIA_PATH="${SAFE_MEDIA_PATH:-$(dirname "${LF_ROOT}")}"  # 允许本地图片路径
 
-INFER_CONFIG="${REPO_ROOT}/examples/inference/gemma4_12b_lora.yaml"
+MODEL="${MODEL:-e4b}"   # 12b | e4b
+case "${MODEL}" in
+  12b) INFER_CONFIG="${REPO_ROOT}/examples/inference/gemma4_12b_lora.yaml" ;;
+  e4b) INFER_CONFIG="${REPO_ROOT}/examples/inference/gemma4_e4b_lora.yaml" ;;
+  *)   echo "ERROR: unknown MODEL=${MODEL} (expected 12b or e4b)" >&2; exit 1 ;;
+esac
 
 echo "Starting LlamaFactory HF API server on http://0.0.0.0:${API_PORT}"
 echo "  GPU     : ${GPU}"
 echo "  Port    : ${API_PORT}"
+echo "  Model   : ${MODEL}"
 echo "  Config  : ${INFER_CONFIG}"
 
 cd "${REPO_ROOT}"

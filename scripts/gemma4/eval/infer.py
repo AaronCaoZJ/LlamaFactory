@@ -23,8 +23,11 @@ import urllib.request
 from pathlib import Path
 
 # ── 环境变量配置 ────────────────────────────────────────────────────────────
-API_URL = os.environ.get("API_URL", "http://localhost:8110")
-MODEL_NAME = os.environ.get("MODEL_NAME", "gemma4_12b_mix_22_27_v3")
+API_URL = os.environ.get("API_URL", "http://localhost:8114")   # HF server 默认端口；vllm 用 8104
+MODEL_NAME = os.environ.get("MODEL_NAME", "gemma4_e4b_mix_22_27_v3")
+
+# 训练侧 gemma4n 模板会注入 default_system；推理必须给出同一句，否则 prompt 结构与训练不一致。
+SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", "You are a helpful assistant.")
 
 # ── 评估数据集配置 ──────────────────────────────────────────────────────────
 DATASET = "/workspace1/zhijun/LlamaFactory/data/robot_rollout.json"
@@ -58,12 +61,18 @@ def chat(
     enable_thinking: bool = False,
 ) -> str:
     formatted: list[dict] = []
+    if SYSTEM_PROMPT:
+        formatted.append({"role": "system", "content": SYSTEM_PROMPT})
+
     for msg in messages:
         if msg["role"] == "user" and image_paths:
             clean_text = msg["content"].replace(_IMAGE_TOKEN, "").strip()
-            content: list[dict] = [{"type": "text", "text": clean_text}]
-            for p in image_paths:
-                content.append({"type": "image_url", "image_url": {"url": encode_image(p)}})
+            # 图片必须排在文本之前：训练样本的 instruction 以 "<image><image>" 开头，
+            # 两个后端都按 content 顺序拼占位符，图片放文本后会与训练分布失配。
+            content: list[dict] = [
+                {"type": "image_url", "image_url": {"url": encode_image(p)}} for p in image_paths
+            ]
+            content.append({"type": "text", "text": clean_text})
             formatted.append({"role": "user", "content": content})
         else:
             formatted.append(msg)
@@ -141,7 +150,8 @@ def run_eval(args: argparse.Namespace) -> None:
         sample_input = sample.get("input") or ""
         if args.no_stage and sample_input:
             sample_input = strip_stage(sample_input)
-        user_text = f"{instruction}\n\n{sample_input}" if sample_input else instruction
+        # 训练侧 alpaca converter 用 "\n".join([instruction, input])，此处必须同样用单个 "\n"
+        user_text = f"{instruction}\n{sample_input}" if sample_input else instruction
         messages = [{"role": "user", "content": user_text}]
         image_paths: list[str] = sample["images"]
 

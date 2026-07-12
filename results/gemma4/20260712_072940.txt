@@ -1,0 +1,12 @@
+=== Eval Log ===
+Timestamp : 20260712_072940
+Model     : /workspace1/zhijun/hf_download/models/gemma4-12B-it
+API_URL   : http://localhost:8104
+Evalset   : /workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample/v3/rollout_lite.json
+Command   : python scripts/gemma4/eval/infer.py single 'Describe the image in detail' --image '/workspace1/zhijun/LlamaFactory/data/agentrobot/overfit_test/rollout_000/agentview/0000.png'
+================
+Server  : http://localhost:8104  model=/workspace1/zhijun/hf_download/models/gemma4-12B-it
+Prompt  : Describe the image in detail
+Images  : ['/workspace1/zhijun/LlamaFactory/data/agentrobot/overfit_test/rollout_000/agentview/0000.png']
+────────────────────────────────────────────────────────────────────────
+A high-angle, medium shot shows a white robot arm with a white head and a white body, standing on a white table. The robot arm is positioned in the center of the frame, facing the camera. It has a white head with a black face and a white body with a black arm. The robot arm is standing on a white table with a white surface. In front of the robot arm, there is a white tray with a white surface. On the tray, there is a small orange and white block, a white cup with a blue and yellow stripe, and a white spoon. The background is a black curtain. The lighting is bright and even, and the colors are vibrant. The overall mood of the image is peaceful and serene.
