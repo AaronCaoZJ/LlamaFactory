@@ -21,6 +21,7 @@ lora_target: all
 dataset: mix_22-06_fk-pp_01_flip_img
 template: qwen3_5_nothink
 cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）；全量重算仅 ~17s
 preprocessing_num_workers: 4
 dataloader_num_workers: 2
 

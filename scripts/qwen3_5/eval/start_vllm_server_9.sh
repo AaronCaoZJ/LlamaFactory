@@ -37,7 +37,15 @@ LORA_MODULES=(
   "mix_22-06_fk-pp_01=${SAVES}/mix_22-06_fk-pp/01_flip_img"
   "mix_22-06_fk-pp_02=${SAVES}/mix_22-06_fk-pp/02_exchange_token"
   "mix_22-06_fk-pp_03=${SAVES}/mix_22-06_fk-pp/03_just_mix"
+  # 方案 B（video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
+  # "mix_22_27_v3_video_9=${SAVES}/mix_22_27_v3_video"
 )
+
+# LF 对齐的 chat template（必需）。Qwen3.5 官方模板即使 enable_thinking=false 也会在
+# '<|im_start|>assistant\n' 后插一个空 think 块 '<think>\n\n</think>\n\n'，而 LF 的
+# qwen3_5_nothink 什么都不插 —— 不挂这个文件，prompt 与训练分布差 4 个 token（HANDOFF §4.2）。
+# 对 image 布局和 video 槽位都适用；已用 /tokenize 逐 token 比对验证过。
+CHAT_TEMPLATE="${LF_ROOT}/scripts/qwen3_5/eval/chat_template_qwen3_5_lf.jinja"
 
 # ================================================================================
 # CUDA JIT compiler (machine-adaptive)
@@ -66,6 +74,8 @@ echo "  Base model          : ${BASE_MODEL}"
 echo "${SEP}"
 for m in "${LORA_MODULES[@]}"; do printf "  %-22s: %s\n" "${m%%=*}" "${m#*=}"; done
 echo "${SEP}"
+echo "  Chat template       : ${CHAT_TEMPLATE}"
+echo "${SEP}"
 
 CMD=(
   vllm serve "${BASE_MODEL}"
@@ -75,6 +85,7 @@ CMD=(
   --max-num-seqs "${MAX_NUM_SEQS}"
   --enable-lora --max-lora-rank 64
   --lora-modules "${LORA_MODULES[@]}"
+  --chat-template "${CHAT_TEMPLATE}"
   # --override-generation-config "{\"temperature\": ${TEMPERATURE}, \"top_p\": 1.0, \"top_k\": -1}"
   --trust-remote-code
   --port "${PORT}"

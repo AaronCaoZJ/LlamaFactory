@@ -71,9 +71,10 @@ echo "  Max num seqs        : ${MAX_NUM_SEQS}"
 echo "  Enforce eager       : ${ENFORCE_EAGER}"
 echo "${SEP}"
 echo "  Base model          : ${BASE_MODEL}"
-echo "  Chat template       : ${CHAT_TEMPLATE}"
 echo "${SEP}"
 for m in "${LORA_MODULES[@]}"; do printf "  %-22s: %s\n" "${m%%=*}" "${m#*=}"; done
+echo "${SEP}"
+echo "  Chat template       : ${CHAT_TEMPLATE}"
 echo "${SEP}"
 
 CMD=(

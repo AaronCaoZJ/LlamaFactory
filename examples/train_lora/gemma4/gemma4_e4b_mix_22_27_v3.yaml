@@ -22,6 +22,7 @@ dataset: mix_22_27_v3_lite
 template: gemma4n            # E4B/12B = gemma4n（31B/26B 才用 gemma4）
 enable_thinking: false      # 关闭 thinking：删除 CoT，思考段拼到 prompt 侧不计 loss
 cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）；全量重算仅 ~17s
 preprocessing_num_workers: 4
 dataloader_num_workers: 2
 

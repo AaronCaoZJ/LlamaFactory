@@ -13,7 +13,7 @@ TRAINING PARITY — the three things that silently cost accuracy if you get them
      never emitted it. Those 4 tokens cost 1.2pt microF1 / 1.7pt microP and inflate composite
      over-generation (5.6 -> 6.1 per image); 395/400 predictions changed when measured on
      eval_mini. The hf backend strips the block; the vllm backend requires the server to be
-     started with --chat-template chat_template_train_parity.jinja (asserted at startup).
+     started with --chat-template chat_template_qwen3_5_lf.jinja (asserted at startup).
 
 BACKEND — vllm by default: it is the engine that serves this model in production, and bf16 is what
 training and every archived eval used. hf drives transformers directly (no server).
@@ -193,7 +193,7 @@ def check_prompt_parity(api, model):
     if THINK_OPEN_ID in tokens:
         sys.exit("[fatal] server injects an empty <think></think> block (train/infer mismatch, "
                  "-1.2pt microF1). Restart it with start_vllm_server_mikomiko.sh, which passes "
-                 "--chat-template chat_template_train_parity.jinja")
+                 "--chat-template chat_template_qwen3_5_lf.jinja")
     print("[vllm] prompt parity OK (no think block)")
 
 

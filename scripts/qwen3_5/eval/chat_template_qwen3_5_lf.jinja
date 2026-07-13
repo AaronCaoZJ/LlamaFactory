@@ -1,3 +1,18 @@
+{#- Qwen3.5 chat template, aligned with LlamaFactory's `qwen3_5_nothink` training template.      -#}
+{#-                                                                                              -#}
+{#- Copied verbatim from Qwen3.5-9B/chat_template.jinja EXCEPT the generation prompt at the end. -#}
+{#- The official template ALWAYS emits a think block after '<|im_start|>assistant\n':            -#}
+{#-     enable_thinking=false -> '<think>\n\n</think>\n\n'   (an EMPTY think block, not nothing!) -#}
+{#-     enable_thinking unset -> '<think>\n'                                                      -#}
+{#- LF's `qwen3_5_nothink` emits neither: the assistant turn starts with the answer token right   -#}
+{#- after '<|im_start|>assistant\n'. Serving with the official template therefore feeds the model -#}
+{#- a prompt it never saw in training (HANDOFF §4.2). This file therefore emits NO think block by  -#}
+{#- default; pass chat_template_kwargs={"enable_thinking": true} to opt back into thinking mode.  -#}
+{#-                                                                                              -#}
+{#- Applies to BOTH the image layout (<image><image>) and the video slot (<video>): the vision    -#}
+{#- placeholders and the '<0.2 seconds>' video timestamp are expanded by the processor, not here. -#}
+{#- Use with: vllm serve ... --chat-template <this file>                                          -#}
+{#- Two byte-identical copies exist (eval/ and mikomiko_tagger/); keep them in sync.              -#}
 {%- set image_count = namespace(value=0) %}
 {%- set video_count = namespace(value=0) %}
 {%- macro render_content(content, do_vision_count, is_system_content=false) %}
@@ -148,8 +163,9 @@
     {{- '<|im_start|>assistant\n' }}
     {#- TRAINING PARITY: LlamaFactory's `qwen3_5_nothink` ends the prompt right after
         `assistant\n`. The upstream template instead injects an empty `<think>\n\n</think>\n\n`
-        block here, 4 tokens the tagger never saw at that position during SFT (costs 1.2pt
-        microF1). We emit the block only when thinking is explicitly requested. #}
+        block here, 4 tokens the model never saw at that position during SFT (costs 1.2pt
+        microF1 on the mikomiko tagger). We emit the block only when thinking is explicitly
+        requested, i.e. chat_template_kwargs={"enable_thinking": true}. #}
     {%- if enable_thinking is defined and enable_thinking is true %}
         {{- '<think>\n' }}
     {%- endif %}
