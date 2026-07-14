@@ -1,0 +1,48 @@
+### model
+model_name_or_path: OpenGVLab/InternVL3_5-1B-HF
+image_max_pixels: 65536    # 256x256; matches the Qwen reproduction config
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+dataset: mix_22-06_fk-pp_02_exchange_token
+template: intern_vl
+cutoff_len: 2048
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/internvl3.5-1b/robot/mix_22-06_fk-pp_02_exchange_token_zechen_reproduce
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: internvl3.5-1b-robot-mix_22-06_fk-pp_02_exchange_token_zechen_reproduce
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+max_grad_norm: 1.0
+bf16: true
+ddp_timeout: 180000000
+
+### distributed
+deepspeed: examples/deepspeed/ds_z2_config.json
