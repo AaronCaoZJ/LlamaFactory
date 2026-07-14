@@ -33,7 +33,7 @@ fi
 # Training parity: the ckpt jinja injects an empty <think></think> block after "assistant\n" that
 # the SFT template (qwen3_5_nothink) never emitted; those 4 tokens cost 1.2pt microF1. Serve the
 # patched template, which renders token-for-token identical to the training prompt.
-CHAT_TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/chat_template_train_parity.jinja"
+CHAT_TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/chat_template_qwen3_5_lf.jinja"
 [ -f "${CHAT_TEMPLATE}" ] || { echo "[server] ERROR: ${CHAT_TEMPLATE} missing" >&2; exit 1; }
 
 # CUDA JIT compiler shim (machine-adaptive, same as sibling scripts)

@@ -1,0 +1,17 @@
+### LlamaFactory API server config — Gemma-4-E4B + LoRA (HuggingFace backend)
+# Start server:  MODEL=e4b bash scripts/gemma4/eval/start_hf_server.sh
+# Then eval:     API_URL=http://localhost:8114 python scripts/gemma4/eval/infer.py eval -n 100
+#
+# HF backend 直接复用 LF 的 gemma4n 模板，prompt 渲染与训练天然一致（无需自定义 chat template）。
+
+model_name_or_path: ../hf_download/models/gemma4-E4B-it
+adapter_name_or_path: saves/gemma4-e4b/robot/mix_22_27_v3
+finetuning_type: lora
+template: gemma4n
+enable_thinking: false
+infer_backend: huggingface
+trust_remote_code: true
+
+# Multimodal settings
+image_max_pixels: 65536   # 与训练一致（256x256）；12B 那份写的是 262144，会放大到 512x512
+infer_dtype: bfloat16

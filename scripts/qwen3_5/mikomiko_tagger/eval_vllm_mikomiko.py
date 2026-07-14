@@ -6,7 +6,7 @@ Generation and scoring both live elsewhere now, so every path reports identical 
 This file only wires the two together with the historical CLI + output layout.
 
 Prereq: bash scripts/qwen3_5/mikomiko_tagger/start_vllm_server_mikomiko.sh [STEP]
-That script serves chat_template_train_parity.jinja. Pointed at a server running the checkpoint's
+That script serves chat_template_qwen3_5_lf.jinja. Pointed at a server running the checkpoint's
 stock template, infer_mikomiko.check_prompt_parity() aborts: the stock template appends an empty
 "<think>\n\n</think>\n\n" after "assistant\n", 4 tokens absent from the SFT prompt, worth -1.2pt
 microF1.

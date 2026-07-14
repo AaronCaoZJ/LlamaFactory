@@ -21,6 +21,7 @@ dataset: overfit
 template: gemma4n
 enable_thinking: false
 cutoff_len: 1024   # 每样本 2 图 = 512 image soft tokens；512 会把图像 token 截断导致 features/tokens 不匹配
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）；全量重算仅 ~17s
 preprocessing_num_workers: 4
 dataloader_num_workers: 2
 

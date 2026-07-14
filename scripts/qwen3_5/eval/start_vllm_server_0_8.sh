@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vLLM OpenAI server: Qwen3.5-9B + MVTOKEN LoRA adapters (default :8109).
+# vLLM OpenAI server: Qwen3.5-0.8B + MVTOKEN LoRA adapters (default :8108).
 set -euo pipefail
 
 # ================================================================================
@@ -13,13 +13,13 @@ source "$(
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
-GPU="${GPU:-6}"
+GPU="${GPU:-4}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
 
 # ================================================================================
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
-PORT="${PORT:-8109}"
+PORT="${PORT:-8108}"
 GPU_UTIL="${GPU_UTIL:-0.7}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
@@ -27,18 +27,11 @@ MAX_LEN=8192
 MAX_NUM_SEQS=256
 ENFORCE_EAGER=0
 
-BASE_MODEL="${MODELS_DIR}/Qwen3.5-9B"
-SAVES="${LF_ROOT}/saves/qwen3.5-9b/robot"
+BASE_MODEL="${MODELS_DIR}/Qwen3.5-0.8B"
+SAVES="${LF_ROOT}/saves/qwen3.5-0.8b/robot"
 
 LORA_MODULES=(
-  "mix_22_27_v3_9=${SAVES}/mix_22_27_v3"
-  "mix_22_27_04_v3_9=${SAVES}/mix_22_27_04_v3"
-  "piper_0705_v4_9=${SAVES}/piper_0705_v4"
-  "mix_22-06_fk-pp_01=${SAVES}/mix_22-06_fk-pp/01_flip_img"
-  "mix_22-06_fk-pp_02=${SAVES}/mix_22-06_fk-pp/02_exchange_token"
-  "mix_22-06_fk-pp_03=${SAVES}/mix_22-06_fk-pp/03_just_mix"
-  # 方案 B（video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
-  # "mix_22_27_v3_video_9=${SAVES}/mix_22_27_v3_video"
+  "mix_22-06_fk-pp_02_08=${SAVES}/mix_22-06_fk-pp/02_exchange_token"
 )
 
 # LF 对齐的 chat template（必需）。Qwen3.5 官方模板即使 enable_thinking=false 也会在

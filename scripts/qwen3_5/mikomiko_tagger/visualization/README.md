@@ -49,7 +49,7 @@ FORCE=1 N=200 GPU=4 BACKEND=hf bash build_html.sh
 3. **不能有空 think 块** —— checkpoint 自带 jinja 在 `enable_thinking` 为假时会在 `assistant\n`
    后插入 `<think>\n\n</think>\n\n`,而训练模板 `qwen3_5_nothink` 从不发这个块。这 4 个 token
    值 **1.2pt microF1 / 1.7pt microP**,还会把每图复合 tag 从 5.6 抬到 6.1(400 张实测,395 张
-   预测改变)。hf 后端自动剥掉;vllm 后端靠 `chat_template_train_parity.jinja` +
+   预测改变)。hf 后端自动剥掉;vllm 后端靠 `chat_template_qwen3_5_lf.jinja` +
    `check_prompt_parity()` 启动自检兜底。
 
 ## 注意

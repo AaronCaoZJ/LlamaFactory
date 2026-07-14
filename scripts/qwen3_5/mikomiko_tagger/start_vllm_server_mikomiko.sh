@@ -81,7 +81,7 @@ echo "${SEP}"
 # after "assistant\n", which LlamaFactory's qwen3_5_nothink (the SFT template) never emitted.
 # Those 4 tokens cost 1.2pt microF1 and inflate composite over-generation, so serve the patched
 # template instead. Both render token-for-token identical to the training prompt.
-CHAT_TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/chat_template_train_parity.jinja"
+CHAT_TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/chat_template_qwen3_5_lf.jinja"
 [ -f "${CHAT_TEMPLATE}" ] || { echo "[server] ERROR: ${CHAT_TEMPLATE} missing" >&2; exit 1; }
 
 CMD=(

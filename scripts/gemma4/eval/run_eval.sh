@@ -9,7 +9,8 @@ source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_d
 
 # HF server 默认 8114；若用 vllm server 改成 8104。
 export API_URL="${API_URL:-http://localhost:8104}"
-export MODEL_NAME="${MODEL_NAME:-gemma4_12b_mix_22_27_v3}"
+# vllm 后端：必须等于 start_vllm_server.sh 里 --lora-modules 的 key；HF 后端该字段不校验。
+export MODEL_NAME="${MODEL_NAME:-gemma4_e4b_mix_22_27_v3}"
 
 # OOD 测试集（留空则用 infer.py 默认数据集；这里复用 qwen3_5 的共享评测样本）
 EVALSET="${LF_ROOT}/data/agentrobot/ood_sample/v3/rollout_lite.json"
@@ -26,14 +27,14 @@ TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 LOG_FILE="${RESULTS_DIR}/${TIMESTAMP}.txt"
 
 # ── 批量评估：显示完整回复（验证指令遵从）────────────────────────────────────
-EVAL_CMD="python scripts/gemma4/eval/infer.py eval --raw --no-stage -n 100 ${EVALSET_ARG}"
+# EVAL_CMD="python scripts/gemma4/eval/infer.py eval --raw --no-stage -n 100 ${EVALSET_ARG}"
 
 # ── 备选：只看 token 级准确率 ────────────────────────────────────────────────
 # EVAL_CMD="python scripts/gemma4/eval/infer.py eval -n 100 ${EVALSET_ARG}"
 
 # ── 备选：单条 VQA ───────────────────────────────────────────────────────────
-# VQA_IMAGE="${LF_ROOT}/data/agentrobot/overfit_test/rollout_000/agentview/0000.png"
-# EVAL_CMD="python scripts/gemma4/eval/infer.py single 'Describe the image in detail' --image '${VQA_IMAGE}'"
+VQA_IMAGE="${LF_ROOT}/data/agentrobot/overfit_test/rollout_000/agentview/0000.png"
+EVAL_CMD="python scripts/gemma4/eval/infer.py single 'Describe the image in detail' --image '${VQA_IMAGE}'"
 
 # ── 写入日志头 ────────────────────────────────────────────────────────────────
 {
