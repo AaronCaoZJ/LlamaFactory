@@ -65,6 +65,31 @@ Usage:
         --task "pick up the banana and place it on the blue plate" \\
         --vlm-backend mvtoken_0622_v0 \\
         --vlm-url http://localhost:8101/v1
+
+    # Dual-arm (piper-dual) — three cameras, one token per arm per step
+    python data/agentrobot/rollout_to_llamafactory.py \\
+        data/agentrobot/MVTOKEN/dual_cloth \\
+        --version v4 --dual --once \\
+        --task "fold the black t-shirt"
+
+DUAL-ARM (--dual)
+-----------------
+Dual recordings (dual_cloth) carry THREE views (agentview / wrist_left / wrist_right) and TWO
+tokens per step (actions.jsonl rows have "left" and "right" objects). Because the arms are
+teleoperated independently, a step where only one arm moved records STILL for the other, so
+STILL joins the vocabulary. --dual is a hardware flag exactly like --franka / --piper; on top of
+it, ONE scheme flag picks both the prompt file and the sample shape (see convert_dual_rollout):
+
+  --twice  2 VLM calls/step -> 2 Alpaca samples/step (both carry all 3 views; {arm} says which
+           arm to answer). The right call does NOT see the left token -> the two calls stay
+           conditionally independent and can be batched in parallel at inference.
+  --once   1 VLM call/step  -> 1 Alpaca sample/step, output "<left> <right>" (LEFT first).
+  --chain  1 image forward, 2 answers -> 1 ShareGPT sample/step with two assistant turns
+           (left token, follow-up user turn, right token).
+
+--chain output is ShareGPT, so register it with formatting=sharegpt + columns.messages; --twice
+and --once stay Alpaca (instruction/input/output/images). --dual is lite-only and rejects
+--video-slot (3 views do not pair into Qwen's 2-frame temporal patches).
 """
 from __future__ import annotations
 
@@ -97,6 +122,25 @@ DONE_TOKEN = "DONE"
 # the prompt. The camera-description header now lives inside each prompt template (lite and
 # full), so there is no separate instruction header here.
 IMAGE_TOKENS = "<image><image>"
+
+# --video-slot: the two views ride in the video slot as two "frames" instead of two images.
+# Qwen's patch embed is a 3D conv with temporal_patch_size=2, so the two frames are fused into
+# a single set of visual tokens: 64 instead of 128 per sample (at 256x256). The two viewpoints
+# end up mixed at every spatial position -- an experiment, not the default. See ShowRobot-VLM_HANDOFF.md.
+VIDEO_TOKEN = "<video>"
+
+# ── Dual-arm (--dual) ─────────────────────────────────────────────────────────
+# dual_cloth-style recordings: THREE cameras (agentview + one wrist per arm) and one token per
+# arm per step, stored under the "left" / "right" keys of each actions.jsonl row. The two arms
+# are teleoperated independently, so a step where only one arm moved records STILL for the other
+# -- STILL is a first-class token here, and is NOT part of the single-arm vocabulary above.
+STILL_TOKEN = "STILL"
+DUAL_IMAGE_TOKENS = "<image><image><image>"  # agentview, wrist_left, wrist_right
+DUAL_ACTION_TOKENS = ACTION_TOKENS | {STILL_TOKEN}
+# Per-arm "recent moves": MV_* plus STILL (STILL is exactly what tells the model this arm is
+# waiting on the other one). GRASP/RELEASE stay out, matching the single-arm convention.
+DUAL_HISTORY_TOKENS = MV_TOKENS | {STILL_TOKEN}
+DUAL_SCHEMES = ("twice", "once", "chain")
 
 # --use-subgoal motion keywords: used ONLY to locate the grasp and release subgoals in the
 # VLM plan (so the recorded GRASP/RELEASE tokens can anchor the phase boundaries). Every
@@ -301,6 +345,7 @@ def convert_rollout(
     task_override: str | None = None,
     gripper_color: str = "black",
     config_dir: Path | None = None,
+    video_slot: bool = False,
 ) -> list[dict]:
     """Convert one rollout to LLaMA Factory samples.
 
@@ -310,6 +355,9 @@ def convert_rollout(
     ``config_dir`` is where the matching task/affordance config lives (next to the output json
     for a single rollout, a per-task subfolder of the output dir for a multi-folder run); it is
     searched after ``rollout_dir``.
+
+    ``video_slot`` emits the two views as video frames (``<video>`` + ``videos``) instead of
+    two images (``<image><image>`` + ``images``).
     """
     actions_path = rollout_dir / "actions.jsonl"
     if not actions_path.exists():
@@ -379,14 +427,25 @@ def convert_rollout(
         )
 
     def _sample(step: dict, input_text: str, token: str) -> dict:
+        views = [
+            str((rollout_dir / step["agentview"]).resolve()),
+            str((rollout_dir / step["wrist"]).resolve()),
+        ]
+        if video_slot:
+            # "videos" is nested: one frame list per <video> placeholder. Paths must stay
+            # absolute -- the converter only prepends media_dir to flat string lists.
+            return {
+                "instruction": VIDEO_TOKEN + input_text,
+                "input": "",
+                "output": token,
+                "videos": [views],
+            }
+
         return {
             "instruction": IMAGE_TOKENS + input_text,
             "input": "",
             "output": token,
-            "images": [
-                str((rollout_dir / step["agentview"]).resolve()),
-                str((rollout_dir / step["wrist"]).resolve()),
-            ],
+            "images": views,
         }
 
     samples = []
@@ -418,6 +477,117 @@ def convert_rollout(
     return samples
 
 
+# ── Dual-arm conversion ───────────────────────────────────────────────────────
+
+def convert_dual_rollout(
+    rollout_dir: Path,
+    prompt_template: str,
+    scheme: str,
+    followup_template: str | None = None,
+    task_override: str | None = None,
+) -> list[dict]:
+    """Convert one dual-arm rollout (three cameras, one action token per arm per step).
+
+    ``scheme`` is the training/inference contract, and each one produces a different sample
+    shape from the SAME recording:
+
+      twice — two VLM calls per step. Two Alpaca samples, both carrying all three views; the
+              prompt's ``{arm}`` says which arm to answer for. The RIGHT sample does NOT see the
+              LEFT token, so the two calls stay conditionally independent given the images and
+              can be batched in parallel at inference.
+      once  — one VLM call per step. One Alpaca sample whose output is ``"<left> <right>"``. The
+              right token is still conditioned on the left one, through the decoder's own
+              autoregression, at the cost of a single image forward.
+      chain — one image forward, two answers. One ShareGPT sample with two assistant turns:
+              the LEFT token, a short follow-up user turn, then the RIGHT token. Same sequential
+              conditioning as ``twice`` but the three views are encoded only once.
+
+    Terminal DONE follows the single-arm convention: the recordings contain no DONE, so one
+    sample is synthesized per episode on the last observed frame, with BOTH arms DONE (``once``
+    emits ``"DONE DONE"``), teaching "the whole task is complete".
+    """
+    actions_path = rollout_dir / "actions.jsonl"
+    if not actions_path.exists():
+        print(f"[skip] no actions.jsonl in {rollout_dir}", file=sys.stderr)
+        return []
+
+    task_name = task_override or rollout_dir.parent.name
+
+    steps = []
+    with open(actions_path) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                steps.append(json.loads(line))
+
+    def _views(step: dict) -> list[str]:
+        return [
+            str((rollout_dir / step["agentview"]).resolve()),
+            str((rollout_dir / step["wrist_left"]).resolve()),
+            str((rollout_dir / step["wrist_right"]).resolve()),
+        ]
+
+    def _render(history: dict[str, list[str]], arm: str) -> str:
+        # once/chain templates have no {arm} field; the extra kwarg is simply ignored by format().
+        return prompt_template.format(
+            task=task_name,
+            recent_left=", ".join(history["left"][-RECENT_WINDOW:][::-1]) or "none",
+            recent_right=", ".join(history["right"][-RECENT_WINDOW:][::-1]) or "none",
+            arm=arm.upper(),
+        )
+
+    def _emit(step: dict, history: dict[str, list[str]], tok_l: str, tok_r: str) -> list[dict]:
+        views = _views(step)
+        if scheme == "twice":
+            return [
+                {
+                    "instruction": DUAL_IMAGE_TOKENS + _render(history, arm),
+                    "input": "",
+                    "output": token,
+                    "images": views,
+                }
+                for arm, token in (("left", tok_l), ("right", tok_r))
+            ]
+        if scheme == "once":
+            return [{
+                "instruction": DUAL_IMAGE_TOKENS + _render(history, ""),
+                "input": "",
+                "output": f"{tok_l} {tok_r}",
+                "images": views,
+            }]
+        return [{
+            "messages": [
+                {"role": "user", "content": DUAL_IMAGE_TOKENS + _render(history, "")},
+                {"role": "assistant", "content": tok_l},
+                {"role": "user", "content": followup_template},
+                {"role": "assistant", "content": tok_r},
+            ],
+            "images": views,
+        }]
+
+    samples: list[dict] = []
+    history: dict[str, list[str]] = {"left": [], "right": []}
+    last_action_idx = -1
+
+    for i, step in enumerate(steps):
+        tok_l = step["left"]["token"]
+        tok_r = step["right"]["token"]
+        if tok_l not in DUAL_ACTION_TOKENS or tok_r not in DUAL_ACTION_TOKENS:
+            continue
+        last_action_idx = i
+
+        # Render against the history BEFORE this step, then fold this step into it.
+        samples.extend(_emit(step, history, tok_l, tok_r))
+        for arm, token in (("left", tok_l), ("right", tok_r)):
+            if token in DUAL_HISTORY_TOKENS:
+                history[arm].append(token)
+
+    if last_action_idx >= 0:
+        samples.extend(_emit(steps[last_action_idx], history, DONE_TOKEN, DONE_TOKEN))
+
+    return samples
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -442,6 +612,30 @@ def main() -> None:
         "--piper", action="store_const", const="piper", dest="embodiment_view",
         help="Lite mode: use the Piper (egocentric) prompt prompts/<version>/piper_mvtoken_lite.txt.",
     )
+    view_group.add_argument(
+        "--dual", action="store_const", const="dual", dest="embodiment_view",
+        help="Dual-arm (piper-dual): three cameras (agentview + wrist_left + wrist_right) and one "
+             "token per arm per step. Requires one of --twice / --once / --chain, which selects "
+             "prompts/<version>/dual_mvtoken_<scheme>.txt AND the sample shape.",
+    )
+    scheme_group = parser.add_mutually_exclusive_group()
+    scheme_group.add_argument(
+        "--twice", action="store_const", const="twice", dest="dual_scheme",
+        help="--dual: TWO VLM calls per step (two Alpaca samples, both with all three views; the "
+             "prompt says which arm to answer for). The right call does not see the left token, "
+             "so the two calls can be batched in parallel at inference.",
+    )
+    scheme_group.add_argument(
+        "--once", action="store_const", const="once", dest="dual_scheme",
+        help="--dual: ONE VLM call per step emitting both tokens as '<left> <right>' (one Alpaca "
+             "sample). Cheapest; the right token is conditioned on the left via autoregression.",
+    )
+    scheme_group.add_argument(
+        "--chain", action="store_const", const="chain", dest="dual_scheme",
+        help="--dual: ONE image forward, TWO answers -- a ShareGPT sample with two assistant "
+             "turns (left token, follow-up user turn, right token). Register the output with "
+             "formatting=sharegpt + columns.messages, NOT the Alpaca columns.",
+    )
     parser.add_argument(
         "--output", type=Path, default=None,
         help="Output JSON path. Defaults to rollout[_subgoal].json inside the rollout dir "
@@ -463,6 +657,14 @@ def main() -> None:
     parser.add_argument(
         "--jsonl", action="store_true", default=False,
         help="Write output as JSON Lines (.jsonl) instead of a JSON array.",
+    )
+    parser.add_argument(
+        "--video-slot", action="store_true", default=False,
+        help="Emit the two views as video frames ('<video>' + 'videos') instead of two images. "
+             "Qwen fuses every 2 frames into one temporal patch, so the sample costs half the "
+             "visual tokens (64 vs 128 at 256x256) but the two viewpoints get mixed. "
+             "Training yaml must set video_fps (it decides the '<0.2 seconds>' timestamp text) "
+             "and video_max_pixels; eval must use the same values.",
     )
     parser.add_argument(
         "--use-subgoal", action="store_true", default=False,
@@ -492,6 +694,20 @@ def main() -> None:
         parser.error("--use-subgoal and --use-affordance are mutually exclusive.")
     mode = "subgoal" if args.use_subgoal else "affordance" if args.use_affordance else "lite"
 
+    dual = args.embodiment_view == "dual"
+    if dual:
+        if not args.dual_scheme:
+            parser.error("--dual requires exactly one of --twice / --once / --chain.")
+        if mode != "lite":
+            parser.error("--dual supports the lite prompt only (no --use-subgoal / --use-affordance).")
+        if args.video_slot:
+            parser.error(
+                "--dual is incompatible with --video-slot: three views cannot be paired into "
+                "Qwen's 2-frame temporal patches."
+            )
+    elif args.dual_scheme:
+        parser.error("--twice / --once / --chain are only meaningful with --dual.")
+
     rollout_dirs = _expand_dirs(args.rollout_dirs)
     if not rollout_dirs:
         print("No valid rollout directories found.", file=sys.stderr)
@@ -501,6 +717,8 @@ def main() -> None:
     stem = {"subgoal": "rollout_subgoal", "affordance": "rollout_affordance"}.get(
         mode, "rollout"
     )
+    if dual:
+        stem = f"rollout_dual_{args.dual_scheme}"
     default_filename = stem + ext
     single = len(rollout_dirs) == 1
     if args.output is not None:
@@ -520,7 +738,13 @@ def main() -> None:
         dirname, _, task_desc = entry.partition("=")
         task_map[dirname.strip()] = task_desc.strip()
 
-    if mode == "lite" and args.embodiment_view:
+    followup_template: str | None = None
+    if dual:
+        # --twice / --once / --chain select BOTH the prompt and the sample shape.
+        prompt_template = _load_prompt(args.version, f"dual_mvtoken_{args.dual_scheme}.txt")
+        if args.dual_scheme == "chain":
+            followup_template = _load_prompt(args.version, "dual_mvtoken_chain_right.txt").strip()
+    elif mode == "lite" and args.embodiment_view:
         # --franka / --piper select the embodiment-specific lite prompt under prompts/<version>/.
         prompt_template = _load_prompt(args.version, f"{args.embodiment_view}_mvtoken_lite.txt")
     else:
@@ -565,15 +789,25 @@ def main() -> None:
 
     all_samples: list[dict] = []
     for d in rollout_dirs:
-        samples = convert_rollout(
-            d,
-            prompt_template=prompt_template,
-            mode=mode,
-            task_override=_resolve_task(d),
-            gripper_color=args.gripper_color,
-            config_dir=_config_dir(d),
-        )
-        print(f"{d.name}: {len(samples)} action steps")
+        if dual:
+            samples = convert_dual_rollout(
+                d,
+                prompt_template=prompt_template,
+                scheme=args.dual_scheme,
+                followup_template=followup_template,
+                task_override=_resolve_task(d),
+            )
+        else:
+            samples = convert_rollout(
+                d,
+                prompt_template=prompt_template,
+                mode=mode,
+                task_override=_resolve_task(d),
+                gripper_color=args.gripper_color,
+                config_dir=_config_dir(d),
+                video_slot=args.video_slot,
+            )
+        print(f"{d.name}: {len(samples)} samples")
         all_samples.extend(samples)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

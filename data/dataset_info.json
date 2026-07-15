@@ -35,6 +35,38 @@
       "images": "images"
     }
   },
+  "dual_cloth_v4_twice": {
+    "file_name": "agentrobot/MVTOKEN/dual_cloth/v4/rollout_dual_twice.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "dual_cloth_v4_once": {
+    "file_name": "agentrobot/MVTOKEN/dual_cloth/v4/rollout_dual_once.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "dual_cloth_v4_chain": {
+    "file_name": "agentrobot/MVTOKEN/dual_cloth/v4/rollout_dual_chain.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "mix_22_27_04_v3_lite": {
     "file_name": "agentrobot/MVTOKEN/mix_22_27_04/v3/rollout_lite.json",
     "columns": {
@@ -51,6 +83,15 @@
       "query": "input",
       "response": "output",
       "images": "images"
+    }
+  },
+  "mix_22_27_v3_lite_video": {
+    "file_name": "agentrobot/MVTOKEN/mix_22_27/v3/rollout_lite_video.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "videos": "videos"
     }
   },
   "mvtoken_0622_v2_lite": {
@@ -78,6 +119,15 @@
       "query": "input",
       "response": "output",
       "images": "images"
+    }
+  },
+  "overfit_video": {
+    "file_name": "agentrobot/overfit_test/rollout_000_video.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "videos": "videos"
     }
   },
   "identity": {

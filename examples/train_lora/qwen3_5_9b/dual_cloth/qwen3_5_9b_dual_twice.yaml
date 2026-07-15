@@ -1,0 +1,56 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution (3 views -> ~192 vis tokens)
+trust_remote_code: true
+# flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# TWICE: two VLM calls per step -> 2 Alpaca samples per step (4364), both carrying all three
+# views; the prompt's {arm} says which arm to answer. The right sample does NOT see the left
+# token, so at inference the two calls stay conditionally independent and can be batched.
+dataset: dual_cloth_v4_twice
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/dual_cloth/twice
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: qwen3.5-9b-robot-dual_cloth-twice
+
+### train
+# 4364 samples (26 rollouts x ~84 steps x 2 arms), 1 H200 (single card), batch=4, grad_acc=8
+# -> eff_bs=32 -> ~136 steps/epoch. 20 epochs ≈ 2730 steps.
+# NOTE: twice has 2x the samples of once/chain but 1 target token each, so one epoch still
+# carries the same gradient signal (both arms of every frame) -- epochs stay comparable.
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 20.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 9B×bf16=18GB fits easily in H200 141GB, less comm overhead)
+deepspeed: examples/deepspeed/ds_z2_config.json

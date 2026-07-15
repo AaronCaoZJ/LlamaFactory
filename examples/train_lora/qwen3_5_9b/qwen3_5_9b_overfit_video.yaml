@@ -1,0 +1,52 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+# 两路相机走 video 槽位：agentview / wrist 是 <video> 的两"帧"，不再是两张 <image>。
+# Qwen 的 patch embed 是 3D conv（temporal_patch_size=2），两帧被融合成一组视觉 token：
+# 64 个而不是 128 个（256x256 下），代价是两个视角在每个空间位置被混合。详见 HANDOFF §2.5。
+video_max_pixels: 65536    # 256x256，与 image 版的 image_max_pixels 对齐
+video_min_pixels: 1024
+video_fps: 2.0             # ⚠️ 决定 prompt 里的 "<0.2 seconds>" 时间戳文本；评测生成 mp4 必须用同一个 fps
+video_maxlen: 128
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.0   # disable dropout for overfitting test
+lora_target: all
+
+### dataset
+dataset: overfit_video
+template: qwen3_5_nothink
+cutoff_len: 512
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）；全量重算仅 ~17s
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/overfit_video
+logging_steps: 1
+save_steps: 50
+plot_loss: true
+overwrite_output_dir: true
+report_to: wandb
+run_name: qwen3.5-9b-robot-overfit_video
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-4   # higher LR to overfit faster
+num_train_epochs: 30
+lr_scheduler_type: constant  # no decay, we want to overfit
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 9B×bf16=18GB fits in H200 141GB, less comm overhead)
+deepspeed: examples/deepspeed/ds_z2_config.json

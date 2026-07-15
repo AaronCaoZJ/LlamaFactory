@@ -13,14 +13,14 @@ source "$(
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
-GPU="${GPU:-7}"
+GPU="${GPU:-4}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
 
 # ================================================================================
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8102}"
-GPU_UTIL="${GPU_UTIL:-0.7}"
+GPU_UTIL="${GPU_UTIL:-0.5}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192
@@ -33,6 +33,7 @@ SAVES="${LF_ROOT}/saves/qwen3.5-2b/robot"
 LORA_MODULES=(
   "mix_22_27_v3_2=${SAVES}/mix_22_27_v3"
   "mix_22-06_fk-pp_02_2=${SAVES}/mix_22-06_fk-pp/02_exchange_token"
+  "zechen_repro=/workspace1/zechen/finetune/lora/Qwen3.5-2b"
 )
 
 # LF 对齐的 chat template（必需）。Qwen3.5 官方模板即使 enable_thinking=false 也会在

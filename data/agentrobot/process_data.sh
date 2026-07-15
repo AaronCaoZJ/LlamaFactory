@@ -8,6 +8,7 @@ DATA_DIR_0627=data/agentrobot/MVTOKEN/0627_cleaned
 DATA_DIR_0704=data/agentrobot/MVTOKEN/0704_cleaned
 MIX_DIR=data/agentrobot/MVTOKEN/mix_22_27_04
 PIPER_DIR_0705=data/agentrobot/MVTOKEN/0705_piper
+DUAL_DIR_CLOTH=data/agentrobot/MVTOKEN/dual_cloth
 
 TASK_MAP_0622=(
     "pap_banana=pick up the banana and place it on the blue plate"
@@ -40,6 +41,9 @@ TASK_MAP_0705_PIPER=(
     "stack_gray_cup=pick up the gray cup and stack it on the yellow cup"
     "rearrange_show=rearrange the letters to spell \"SHOW\""
 )
+
+TASK_DUAL_CLOTH="fold the black t-shirt"
+
 # --version <vX> selects the prompt folder AgentRobot/prompts/<vX>/ (fixed per-mode filenames:
 # lite=mvtoken_generator_lite.txt, affordance=mvtoken_generator_affordance.txt,
 # subgoal=mvtoken_generator.txt). Keep --version aligned with the output subdir below.
@@ -119,19 +123,58 @@ EOF
 # Output: MVTOKEN/0705_piper/v3/rollout_lite.json (registered as mvtoken_0705_piper_v3_lite).
 # ========================================
 EOF
+# python data/agentrobot/rollout_to_llamafactory.py \
+#     "$PIPER_DIR_0705"/pap_banana \
+#     "$PIPER_DIR_0705"/pap_blue_block \
+#     "$PIPER_DIR_0705"/pap_orange_block \
+#     "$PIPER_DIR_0705"/pap_tennis \
+#     "$PIPER_DIR_0705"/pap_wrench \
+#     "$PIPER_DIR_0705"/pap_mango \
+#     "$PIPER_DIR_0705"/stack_gray_cup \
+#     "$PIPER_DIR_0705"/rearrange_show \
+#     --version v4 \
+#     --piper \
+#     --task-map "${TASK_MAP_0705_PIPER[@]}" \
+#     --output "$PIPER_DIR_0705"/v4/rollout_lite.json
+
+
+: <<'EOF'
+# ========================================
+# Dual-arm (piper-dual) 0713 cloth folding — v4, THREE schemes off the SAME 26 rollouts.
+# Three cameras (agentview + wrist_left + wrist_right) and one token per arm per step; the arms
+# are teleoperated independently, so STILL (one arm waits for the other) is part of the vocab.
+#
+# --dual is the hardware flag (like --franka / --piper) and picks prompts/v4/dual_mvtoken_*.txt;
+# the scheme flag picks BOTH the prompt and the sample shape:
+#   --twice  2 VLM calls/step -> 2 Alpaca samples/step (4364). Both calls see all 3 views; the
+#            right call does NOT see the left token, so they can be batched in parallel.
+#   --once   1 VLM call/step  -> 1 Alpaca sample/step (2182), output "<left> <right>".
+#   --chain  1 image forward, 2 answers -> 1 ShareGPT sample/step (2182), two assistant turns.
+#
+# Registered as dual_cloth_v4_{twice,once,chain} in data/dataset_info.json. NOTE: the chain set
+# is ShareGPT (formatting=sharegpt + columns.messages), the other two are Alpaca.
+# ========================================
+EOF
 python data/agentrobot/rollout_to_llamafactory.py \
-    "$PIPER_DIR_0705"/pap_banana \
-    "$PIPER_DIR_0705"/pap_blue_block \
-    "$PIPER_DIR_0705"/pap_orange_block \
-    "$PIPER_DIR_0705"/pap_tennis \
-    "$PIPER_DIR_0705"/pap_wrench \
-    "$PIPER_DIR_0705"/pap_mango \
-    "$PIPER_DIR_0705"/stack_gray_cup \
-    "$PIPER_DIR_0705"/rearrange_show \
+    "$DUAL_DIR_CLOTH" \
     --version v4 \
-    --piper \
-    --task-map "${TASK_MAP_0705_PIPER[@]}" \
-    --output "$PIPER_DIR_0705"/v4/rollout_lite.json
+    --dual --twice \
+    --task "$TASK_DUAL_CLOTH" \
+    --output "$DUAL_DIR_CLOTH"/v4/rollout_dual_twice.json
+
+python data/agentrobot/rollout_to_llamafactory.py \
+    "$DUAL_DIR_CLOTH" \
+    --version v4 \
+    --dual --once \
+    --task "$TASK_DUAL_CLOTH" \
+    --output "$DUAL_DIR_CLOTH"/v4/rollout_dual_once.json
+
+python data/agentrobot/rollout_to_llamafactory.py \
+    "$DUAL_DIR_CLOTH" \
+    --version v4 \
+    --dual --chain \
+    --task "$TASK_DUAL_CLOTH" \
+    --output "$DUAL_DIR_CLOTH"/v4/rollout_dual_chain.json
 
 
 : <<'EOF'
