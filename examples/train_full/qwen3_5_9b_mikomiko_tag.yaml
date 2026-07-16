@@ -1,0 +1,56 @@
+### model
+# 9B 全参微调基线;对照 examples/train_full/qwen3_5_2b_mikomiko_tag.yaml(仅改 model/batch/ds/输出路径)。
+# 权重需先下载:HF repo `Qwen/Qwen3.5-9B` -> ${MODELS_DIR}/Qwen3.5-9B(见 claude_todo_0716.md 任务2)。
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 262144    # 512x512 cap;与 2b 一致,便于同口径对照(降到 65536=256²可省显存)
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full            # 全参数微调
+freeze_vision_tower: false       # 全参 -> 视觉塔也训(OOM 时先设 true 省显存,handoff P9 建议先冻结对照)
+freeze_multi_modal_projector: false
+
+### dataset
+dataset: mikomiko_tag_train
+# 换更大数据集(如 train_330w)后:改 dataset= 新注册名,并删下方 tokenized_path 目录(缓存按原文本键,换数据必失效)
+eval_dataset: mikomiko_tag_test_unseen_mini,mikomiko_tag_test_stratified_mini
+template: qwen3_5_nothink
+cutoff_len: 1024
+preprocessing_num_workers: 32
+dataloader_num_workers: 16
+tokenized_path: saves/qwen3.5-9b/mikomiko/tokenized_full_v0   # 首跑 tokenize 一次;换 dataset/template/cutoff 须删此目录
+
+### output
+output_dir: saves/qwen3.5-9b/mikomiko/full_v0
+logging_steps: 10
+save_steps: 2000
+save_total_limit: 2          # 9b 全参 ckpt ~100GB/个(权重18+优化器态);只留 2 个防撑爆盘
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false       # 保优化器态可续训;盘紧时设 true 省 ~72GB/ckpt(不可续训)
+report_to: wandb
+run_name: qwen3.5-9b-mikomiko-full_v0
+
+### train
+# 有效 batch 对齐 2b(96):8 卡 × per_device 4 × grad_accum 3 = 96。9b 全参单卡放不下 32,故降 per_device。
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 3
+learning_rate: 1.0e-5            # 全参 SFT;与 2b 同 LR 起步(handoff 结论:1e-5 已在合理区间,勿盲目加大)
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+
+### eval
+per_device_eval_batch_size: 4
+eval_strategy: steps
+eval_steps: 1000
+
+### distributed
+# 9b 全参:ZeRO-3 全分片(参数+梯度+优化器态都切),8×H200(141G)可放下含视觉塔全参。
+# 若吞吐吃紧且显存够,可试 ds_z2(仅分片优化器态,更快但每卡约 +30G);先用 z3 保稳。
+deepspeed: examples/deepspeed/ds_z3_config.json
