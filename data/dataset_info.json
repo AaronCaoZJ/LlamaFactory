@@ -17,6 +17,15 @@
       "images": "images"
     }
   },
+  "mix_22-06_fk-pp_02_exchange_token_history2": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token_history2/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mix_22-06_fk-pp_03_just_mix": {
     "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite.json",
     "columns": {
