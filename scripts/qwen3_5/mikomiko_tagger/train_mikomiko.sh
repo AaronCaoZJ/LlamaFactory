@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* 覆盖项: GPU | CKPT_ROOT | CKPT_STEP | LR | EPOCHS | RUN_NAME | OUT_DIR
 
-# Full-parameter SFT of Qwen3.5-2B on the mikomiko image->tag task, RESUMED from a prior checkpoint.
+# Full-parameter SFT of Qwen3.5-2B on the mikomiko image->tag task, starting from the base model.
 # Builds the dataset first if its jsonl files are missing, then launches training. Ctrl-C to stop.
 set -euo pipefail
 
@@ -42,40 +42,46 @@ source "${VENV_PATH}/bin/activate"
 
 # ============================================================
 #! Build dataset (plan -> download) if the jsonl files are missing
-DATA_DIR="${LF_ROOT}/data/mikomiko_tag"
-BUILDER="${DATA_DIR}/dataset_builder.py"
+# DATA_DIR="${LF_ROOT}/data/mikomiko_tag"
+# BUILDER="${DATA_DIR}/dataset_builder.py"
 
-if [ ! -f "${DATA_DIR}/train.jsonl" ] || [ ! -f "${DATA_DIR}/test_unseen.jsonl" ] \
-   || [ ! -f "${DATA_DIR}/test_stratified.jsonl" ]; then
-  echo "Building mikomiko tag dataset (train + two test sets) ..."
-  python "${BUILDER}" --plan
-  python "${BUILDER}" --download
-fi
+# if [ ! -f "${DATA_DIR}/train.jsonl" ] || [ ! -f "${DATA_DIR}/test_unseen.jsonl" ] \
+#    || [ ! -f "${DATA_DIR}/test_stratified.jsonl" ]; then
+#   echo "Building mikomiko tag dataset (train + two test sets) ..."
+#   python "${BUILDER}" --plan
+#   python "${BUILDER}" --download
+# fi
 
 # ============================================================
-#! Launch training (resume from a prior checkpoint under ${MODELS_DIR})
+#! Launch training (from scratch on the base model)
 TRAIN_CONFIG="${LF_ROOT}/examples/train_full/qwen3_5_2b_mikomiko_tag.yaml"
-CKPT_STEP="${CKPT_STEP:-11530}"  # resume from this step
-CKPT="${CKPT:-${MODELS_DIR}/Mikomiko_pornpic_tagger/checkpoint-${CKPT_STEP}}"
 
-LR="${LR:-5e-6}"
+# Resume settings are kept here only as a commented reference.
+# CKPT_STEP="${CKPT_STEP:-11530}"
+# CKPT="${CKPT:-${MODELS_DIR}/Mikomiko_pornpic_tagger/checkpoint-${CKPT_STEP}}"
+
+# LR="${LR:-5e-6}"
 EPOCHS="${EPOCHS:-2.0}"
-RUN_NAME="${RUN_NAME:-qwen3.5-2b-mikomiko-resume${CKPT_STEP}-lr${LR}}"
-OUT_DIR="${OUT_DIR:-saves/qwen3.5-2b/mikomiko/full_v0_resume${CKPT_STEP}}"
+BASE_MODEL="${BASE_MODEL:-${MODELS_DIR}/Qwen3.5-2B}"
+# RUN_NAME="${RUN_NAME:-qwen3.5-2b-mikomiko-fromscratch-lr${LR}}"
+# OUT_DIR="${OUT_DIR:-saves/qwen3.5-2b/mikomiko/full_v1}"
 
-echo "Starting training on GPU=${GPU} (resume ${CKPT}) ..."
+echo "Starting training on GPU=${GPU} (from scratch: ${BASE_MODEL}) ..."
 cd "${LF_ROOT}"
-
-# Fresh full_v0 training (no resume): uncomment to train from the base model instead.
-# exec env CUDA_VISIBLE_DEVICES="${GPU}" \
-#   llamafactory-cli train "${TRAIN_CONFIG}" model_name_or_path="${MODELS_DIR}/Qwen3.5-2B"
 
 exec env CUDA_VISIBLE_DEVICES="${GPU}" \
   llamafactory-cli train "${TRAIN_CONFIG}" \
-    model_name_or_path="${CKPT}" \
-    resume_from_checkpoint="${CKPT}" \
-    learning_rate="${LR}" \
-    run_name="${RUN_NAME}" \
-    output_dir="${OUT_DIR}" \
+    model_name_or_path="${BASE_MODEL}" \
     num_train_epochs="${EPOCHS}" \
     overwrite_output_dir=false
+
+# If you need to resume later, restore the block below and point CKPT to a checkpoint dir.
+# exec env CUDA_VISIBLE_DEVICES="${GPU}" \
+#   llamafactory-cli train "${TRAIN_CONFIG}" \
+#     model_name_or_path="${CKPT}" \
+#     resume_from_checkpoint="${CKPT}" \
+#     learning_rate="${LR}" \
+#     run_name="${RUN_NAME}" \
+#     output_dir="${OUT_DIR}" \
+#     num_train_epochs="${EPOCHS}" \
+#     overwrite_output_dir=false

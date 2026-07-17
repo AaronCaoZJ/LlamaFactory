@@ -86,7 +86,7 @@ def _training_function(config: dict[str, Any]) -> None:
     if getattr(training_args, "profile_modules", None):
         callbacks.append(ModuleProfilerCallback(training_args.profile_modules))
 
-    callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
+    callbacks.append(ReporterCallback(training_args, model_args, data_args, finetuning_args, generating_args))  # add to last
 
     if finetuning_args.stage in ["pt", "sft"] and finetuning_args.use_hyper_parallel:
         if not is_hyper_parallel_available():

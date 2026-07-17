@@ -143,6 +143,10 @@ class Fp8Arguments:
 class TrainingArguments(ProfilerArguments, Fp8Arguments, RayArguments, BaseTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
+    wandb_entity: str | None = field(
+        default=None,
+        metadata={"help": "The W&B entity (user or team) to log to."},
+    )
     overwrite_output_dir: bool = field(
         default=False,
         metadata={"help": "deprecated"},

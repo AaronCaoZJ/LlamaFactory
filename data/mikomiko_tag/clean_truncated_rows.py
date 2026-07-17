@@ -25,12 +25,13 @@ Everything removed is written to removed_truncated.jsonl (audit trail), never si
 Usage:
     python clean_truncated_rows.py            # dry run: report only
     python clean_truncated_rows.py --apply
+    python clean_truncated_rows.py --apply --output-dir jsonl_0716/cleaned
 """
 import argparse, json, os, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-JSONL_DIR = os.path.join(HERE, "jsonl")
-REMOVED = os.path.join(JSONL_DIR, "removed_truncated.jsonl")
+JSONL_DIR = os.path.join(HERE, "jsonl_0716")
+DEFAULT_OUTPUT_DIR = os.path.join(JSONL_DIR, "cleaned")
 
 MAX_TAG_CHARS = 64          # longest legitimate tag is 24 chars ("Skinny Black Hairy Pussy")
 # A 1-4 word phrase repeated >=3 times in a row. Catches the loop itself rather than one hard-coded
@@ -72,8 +73,14 @@ def clean_record(rec):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--apply", action="store_true", help="rewrite the files (default: dry run)")
+    ap.add_argument(
+        "--output-dir",
+        default=DEFAULT_OUTPUT_DIR,
+        help=f"write cleaned jsonl files to this directory (default: {DEFAULT_OUTPUT_DIR})",
+    )
     args = ap.parse_args()
     tag = "apply" if args.apply else "dry"
+    output_dir = os.path.abspath(args.output_dir)
 
     audit, n_dropped, n_stripped = [], 0, 0
     for name in TARGETS:
@@ -103,20 +110,24 @@ def main():
               f"   drop {dropped}, strip {stripped}")
 
         if args.apply and (dropped or stripped):
-            tmp = path + ".tmp"                          # write-then-rename: never a half file
+            os.makedirs(output_dir, exist_ok=True)
+            out_path = os.path.join(output_dir, name)
+            tmp = out_path + ".tmp"                      # write-then-rename: never a half file
             with open(tmp, "w", encoding="utf-8") as f:
                 f.writelines(out_lines)
-            os.replace(tmp, path)
+            os.replace(tmp, out_path)
 
     print(f"\n{n_dropped} rows dropped, {n_stripped} rows had a tag stripped.")
     if not args.apply:
         print("Dry run — re-run with --apply to rewrite.")
         return
     if audit:
-        with open(REMOVED, "w", encoding="utf-8") as f:
+        os.makedirs(output_dir, exist_ok=True)
+        removed_path = os.path.join(output_dir, "removed_truncated.jsonl")
+        with open(removed_path, "w", encoding="utf-8") as f:
             for r in audit:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        print(f"Audit trail -> {REMOVED}")
+        print(f"Audit trail -> {removed_path}")
     else:
         print("Nothing to clean — files were already clean.")
 

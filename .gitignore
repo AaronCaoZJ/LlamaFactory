@@ -197,7 +197,11 @@ predictions_score.json
 /.ai/agent_todo/
 
 /data/mikomiko_tag/img/
-/data/mikomiko_tag/pornpic_tag_recognition_pornpic_tag_full_001.csv
-/data/mikomiko_tag/pornstars620_100k-sample-posts_category-tags.csv
+/data/mikomiko_tag/img_0716/
 /data/mikomiko_tag/jsonl/
+/data/mikomiko_tag/jsonl_0716/
 /data/mikomiko_tag/onlyfans/
+
+/data/mikomiko_tag/*.csv
+/data/mikomiko_tag/pornpics_tag_cover_dataset_20260716
+/data/mikomiko_tag/mix_train.jsonl

@@ -886,8 +886,44 @@
     },
     "folder": "python"
   },
+  "mikomiko_tag_mix_train": {
+    "file_name": "mikomiko_tag/mix_train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_0716_train": {
+    "file_name": "mikomiko_tag/jsonl_0716/train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_0716_test_unseen": {
+    "file_name": "mikomiko_tag/jsonl_0716/test_unseen.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_tag_0716_test_unseen_mini": {
+    "file_name": "mikomiko_tag/jsonl_0716/test_unseen_mini.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mikomiko_tag_train": {
-    "file_name": "mikomiko_tag/jsonl/train.jsonl",
+    "file_name": "mikomiko_tag/jsonl/cleaned/train.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -896,7 +932,7 @@
     }
   },
   "mikomiko_tag_test_unseen": {
-    "file_name": "mikomiko_tag/jsonl/test_unseen.jsonl",
+    "file_name": "mikomiko_tag/jsonl/cleaned/test_unseen.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -905,7 +941,7 @@
     }
   },
   "mikomiko_tag_test_stratified": {
-    "file_name": "mikomiko_tag/jsonl/test_stratified.jsonl",
+    "file_name": "mikomiko_tag/jsonl/cleaned/test_stratified.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",

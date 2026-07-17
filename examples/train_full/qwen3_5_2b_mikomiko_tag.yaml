@@ -13,7 +13,7 @@ freeze_vision_tower: false       # 全参数 -> also tune the vision tower (set 
 freeze_multi_modal_projector: false
 
 ### dataset
-dataset: mikomiko_tag_train
+dataset: mikomiko_tag_mix_train
 # In-loop eval = 200-sample minis of EACH test set (fast monitoring). Run the FULL test_unseen
 # (122,870) + test_stratified (1,945) separately after training for real per-set metrics.
 eval_dataset: mikomiko_tag_test_unseen_mini,mikomiko_tag_test_stratified_mini
@@ -23,10 +23,10 @@ preprocessing_num_workers: 32
 dataloader_num_workers: 16
 # cache tokenized dataset -> first run tokenizes 1.1M once, later runs load instantly.
 # DELETE this dir if you change dataset/template/cutoff_len (cache is keyed to raw text only).
-tokenized_path: saves/qwen3.5-2b/mikomiko/tokenized_full_v0
+tokenized_path: saves/qwen3.5-2b/mikomiko/tokenized_full_v1
 
 ### output
-output_dir: saves/qwen3.5-2b/mikomiko/full_v0
+output_dir: saves/qwen3.5-2b/mikomiko/full_v1
 logging_steps: 10
 save_steps: 2000
 save_total_limit: 3          # bound disk: keep only 3 latest ckpts (full-SFT ckpt ~29GB each)
@@ -34,12 +34,14 @@ plot_loss: true
 overwrite_output_dir: true
 save_only_model: false       # keep optimizer state -> resumable (drop to true to save ~24GB/ckpt)
 report_to: wandb
-run_name: qwen3.5-2b-mikomiko-full_v0
+project: llamafactory
+wandb_entity: lovashi514-nus
+run_name: qwen3.5-2b-mikomiko-full_v1
 
 ### train
 per_device_train_batch_size: 32
 gradient_accumulation_steps: 1
-learning_rate: 1.0e-5            # full finetune -> smaller LR than LoRA
+learning_rate: 1.5e-5            # full finetune -> smaller LR than LoRA
 num_train_epochs: 1.0            # 1.1M samples; 1 epoch (~17.3k steps, ~8h) to start. raise if underfit
 lr_scheduler_type: cosine
 warmup_ratio: 0.05
