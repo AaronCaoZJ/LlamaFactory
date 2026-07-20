@@ -40,17 +40,18 @@ SAVES="/workspace1/zechen/finetune/lora"
 #   "internvl3.5-4b=${SAVES}/InternVL3.5-4b"
 # )
 
-# PORT="${PORT:-8202}"
-# BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-2B-HF"
-# LORA_MODULES=(
-#   "internvl3.5-2b=${SAVES}/InternVL3.5-2b"
-# )
-
-PORT="${PORT:-8201}"
-BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-1B-HF"
+PORT="${PORT:-8202}"
+BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-2B-HF"
 LORA_MODULES=(
-  "internvl3.5-1b=${SAVES}/InternVL3.5-1b"
+  "internvl3.5-2b=${SAVES}/InternVL3.5-2b"
+  "internvl3.5-2b-History2=${SAVES}/InternVL3.5-2b-History2"
 )
+
+# PORT="${PORT:-8201}"
+# BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-1B-HF"
+# LORA_MODULES=(
+#   "internvl3.5-1b=${SAVES}/InternVL3.5-1b"
+# )
 
 # LF 对齐的 chat template（必需）。InternVL3.5-HF 自带的 chat_template.jinja 与 LF
 # 'template: intern_vl' 的训练分布差 35 个 token：(1) 它完全不注入 system，而 LF 在数据集

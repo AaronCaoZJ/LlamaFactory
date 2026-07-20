@@ -984,5 +984,32 @@
       "response": "output",
       "images": "images"
     }
+  },
+  "ms0717_blockpap_oracle": {
+    "file_name": "agentrobot/MVTOKEN/ms_0717/blockpap_oracle/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "ms0717_pickcube_follow": {
+    "file_name": "agentrobot/MVTOKEN/ms_0717/pickcube_follow/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "ms0717_stackcube_follow": {
+    "file_name": "agentrobot/MVTOKEN/ms_0717/stackcube_follow/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }

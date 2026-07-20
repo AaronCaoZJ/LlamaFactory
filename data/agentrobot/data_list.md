@@ -37,3 +37,11 @@
 - Mix of data till 0706
 - ~120 from Franka and ~60 from Piper
 - v3 for just_mix train, and v4 for hardware aware prompt, LlamaFactory/scripts/qwen3_5/train/mix_fk-pp_train.sh for more details
+
+### ms_0717 (ManiSkill 仿真, 2 cm 原子, 0717)
+- @/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/ms_0717
+- **38 rollouts / 1670 pairs, 3 子集 = 2 种闭环方案**(生成脚本 @AgentRobot/scripts/maniskill/,README 同目录)
+- 相机对齐 BlockPAP real2sim(标定前视 external_cam 640×480 + 居中腕相机 256²,wrist 已按部署 transform 翻转);每 token ≙ 2 cm,**每帧后严格沿单轴移动**
+- `ms0717_blockpap_oracle`(方案 A,24 集,BlockPAP 白桌面特权 oracle)+ `ms0717_{pick,stack}cube_follow`(方案 D,闭环重执行,各 7 集);步长 19.6-19.7±0.3-0.8 mm,离轴 0%,零振荡,每集过任务成功校验
+- **离线分解方案 B/C 已删**:其帧取自连续演示轨迹,单轴 token 常对应斜向帧间位移(实测离轴比 65-72%、40-65% 步 >1cm 离轴),帧-标签失配,不可训练
+- v3 prompt;可视化 dataset_browser.html + 各子集 preview.mp4 在数据目录内
