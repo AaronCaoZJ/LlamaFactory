@@ -20,7 +20,7 @@ export CUDA_VISIBLE_DEVICES="${GPU}"
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8109}"
-GPU_UTIL="${GPU_UTIL:-0.6}"
+GPU_UTIL="${GPU_UTIL:-0.7}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192

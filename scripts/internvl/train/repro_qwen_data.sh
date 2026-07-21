@@ -18,7 +18,7 @@ if [ -z "${MODEL_PATH:-}" ]; then
   done
   MODEL_PATH="${MODEL_PATH:-/workspace1/zechen/hf_download/InternVL3_5-2B-HF}"
 fi
-GPUS="${GPUS:-4,6}"
+GPUS="${GPUS:-4,5}"
 
 cd "${LF_ROOT}"
 

@@ -1011,5 +1011,14 @@
       "response": "output",
       "images": "images"
     }
+  },
+  "ms0717_blockpap_oracle_wide": {
+    "file_name": "agentrobot/MVTOKEN/ms_0717/blockpap_oracle_wide/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }

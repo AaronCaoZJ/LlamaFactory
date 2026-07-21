@@ -40,8 +40,8 @@
 
 ### ms_0717 (ManiSkill 仿真, 2 cm 原子, 0717)
 - @/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/ms_0717
-- **38 rollouts / 1670 pairs, 3 子集 = 2 种闭环方案**(生成脚本 @AgentRobot/scripts/maniskill/,README 同目录)
+- **138 rollouts / 7008 pairs, 4 子集 = 2 种闭环方案**(主力 = `ms0717_blockpap_oracle_wide`,100 集完全随机布局)(生成脚本 @AgentRobot/scripts/maniskill/,README 同目录)
 - 相机对齐 BlockPAP real2sim(标定前视 external_cam 640×480 + 居中腕相机 256²,wrist 已按部署 transform 翻转);每 token ≙ 2 cm,**每帧后严格沿单轴移动**
-- `ms0717_blockpap_oracle`(方案 A,24 集,BlockPAP 白桌面特权 oracle)+ `ms0717_{pick,stack}cube_follow`(方案 D,闭环重执行,各 7 集);步长 19.6-19.7±0.3-0.8 mm,离轴 0%,零振荡,每集过任务成功校验
-- **离线分解方案 B/C 已删**:其帧取自连续演示轨迹,单轴 token 常对应斜向帧间位移(实测离轴比 65-72%、40-65% 步 >1cm 离轴),帧-标签失配,不可训练
+- `ms0717_blockpap_oracle_wide`(方案 A,**100 集**,block+coaster 各在 ~22×43cm 独立随机,间距≥12cm,100/100 成功)· `ms0717_blockpap_oracle`(方案 A,24 集,BlockPAP 原生 random——**coaster 仅 4×2cm 抖动**,多样性差)· `ms0717_{pick,stack}cube_follow`(方案 D,各 7 集);步长 19.6-19.7±0.3-0.8 mm,斜向步 0%,每集过成功校验
+- 已知偏斜:`MV_BACK` 仅 3.4%(机械臂静止位 x≈0.34 在所有物体前方,取物恒为 +X);详见目录 README
 - v3 prompt;可视化 dataset_browser.html + 各子集 preview.mp4 在数据目录内

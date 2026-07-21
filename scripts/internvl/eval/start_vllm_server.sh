@@ -45,6 +45,7 @@ BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-2B-HF"
 LORA_MODULES=(
   "internvl3.5-2b=${SAVES}/InternVL3.5-2b"
   "internvl3.5-2b-History2=${SAVES}/InternVL3.5-2b-History2"
+  "internvl3.5-2b-ms0717_blockpap=/workspace1/zhijun/LlamaFactory/saves/internvl3.5-2b/robot/ms0717_blockpap_oracle_wide"
 )
 
 # PORT="${PORT:-8201}"

@@ -20,7 +20,7 @@ export CUDA_VISIBLE_DEVICES="${GPU}"
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8101}"
-GPU_UTIL="${GPU_UTIL:-0.5}"
+GPU_UTIL="${GPU_UTIL:-0.7}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192
@@ -31,8 +31,8 @@ BASE_MODEL="${MODELS_DIR}/Qwen3.5-27B"
 SAVES="${LF_ROOT}/saves/qwen3.5-27b/robot"
 
 LORA_MODULES=(
-  "mvtoken_0622_v0=${SAVES}/mvtoken_0622_v0"
-  "mvtoken_0622_v1=${SAVES}/mvtoken_0622_v1"
+  # "mvtoken_0622_v0=${SAVES}/mvtoken_0622_v0"
+  # "mvtoken_0622_v1=${SAVES}/mvtoken_0622_v1"
   "mix_22_27_v3=${SAVES}/mix_22_27_v3"
 )
 

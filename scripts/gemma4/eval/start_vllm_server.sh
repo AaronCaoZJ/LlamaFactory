@@ -13,14 +13,14 @@ source "$(
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
-GPU="${GPU:-5}"
+GPU="${GPU:-4}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
 
 # ================================================================================
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8104}"
-GPU_UTIL="${GPU_UTIL:-0.7}"
+GPU_UTIL="${GPU_UTIL:-0.6}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192
