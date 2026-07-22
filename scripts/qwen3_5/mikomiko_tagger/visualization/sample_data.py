@@ -38,20 +38,24 @@ def main():
     ap.add_argument("--n", type=int, default=24, help="samples per split (default 24 = 6 rows of 4)")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--work-dir", default=str(DEFAULT_WORK))
+    ap.add_argument("--jsonl-dir", default=str(JSONL_DIR),
+                    help="dir holding test_unseen_mini.jsonl + train.jsonl (default: the v0 jsonl/ set; "
+                         "pass data/mikomiko_tag/jsonl_0716 to sample the 0716 set)")
     args = ap.parse_args()
+    jsonl_dir = Path(args.jsonl_dir)
     os.makedirs(args.work_dir, exist_ok=True)
     out_path = os.path.join(args.work_dir, "samples.json")
     samples = []
 
     # unseen: from the 200-image mini set (post-level zero overlap with train)
-    rows = [json.loads(l) for l in open(JSONL_DIR / "test_unseen_mini.jsonl", encoding="utf-8")]
+    rows = [json.loads(l) for l in open(jsonl_dir / "test_unseen_mini.jsonl", encoding="utf-8")]
     random.seed(args.seed)
     for r in random.sample(rows, min(args.n, len(rows))):
         samples.append(dict(split="unseen", image=r["images"][0], gemini=r["output"],
                             instruction=r["instruction"]))
 
     # seen: sample train.jsonl by line index (single streaming pass; ~1.1M lines)
-    train_path = JSONL_DIR / "train.jsonl"
+    train_path = jsonl_dir / "train.jsonl"
     n_train = sum(1 for _ in open(train_path, "rb"))
     random.seed(args.seed)
     want = set(random.sample(range(n_train), args.n * 2))   # oversample: some images may be missing

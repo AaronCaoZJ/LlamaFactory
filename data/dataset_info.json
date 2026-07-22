@@ -887,7 +887,7 @@
     "folder": "python"
   },
   "mikomiko_tag_mix_train": {
-    "file_name": "mikomiko_tag/mix_train.jsonl",
+    "file_name": "mikomiko_tag/jsonl_0716/mix/mix_train.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -1014,6 +1014,51 @@
   },
   "ms0717_blockpap_oracle_wide": {
     "file_name": "agentrobot/MVTOKEN/ms_0717/blockpap_oracle_wide/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_desc_0721_smoke_realmix": {
+    "file_name": "mikomiko_tag/jsonl_desc_0721/smoke_realmix.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_desc_0721_smoke": {
+    "file_name": "mikomiko_tag/jsonl_desc_0721/smoke.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_desc_0721_train": {
+    "file_name": "mikomiko_tag/jsonl_desc_0721/train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_desc_0721_test_unseen": {
+    "file_name": "mikomiko_tag/jsonl_desc_0721/test_unseen.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mikomiko_desc_0721_test_unseen_mini": {
+    "file_name": "mikomiko_tag/jsonl_desc_0721/test_unseen_mini.jsonl",
     "columns": {
       "prompt": "instruction",
       "query": "input",

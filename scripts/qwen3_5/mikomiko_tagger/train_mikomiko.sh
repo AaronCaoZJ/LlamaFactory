@@ -55,6 +55,7 @@ source "${VENV_PATH}/bin/activate"
 # ============================================================
 #! Launch training (from scratch on the base model)
 TRAIN_CONFIG="${LF_ROOT}/examples/train_full/qwen3_5_2b_mikomiko_tag.yaml"
+TRAIN_CONFIG="${LF_ROOT}/examples/train_full/qwen3_5_2b_mikomiko_tag.yaml"
 
 # Resume settings are kept here only as a commented reference.
 # CKPT_STEP="${CKPT_STEP:-11530}"

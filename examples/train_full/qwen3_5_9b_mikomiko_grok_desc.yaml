@@ -1,0 +1,68 @@
+### model
+# 9B 全参微调,20260721 描述任务(4 段散文描述,en/ja/zh 三语)。
+# 与 examples/train_full/qwen3_5_9b_mikomiko_tag.yaml 是两个独立任务:那个输出逗号标签列表(~30 tok),
+# 这个输出 ~500-950 tok 的四段描述。除 model/ds 外几乎每项都不同,不要互相 copy 数值。
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 262144    # 512x512 -> patch16 x merge2 = 32px/token -> 256 visual token/图
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+freeze_vision_tower: false
+freeze_multi_modal_projector: false
+
+### dataset
+dataset: mikomiko_desc_0721_train
+eval_dataset: mikomiko_desc_0721_test_unseen_mini
+template: qwen3_5_nothink
+# 1024 会把这个任务的每一条都截断: en 中位数样本就是 470(prompt)+532(输出)+256(图)=1258 tok。
+# 2048 覆盖三语 p99(en~1460 / ja~1790 / zh~1400,含图像与 chat 模板开销)。
+# 实测口径见 data/mikomiko_tag/analyze_0721b.py。改这个值必须删下方 tokenized_path。
+cutoff_len: 2048
+preprocessing_num_workers: 32
+dataloader_num_workers: 16
+# 与 tag 任务分开的缓存目录。缓存按原文本键、不校验 dataset 名,共用会静默拿到旧 token。
+tokenized_path: saves/qwen3.5-9b/mikomiko/tokenized_desc_0721
+
+### output
+output_dir: saves/qwen3.5-9b/mikomiko/grok_desc_v0
+logging_steps: 10
+save_steps: 2000
+save_total_limit: 2          # 9b 全参 ckpt ~100GB/个;共享盘只剩 ~960G,只留 2 个
+plot_loss: true
+overwrite_output_dir: false
+save_only_model: false       # 盘紧时设 true 省 ~72GB/ckpt(代价:不可续训)
+report_to: wandb
+project: llamafactory
+wandb_entity: lovashi514-nus
+run_name: qwen3.5-9b-mikomiko-grok_desc_v0
+
+### train
+# 有效 batch 96 = 8 卡 x per_device 12 x grad_accum 1。
+# per_device 12 是 2026-07-21 在 8xH200 上实测选出的,不是估算
+# (scripts/qwen3_5/mikomiko_desc/probe_batch.sh,2400 行三语分层集,15 步):
+#   bs=8  峰值  79,430MiB(55%)  3.43s/it  18.7 samp/s
+#   bs=12 峰值 106,372MiB(74%)  3.82s/it  25.1 samp/s   <- 本档
+#   bs=16 峰值 134,430MiB(94%)  4.86s/it  26.3 samp/s
+#   bs=24 OOM
+# 没取显存上限 bs=16 的两个理由:(1) 它只快 4.6%(整个 epoch 约 40 分钟),(2) 8x16 只能配
+# grad_accum=1 -> eff_batch 128,偏离 lr=1e-5 对应的 96。bs=12 恰好整除出 96。
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-5
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+
+### eval
+per_device_eval_batch_size: 2
+eval_strategy: steps
+eval_steps: 1000
+
+### distributed
+deepspeed: examples/deepspeed/ds_z3_config.json
