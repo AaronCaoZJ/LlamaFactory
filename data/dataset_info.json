@@ -1065,5 +1065,14 @@
       "response": "output",
       "images": "images"
     }
+  },
+  "ms0717_blockstack_follow": {
+    "file_name": "agentrobot/MVTOKEN/ms_0717/blockstack_follow/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }

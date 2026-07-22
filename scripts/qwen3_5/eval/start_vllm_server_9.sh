@@ -88,7 +88,7 @@ SEP="===========================================================================
 echo "Starting vllm server on http://0.0.0.0:${PORT}"
 echo "  GPU                 : ${GPU}"
 echo "  GPU util            : ${GPU_UTIL}"
-# echo "  Temperature         : ${TEMPERATURE}"
+echo "  Temperature         : ${TEMPERATURE}"
 echo "  Max seq len         : ${MAX_LEN}"
 echo "  Max num seqs        : ${MAX_NUM_SEQS}"
 echo "  Enforce eager       : ${ENFORCE_EAGER}"
@@ -109,7 +109,7 @@ CMD=(
   --enable-lora --max-lora-rank 64
   --lora-modules "${LORA_MODULES[@]}"
   --chat-template "${CHAT_TEMPLATE}"
-  # --override-generation-config "{\"temperature\": ${TEMPERATURE}, \"top_p\": 1.0, \"top_k\": -1}"
+  --override-generation-config "{\"temperature\": ${TEMPERATURE}, \"top_p\": 1.0, \"top_k\": -1}"
   --trust-remote-code
   --port "${PORT}"
 )
