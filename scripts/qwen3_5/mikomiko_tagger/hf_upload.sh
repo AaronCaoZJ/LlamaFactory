@@ -5,9 +5,16 @@ cd ${LF_ROOT}
 
 UP=scripts/qwen3_5/mikomiko_tagger/hf_upload_mikomiko.py
 
-# 两个模型是两个 repo:tag 是已发布的那个,desc 单独一个,别混着传进同一个 repo。
-REPO_TAG=aaroncaozj/Mikomiko_pornpic_tagger
-REPO_DESC=aaroncaozj/Mikomiko_grok_desc
+# 所有模型共用一个 repo,靠 --path-in-repo 的第一级区分版本,repo 内结构:
+#   Mikomiko_Pornpics_Annota/            <- 2026-07 由 Mikomiko_pornpic_tagger 改名而来
+#     gemini_tagger_v0/checkpoint-11530/   (2B tag, full)
+#     gemini_tagger_v1/checkpoint-41766/   (2B tag, full)
+#     grok_descriptor_v0/checkpoint-13963/ (9B desc, weights)
+# 注意这个 repo 是**公开**的,传什么都是公开可下载。脚本不会改动已存在 repo 的可见性。
+REPO=aaroncaozj/Mikomiko_Pornpics_Annota
+
+# repo 内的版本目录名(--path-in-repo 的第一级)。注意与本地 saves 目录名无关,不要混。
+DESC_NAME=grok_descriptor_v0
 
 TAG_CKPT_ROOT=${LF_ROOT}/saves/qwen3.5-2b/mikomiko/full_v0
 DESC_CKPT_ROOT=${LF_ROOT}/saves/qwen3.5-9b/mikomiko/grok_desc_v0
@@ -17,14 +24,14 @@ DESC_CKPT_ROOT=${LF_ROOT}/saves/qwen3.5-9b/mikomiko/grok_desc_v0
 #   weights  只留权重 + tokenizer/processor/config -> 只能推理,体积约 1/3
 #   lora     adapter 白名单
 # 加 --dry-run 就只列清单不上传;过滤规则与真上传同一套,看到什么就会传什么。
+# dry-run 也会去查目标 repo 存不存在、是公开还是私有,传大东西之前值得看一眼。
 # 认证:HF_TOKEN 环境变量,或本机 huggingface-cli login 过的缓存 token。
 #
-# --uploader 决定怎么传,默认 auto(超过 5 GB 自动走 large):
-#   large    断点续传。进度记在 <ckpt 的父目录>/.cache/huggingface/,断了重跑**同一条命令**
-#            就接着传;分多次 commit,传完一批提交一批。full 模式必须用这个。
-#   folder   整个目录一次 commit,全部传完才提交 —— 中途断掉已传的字节全部作废,从 0 重来。
-# 续传粒度是文件级:传完的文件不再重传,但单个文件传一半断了仍要整个重来。网络不稳就把
-# --num-workers 调小(默认 CPU 核数一半),并发越低,中断时丢掉的半传文件越少。
+# 上传走 upload_folder:大目录自动分多次 commit,**断了重跑同一条命令就接着传**
+# (已 commit 的文件跳过,已上传的数据块服务端去重)。--path-in-repo 支持多级路径。
+#
+# 目标 repo 必须已存在,否则报错退出;确实要新建才加 --create-repo(默认建私有)。
+# 脚本不会改动已存在 repo 的可见性 —— 这个 repo 是公开的,传什么都是公开可下载。
 
 
 : <<'EOF'
@@ -39,35 +46,42 @@ EOF
 
 : <<'EOF'
 # ========================================
-# desc 9B checkpoint-13963 -> REPO_DESC 的 checkpoint-13963/ 子目录。
-# mode=full:带 DeepSpeed optimizer 状态,目的是换机器接着训。只想拿去推理就改成 weights,
-# 省掉 optimizer 那部分体积。
+# desc 9B checkpoint-13963 -> grok_descriptor_v0/checkpoint-13963/
+# mode=weights:只传推理要的权重与分词器(17.5 GB),滤掉 105 GB 的 optimizer 状态。
+# 想让它能换机器续训就把 mode 改成 full —— 体积变 122.7 GB。
+#
+# 【已完成 2026-07-22】8 个文件 17.5 GB 已传上去,远端字节数与本地一致。默认注释掉:
+# 重跑不会重复上传(已存在的文件会跳过),但要先在本地重新 hash 18.8 GB,约 14 分钟。
 # ========================================
 EOF
-python $UP --mode full \
-    --src "$DESC_CKPT_ROOT"/checkpoint-13963 \
-    --repo "$REPO_DESC" \
-    --path-in-repo checkpoint-13963
-
-# python $UP --mode weight \
+# python $UP --mode weights \
 #     --src "$DESC_CKPT_ROOT"/checkpoint-13963 \
-#     --repo "$REPO_DESC" \
-#     --path-in-repo checkpoint-13963
+#     --repo "$REPO" \
+#     --path-in-repo "$DESC_NAME"/checkpoint-13963
+
+# python $UP --mode full \
+#     --src "$DESC_CKPT_ROOT"/checkpoint-13963 \
+#     --repo "$REPO" \
+#     --path-in-repo "$DESC_NAME"/checkpoint-13963
 
 
 : <<'EOF'
 # ========================================
 # tag 2B 发布版 checkpoint-17296。
 # full = 可续训的完整备份(~29 GB);weights = 只够推理的那份(~1/3 体积)。
+# 注意:repo 里已有 gemini_tagger_v0(checkpoint-11530)和 v1(checkpoint-41766),这个
+# 17296 是另一次跑的,传之前先定好版本号,别覆盖已发布的两个。
 # ========================================
 EOF
 # python $UP --mode full \
 #     --ckpt-root "$TAG_CKPT_ROOT" --step 17296 \
-#     --repo "$REPO_TAG"
+#     --repo "$REPO" \
+#     --path-in-repo gemini_tagger_vN/checkpoint-17296
 
 # python $UP --mode weights \
 #     --ckpt-root "$TAG_CKPT_ROOT" --step 17296 \
-#     --repo "$REPO_TAG"
+#     --repo "$REPO" \
+#     --path-in-repo gemini_tagger_vN/checkpoint-17296
 
 
 : <<'EOF'
@@ -78,11 +92,11 @@ EOF
 EOF
 # python $UP --dry-run \
 #     --src "$TAG_CKPT_ROOT"/checkpoint-17296 \
-#     --repo "$REPO_TAG" \
+#     --repo "$REPO" \
 #     --include '*.safetensors' \
 #     --include '*.json'
 
 # python $UP --dry-run --mode full \
 #     --src "$DESC_CKPT_ROOT"/checkpoint-13963 \
-#     --repo "$REPO_DESC" \
+#     --repo "$REPO" \
 #     --exclude 'rng_state*'
