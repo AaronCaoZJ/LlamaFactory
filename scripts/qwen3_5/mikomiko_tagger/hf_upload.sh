@@ -18,6 +18,13 @@ DESC_CKPT_ROOT=${LF_ROOT}/saves/qwen3.5-9b/mikomiko/grok_desc_v0
 #   lora     adapter 白名单
 # 加 --dry-run 就只列清单不上传;过滤规则与真上传同一套,看到什么就会传什么。
 # 认证:HF_TOKEN 环境变量,或本机 huggingface-cli login 过的缓存 token。
+#
+# --uploader 决定怎么传,默认 auto(超过 5 GB 自动走 large):
+#   large    断点续传。进度记在 <ckpt 的父目录>/.cache/huggingface/,断了重跑**同一条命令**
+#            就接着传;分多次 commit,传完一批提交一批。full 模式必须用这个。
+#   folder   整个目录一次 commit,全部传完才提交 —— 中途断掉已传的字节全部作废,从 0 重来。
+# 续传粒度是文件级:传完的文件不再重传,但单个文件传一半断了仍要整个重来。网络不稳就把
+# --num-workers 调小(默认 CPU 核数一半),并发越低,中断时丢掉的半传文件越少。
 
 
 : <<'EOF'
