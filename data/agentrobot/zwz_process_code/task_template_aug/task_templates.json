@@ -1,0 +1,204 @@
+{
+  "Pick up the white block and place it on the orange block": [
+    "Pick up the white block and place it on top of the orange block",
+    "Stack the white block onto the orange block",
+    "Use the gripper to move the white block so it rests on the orange block",
+    "Make the white block end up sitting on the orange block",
+    "Lift the white block from its current spot and release it on the orange block",
+    "Put the white block on the orange block, using the orange block as the base"
+  ],
+  "Pick up the white cube and place it on the pink cube": [
+    "Pick up the white cube and place it on top of the pink cube",
+    "Stack the white cube onto the pink cube",
+    "Use the gripper to move the white cube so it rests on the pink cube",
+    "Make the white cube end up sitting on the pink cube",
+    "Lift the white cube from its current spot and release it on the pink cube",
+    "Put the white cube on the pink cube, using the pink cube as the base"
+  ],
+  "pick up the banana and place it on the blue plate": [
+    "Pick up the banana and place it on the blue plate",
+    "Move the banana from the table onto the blue plate",
+    "Use the gripper to transfer the banana to the blue plate",
+    "Make the banana end up resting on the blue plate",
+    "Lift the banana and release it on the blue plate",
+    "Place the banana onto the blue plate as the final target"
+  ],
+  "pick up the banana and place it on the plate": [
+    "Pick up the banana and place it on the plate",
+    "Move the banana from the table onto the plate",
+    "Use the gripper to transfer the banana to the plate",
+    "Make the banana end up resting on the plate",
+    "Lift the banana and release it on the plate",
+    "Place the banana onto the plate as the final target"
+  ],
+  "pick up the blue block and place it on the plate": [
+    "Pick up the blue block and place it on the plate",
+    "Move the blue block from the table onto the plate",
+    "Use the gripper to transfer the blue block to the plate",
+    "Make the blue block end up resting on the plate",
+    "Lift the blue block and release it on the plate",
+    "Place the blue block onto the plate as the final target"
+  ],
+  "pick up the gray cup and stack it on the yellow cup": [
+    "Pick up the gray cup and stack it on the yellow cup",
+    "Place the gray cup on top of the yellow cup",
+    "Use the gripper to move the gray cup so it rests on the yellow cup",
+    "Make the gray cup end up sitting on the yellow cup",
+    "Lift the gray cup from its current spot and release it on the yellow cup",
+    "Put the gray cup on the yellow cup, using the yellow cup as the base"
+  ],
+  "pick up the gray mug and place it on the green coaster": [
+    "Pick up the gray mug and place it on the green coaster",
+    "Move the gray mug from the table onto the green coaster",
+    "Use the gripper to transfer the gray mug to the green coaster",
+    "Make the gray mug end up resting on the green coaster",
+    "Lift the gray mug and release it on the green coaster",
+    "Place the gray mug onto the green coaster as the final target"
+  ],
+  "pick up the mango and place it in the bowl": [
+    "Pick up the mango and place it in the bowl",
+    "Move the mango from the table into the bowl",
+    "Use the gripper to transfer the mango into the bowl",
+    "Make the mango end up inside the bowl",
+    "Lift the mango and release it in the bowl",
+    "Place the mango into the bowl as the final target"
+  ],
+  "pick up the mango and place it on the blue plate": [
+    "Pick up the mango and place it on the blue plate",
+    "Move the mango from the table onto the blue plate",
+    "Use the gripper to transfer the mango to the blue plate",
+    "Make the mango end up resting on the blue plate",
+    "Lift the mango and release it on the blue plate",
+    "Place the mango onto the blue plate as the final target"
+  ],
+  "pick up the orange block and place it on the plate": [
+    "Pick up the orange block and place it on the plate",
+    "Move the orange block from the table onto the plate",
+    "Use the gripper to transfer the orange block to the plate",
+    "Make the orange block end up resting on the plate",
+    "Lift the orange block and release it on the plate",
+    "Place the orange block onto the plate as the final target"
+  ],
+  "pick up the pink cube and place it on the plate": [
+    "Pick up the pink cube and place it on the plate",
+    "Move the pink cube from the table onto the plate",
+    "Use the gripper to transfer the pink cube to the plate",
+    "Make the pink cube end up resting on the plate",
+    "Lift the pink cube and release it on the plate",
+    "Place the pink cube onto the plate as the final target"
+  ],
+  "pick up the pink cup and stack it on the blue cup": [
+    "Pick up the pink cup and stack it on the blue cup",
+    "Place the pink cup on top of the blue cup",
+    "Use the gripper to move the pink cup so it rests on the blue cup",
+    "Make the pink cup end up sitting on the blue cup",
+    "Lift the pink cup from its current spot and release it on the blue cup",
+    "Put the pink cup on the blue cup, using the blue cup as the base"
+  ],
+  "pick up the tennis ball and place it on the plate": [
+    "Pick up the tennis ball and place it on the plate",
+    "Move the tennis ball from the table onto the plate",
+    "Use the gripper to transfer the tennis ball to the plate",
+    "Make the tennis ball end up resting on the plate",
+    "Lift the tennis ball and release it on the plate",
+    "Place the tennis ball onto the plate as the final target"
+  ],
+  "pick up the white bowl and stack it on the pink bowl": [
+    "Pick up the white bowl and stack it on the pink bowl",
+    "Place the white bowl on top of the pink bowl",
+    "Use the gripper to move the white bowl so it rests on the pink bowl",
+    "Make the white bowl end up sitting on the pink bowl",
+    "Lift the white bowl from its current spot and release it on the pink bowl",
+    "Put the white bowl on the pink bowl, using the pink bowl as the base"
+  ],
+  "pick up the wrench and place it on the plate": [
+    "Pick up the wrench and place it on the plate",
+    "Move the wrench from the table onto the plate",
+    "Use the gripper to transfer the wrench to the plate",
+    "Make the wrench end up resting on the plate",
+    "Lift the wrench and release it on the plate",
+    "Place the wrench onto the plate as the final target"
+  ],
+  "pick up the yellow cup and place it on the green coaster": [
+    "Pick up the yellow cup and place it on the green coaster",
+    "Move the yellow cup from the table onto the green coaster",
+    "Use the gripper to transfer the yellow cup to the green coaster",
+    "Make the yellow cup end up resting on the green coaster",
+    "Lift the yellow cup and release it on the green coaster",
+    "Place the yellow cup onto the green coaster as the final target"
+  ],
+  "rearrange the letters to spell \"SHOW\"": {
+    "default": [
+      "Arrange the letters left to right as S, H, O, W",
+      "Line up S, H, O, and W in one row to spell \"SHOW\"",
+      "Make the final sequence S, H, O, W from left to right",
+      "Finish with S to the left of H, H to the left of O, and O to the left of W"
+    ],
+    "by_rollout": {
+      "0704_cleaned/rearrange_show/rollout_006": [
+        "Move S to the left of H so the letters finish as \"SHOW\"",
+        "Place S before H, with O and W staying to their right in order",
+        "Put S at the far left of the letter row to complete \"SHOW\"",
+        "Make S the first letter, immediately followed by H, O, and W",
+        "Shift S beside the left side of H so the row reads \"SHOW\"",
+        "Finish with S on the left, then H, O, and W"
+      ],
+      "0704_cleaned/rearrange_show/rollout_007": [
+        "Move H between S and O so the row spells \"SHOW\"",
+        "Place H immediately to the right of S and to the left of O",
+        "Put H in the second position, between S and O",
+        "Shift H into the spot after S so the letters read \"SHOW\"",
+        "Make the order S, H, O, W by placing H before O",
+        "Finish with H to the right of S and to the left of O"
+      ],
+      "0704_cleaned/rearrange_show/rollout_008": [
+        "Move W to the far right of the row so the letters spell \"SHOW\"",
+        "Place W after O, with S, H, and O to its left",
+        "Put W immediately to the right of O to complete \"SHOW\"",
+        "Make W the last letter in the left-to-right sequence S, H, O, W",
+        "Shift W to the right side of O so the row reads \"SHOW\"",
+        "Finish with W on the right end after S, H, and O"
+      ],
+      "0704_cleaned/rearrange_show/rollout_009": [
+        "Move H between S and O so the row spells \"SHOW\"",
+        "Place H immediately to the right of S and to the left of O",
+        "Put H in the second position, between S and O",
+        "Shift H into the spot after S so the letters read \"SHOW\"",
+        "Make the order S, H, O, W by placing H before O",
+        "Finish with H to the right of S and to the left of O"
+      ],
+      "0704_cleaned/rearrange_show/rollout_010": [
+        "Move O between H and W so the letters spell \"SHOW\"",
+        "Place O immediately to the right of H and to the left of W",
+        "Put O in the third position, after S and H",
+        "Shift O into the spot before W so the row reads \"SHOW\"",
+        "Make the order S, H, O, W by placing O after H",
+        "Finish with O between H and W, with S and H to its left"
+      ],
+      "0704_cleaned/rearrange_show/rollout_011": [
+        "Move O between H and W so the letters spell \"SHOW\"",
+        "Place O immediately to the right of H and to the left of W",
+        "Put O in the third position, after S and H",
+        "Shift O into the spot before W so the row reads \"SHOW\"",
+        "Make the order S, H, O, W by placing O after H",
+        "Finish with O between H and W, with S and H to its left"
+      ],
+      "0705_piper/rearrange_show/rollout_018": [
+        "Move W to the far right of the row so the letters spell \"SHOW\"",
+        "Place W after O, with S, H, and O to its left",
+        "Put W immediately to the right of O to complete \"SHOW\"",
+        "Make W the last letter in the left-to-right sequence S, H, O, W",
+        "Shift W to the right side of O so the row reads \"SHOW\"",
+        "Finish with W on the right end after S, H, and O"
+      ],
+      "0705_piper/rearrange_show/rollout_019": [
+        "Move W to the far right of the row so the letters spell \"SHOW\"",
+        "Place W after O, with S, H, and O to its left",
+        "Put W immediately to the right of O to complete \"SHOW\"",
+        "Make W the last letter in the left-to-right sequence S, H, O, W",
+        "Shift W to the right side of O so the row reads \"SHOW\"",
+        "Finish with W on the right end after S, H, and O"
+      ]
+    }
+  }
+}

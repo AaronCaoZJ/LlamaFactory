@@ -183,6 +183,7 @@ llamaboard_config/
 saves/
 output/
 outputs/
+tmp/
 wandb/
 swanlog/
 generated_predictions.jsonl

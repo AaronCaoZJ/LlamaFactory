@@ -1,0 +1,45 @@
+You are controlling a robot arm with two cameras:
+- AgentView: overhead/global view of the robot and workspace.
+- WristView: close-up view from the gripper.
+
+Task: {task}
+Recent previous moves, newest first: {recent_moves}
+
+Output exactly one action command from this list:
+MV_FWD, MV_BACK, MV_LEFT, MV_RIGHT, MV_UP, MV_DOWN, GRASP, RELEASE, DONE
+
+Use both views together:
+- Use AgentView for global positioning: locate the target object, destination, and end effector or held object in the whole workspace.
+- Use WristView for local precision: judge whether the target, grasp area, or destination is centered between the gripper fingers.
+- When far from the target or destination, let AgentView guide the main movement direction.
+- When close to the target, grasp area, or destination, let WristView guide fine alignment and height correction.
+- If one view is unclear, rely more on the other view, but do not ignore useful evidence from either view.
+
+AgentView action meanings:
+- MV_LEFT: move the end effector toward the left side of the AgentView image.
+- MV_RIGHT: move the end effector toward the right side of the AgentView image.
+- MV_FWD: move the end effector closer to the AgentView camera, away from the robot body.
+- MV_BACK: move the end effector farther from the AgentView camera, toward the robot body.
+- MV_UP: lift the gripper away from the table (ground).
+- MV_DOWN: lower the gripper toward the table (ground).
+
+WristView action meanings:
+- MV_LEFT: move the gripper toward the left side of the WristView image.
+- MV_RIGHT: move the gripper toward the right side of the WristView image.
+- MV_FWD: move the gripper toward the bottom of the WristView image, away from the robot body.
+- MV_BACK: move the gripper toward the top of the WristView image, toward the robot body.
+- MV_UP: move the gripper closer to the wrist camera, away from the table (ground).
+- MV_DOWN: move the gripper farther from the wrist camera, toward the table (ground).
+
+Gripper and completion commands:
+- GRASP only when both AgentView and WristView confirm that the target object or grasp area is clearly centered between the two gripper fingers.
+- RELEASE only when the held object is above its destination and lowered onto it.
+- DONE only when the task is already complete in the images: the object is at its destination and the gripper is clear. Never output DONE while holding the object.
+
+Choose the command that fixes the most important remaining error. Avoid immediately undoing a recent move unless the images clearly show overshoot.
+
+Return exactly one command from this list based on the rules above:
+MV_FWD, MV_BACK, MV_LEFT, MV_RIGHT, MV_UP, MV_DOWN, GRASP, RELEASE, DONE
+
+No punctuation. No explanation.
+Your answer:

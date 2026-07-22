@@ -8,6 +8,60 @@
       "images": "images"
     }
   },
+  "mix_22-06_fk-pp_02_exchange_token_zwz_new_prompt": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_zwz_new_prompt.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_03_just_mix_zwz_new_prompt_add_horizon_flip_add_augment_rules": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite_zwz_new_prompt_add_horizon_flip_add_augment_rules.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_03_just_mix_zwz_new_prompt_add_horizon_flip": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite_zwz_new_prompt_add_horizon_flip.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_03_just_mix_zwz_new_prompt": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite_zwz_new_prompt.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22_27_04_v3_lite_zwz_new_prompt": {
+    "file_name": "agentrobot/MVTOKEN/mix_22_27_04/v3/rollout_lite_zwz_new_prompt.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_02_exchange_token_task_aug": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_task_template_aug.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mix_22-06_fk-pp_02_exchange_token": {
     "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite.json",
     "columns": {
@@ -947,6 +1001,24 @@
       "query": "input",
       "response": "output",
       "images": "images"
+    }
+  },
+  "robovqa_reasoning_lf_ans6k": {
+    "file_name": "robovqa/robovqa_reasoning_lf_ans6k.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "videos": "videos"
+    }
+  },
+  "robovqa_understanding_lf_500": {
+    "file_name": "robovqa/robovqa_understanding_lf_500.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "videos": "videos"
     }
   }
 }
