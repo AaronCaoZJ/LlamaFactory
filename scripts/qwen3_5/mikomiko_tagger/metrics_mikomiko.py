@@ -2,7 +2,7 @@
 """
 metrics_mikomiko.py — the single scorer for the mikomiko image->tag task.
 
-Every consumer (test_mikomiko.sh, infer_mikomiko.py --score, the review page in visualization/)
+Every consumer (infer_tag_2b.sh eval/seen, infer_mikomiko.py --score, the review page in visualization/)
 goes through per_image() + aggregate() here, so the numbers are identical by construction.
 All metrics are on normalized, order-invariant tag SETS.
 

@@ -6,7 +6,7 @@ Build the LlamaFactory alpaca jsonl for the 20260721 *description* delivery.
 Standalone dataset -- the tag datasets in jsonl/ and jsonl_0716/ are NOT touched.
 
 Source : RAW/effective_20260721_llm_training.parquet   (1,369,397 rows)
-Prompt : RAW/0721_prompt.txt   -- ONE instruction in THREE languages, '\\n\\n\\n'-separated,
+Prompt : prompt_grokv8.txt     -- ONE instruction in THREE languages, '\\n\\n\\n'-separated,
                                  in the order en, ja, zh.
 Images : img_0716/{post_id}_{image_name}   (already 100% on disk; verified 1,369,397/1,369,397)
 Output : jsonl_desc_0721/{train,test_unseen,test_unseen_mini}.jsonl
@@ -51,11 +51,11 @@ import pyarrow.parquet as pq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PARQUET = os.path.join(HERE, "RAW", "effective_20260721_llm_training.parquet")
-PROMPT_FILE = os.path.join(HERE, "RAW", "0721_prompt.txt")
+PROMPT_FILE = os.path.join(HERE, "prompt_grokv8.txt")
 IMG_DIR = os.path.join(HERE, "img_0716")
 OUT_DIR = os.path.join(HERE, "jsonl_desc_0721")
 
-LANGS = ("en", "ja", "zh")          # the order the blocks appear in 0721_prompt.txt
+LANGS = ("en", "ja", "zh")          # the order the blocks appear in prompt_grokv8.txt
 SPLIT_SEED = 0
 POST_HOLDOUT_FRAC = 0.02
 MINI_PER_LANG = 400                 # mikomiko_HANDOFF.md: 400 is the smallest n with a usable CI

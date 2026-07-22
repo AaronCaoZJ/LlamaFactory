@@ -47,7 +47,7 @@
 ```
 
 六个 server 脚本已全部挂载：`eval/start_vllm_server{,_9,_2,_0_8}.sh`（27B/9B/2B/0.8B）、
-`mikomiko_tagger/start_vllm_server_mikomiko.sh`、`mikomiko_tagger/visualization/start_server.sh`。
+`mikomiko_tagger/infer_tag_2b.sh` 与 `mikomiko_grok_desc/infer_desc_9b.sh` 里的 `serve_vllm`。
 已验证 **4 个尺寸 × 3 个场景（单轮 / 多轮 / 带 system），token 级全部一致**。
 
 > `eval/` 与 `mikomiko_tagger/` 下两份 jinja **完全相同**，改一份要同步另一份。

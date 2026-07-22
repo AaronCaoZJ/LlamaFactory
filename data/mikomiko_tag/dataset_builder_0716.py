@@ -51,7 +51,7 @@ PARQUET = os.path.join(HERE, "pornpics_tag_cover_dataset_20260716",
 TAG_VOCAB = os.path.join(HERE, "tag_vocab.txt")
 IMG_DIR = os.path.join(HERE, "img_0716")
 OUT_DIR = os.path.join(HERE, "jsonl_0716")
-PROMPT_FILE = os.path.join(HERE, "prompt.txt")
+PROMPT_FILE = os.path.join(HERE, "prompt_tagger.txt")
 
 SPLIT_SEED = 0
 POST_HOLDOUT_FRAC = 0.10

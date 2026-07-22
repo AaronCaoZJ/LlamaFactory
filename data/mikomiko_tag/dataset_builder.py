@@ -81,7 +81,7 @@ STRAT_PER_BAND    = 400
 # The model sees only the IMAGE and outputs the tags directly (open-vocabulary tagging).
 # Label = GEMINI per-image tags. The tagging prompt lives in PROMPT_FILE (editable); if absent
 # or empty, DEFAULT_PROMPT is used. Content is "<image>" + prompt (image first, text after).
-PROMPT_FILE    = os.path.join(HERE, "prompt.txt")
+PROMPT_FILE    = os.path.join(HERE, "prompt_tagger.txt")
 DEFAULT_PROMPT = ("You are an expert tagger for an adult image board. Look at the image and output "
                   "a comma-separated list of board-style tags describing what is visible: the people "
                   "(ethnicity/nationality, apparent age group, body type, hair), their clothing and "

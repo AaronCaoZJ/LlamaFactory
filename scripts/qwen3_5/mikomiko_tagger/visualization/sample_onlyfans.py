@@ -6,19 +6,19 @@ review set from a folder of OnlyFans stills, which have NO gold tags at all: the
 distribution check (what does the model say off-distribution?), not a scored eval.
 
 Rows carry `gemini: ""` so infer_mikomiko.py's samples.json path works unchanged and build_html.py
-auto-detects the no-gold mode. The instruction is read from data/mikomiko_tag/prompt.txt — the same
+auto-detects the no-gold mode. The instruction is read from data/mikomiko_tag/prompt_tagger.txt — the same
 text the dataset builder baked into every training row (verified identical, so prompt parity holds).
 
 Usage:
     python sample_onlyfans.py [--img-dir data/mikomiko_tag/onlyfans] [--n 480] [--work-dir DIR]
-Next: bash build_onlyfans.sh
+Next: bash ../infer_tag_2b.sh viz-onlyfans
 """
 import argparse, json, os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]          # .../LlamaFactory
 DEFAULT_IMG = ROOT / "data/mikomiko_tag/onlyfans"
-PROMPT_FILE = ROOT / "data/mikomiko_tag/prompt.txt"
+PROMPT_FILE = ROOT / "data/mikomiko_tag/prompt_tagger.txt"
 DEFAULT_WORK = ROOT / "saves/qwen3.5-2b/mikomiko/viz_onlyfans"
 TRAIN_JSONL = ROOT / "data/mikomiko_tag/jsonl/train.jsonl"
 

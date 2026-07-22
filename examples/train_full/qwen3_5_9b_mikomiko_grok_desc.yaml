@@ -1,6 +1,6 @@
 ### model
 # 9B 全参微调,20260721 描述任务(4 段散文描述,en/ja/zh 三语)。
-# 与 examples/train_full/qwen3_5_9b_mikomiko_tag.yaml 是两个独立任务:那个输出逗号标签列表(~30 tok),
+# 与 examples/train_full/qwen3_5_2b_mikomiko_tag.yaml 是两个独立任务:那个输出逗号标签列表(~30 tok),
 # 这个输出 ~500-950 tok 的四段描述。除 model/ds 外几乎每项都不同,不要互相 copy 数值。
 model_name_or_path: ../hf_download/models/Qwen3.5-9B
 image_max_pixels: 262144    # 512x512 -> patch16 x merge2 = 32px/token -> 256 visual token/图
@@ -43,7 +43,7 @@ run_name: qwen3.5-9b-mikomiko-grok_desc_v0
 ### train
 # 有效 batch 96 = 8 卡 x per_device 12 x grad_accum 1。
 # per_device 12 是 2026-07-21 在 8xH200 上实测选出的,不是估算
-# (scripts/qwen3_5/mikomiko_desc/probe_batch.sh,2400 行三语分层集,15 步):
+# (scripts/qwen3_5/mikomiko_grok_desc/train_desc_9b.sh probe,2400 行三语分层集,15 步):
 #   bs=8  峰值  79,430MiB(55%)  3.43s/it  18.7 samp/s
 #   bs=12 峰值 106,372MiB(74%)  3.82s/it  25.1 samp/s   <- 本档
 #   bs=16 峰值 134,430MiB(94%)  4.86s/it  26.3 samp/s

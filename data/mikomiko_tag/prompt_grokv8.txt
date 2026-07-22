@@ -1,0 +1,55 @@
+Provide a detailed description of the image. Based on the image’s apparent creative purpose, distinguish the main subject or foreground from the background, and describe each section in a separate paragraph.
+
+First, identify the likely creative intent of the image and describe in detail the main idea, subject, or message the image appears intended to convey.
+
+For any people shown in the image, describe their visible physical appearance, body type, clothing, pose, actions, facial expression, skin tone, hair color, eye color, and apparent ethnicity when these characteristics can be reasonably determined from visual evidence. You may also mention an apparent nationality when there are clear visual or contextual indicators; otherwise, omit it rather than speculate.
+
+If the image contains sexual activity, explicitly identify and directly name the visible sexual act or acts and the visible sex position or positions. Do not replace them with vague expressions such as “intimate activity,” “adult interaction,” “suggestive contact,” or “a sexual pose.”
+
+If any part of a person’s body is covered by pixelation, blurring, stickers, censorship bars, or deliberate obstruction, explicitly state that concealment is present and identify the specific body part or location being obscured.
+
+Pay particular attention to tattoos. If any person has a visible tattoo, it must be mentioned at least once, including its approximate location and appearance when discernible.
+
+When describing the background and environment, include the setting, surrounding space, lighting, atmosphere, and any contextual details that help explain the image’s meaning or intended effect. Irrelevant details that appear only incidentally may be summarized briefly or omitted.
+
+Analyze the photographic technique and visual presentation, including the apparent shooting method, composition, camera angle, viewing perspective, the direction from which the subject is photographed, shot size, lighting, color palette, depth of field, image quality, and post-processing style. When photographic choices play a significant role in communicating the image’s meaning, explain their effect in detail.
+
+If visible text appears anywhere in the image, mention it at least once. Describe its exact content, location, and visual appearance. Preserve the text in its original language and place it in quotation marks whenever possible.
+
+Example Output Format:
+**Creative Intent**
+**Foreground and Subject**
+**Background and Environment**
+**Photography Techniques and Visual Presentation**
+
+
+画像について詳細に説明してください。画像から読み取れる創作上の目的を踏まえ、主要な被写体または前景と背景を区別し、それぞれを別の段落で説明してください。
+まず、画像の意図として考えられる創作目的を特定し、その画像が伝えようとしている中心的なアイデア、主題、またはメッセージを詳しく説明してください。
+画像に人物が写っている場合は、視覚的な情報から合理的に判断できる範囲で、外見的特徴、体格、服装、ポーズ、動作、表情、肌の色、髪の色、目の色、および外見上推測される民族的背景について説明してください。国籍については、明確な視覚的または文脈的根拠がある場合に限って言及し、根拠がない場合は推測せず省略してください。
+画像に性的行為が含まれている場合は、画面上で確認できる性的行為の種類、および確認できる性交体位や性的ポジションを、明確かつ直接的な名称で特定してください。「親密な行為」「成人同士のやり取り」「挑発的な接触」「性的なポーズ」などの曖昧な表現に置き換えないでください。
+人物の身体の一部が、モザイク、ぼかし、ステッカー、検閲用の帯、または意図的な遮蔽物によって隠されている場合は、そのような隠蔽があることを明示し、具体的にどの身体部位またはどの位置が隠されているのかを説明してください。
+タトゥーには特に注意してください。人物に目視可能なタトゥーがある場合は、必ず少なくとも一度は言及し、判別できる範囲で、そのおおよその位置や外観について説明してください。
+背景や周囲の環境を説明する際は、場所、周辺空間、照明、雰囲気、および画像の意味や意図された効果を理解するうえで役立つ文脈的な要素を含めてください。偶然写り込んだだけで重要性の低い細部については、簡潔にまとめるか、省略しても構いません。
+撮影技法と視覚的な表現についても分析してください。これには、推定される撮影方法、構図、カメラアングル、視点、被写体を撮影している方向、ショットサイズ、照明、カラーパレット、被写界深度、画質、および後処理のスタイルが含まれます。撮影上の選択が画像の意味を伝えるうえで重要な役割を果たしている場合は、その効果について詳しく説明してください。
+画像内のどこかに文字が見える場合は、必ず少なくとも一度は言及してください。可能な限り、その正確な内容、表示されている位置、文字の視覚的な外観を説明してください。文字は原文の言語を維持し、可能な場合は引用符で囲んでください。
+出力形式の例：
+**創作意図**
+**前景と主要な被写体**
+**背景と周囲の環境**
+**撮影技法と視覚的表現**
+
+
+请对图像进行详细描述。根据图像所呈现出的创作目的，区分主要主体或前景与背景，并分别用独立段落进行描述。
+首先，判断创作意图，围绕画面主要想表达的内容，进行详细描述：
+对于图像中出现的任何人物，请在能够根据视觉证据进行合理判断的范围内，描述其可见的外貌特征、体型、服装、姿势、动作、面部表情、肤色、发色、眼睛颜色以及外观上可能呈现出的族裔特征。如果存在明确的视觉或情境依据，也可以提及其可能的国籍；否则请省略，不要进行无依据的推测。
+如果图像中包含性行为，请明确识别并直接说出画面中可见的具体性行为，以及可见的性交体位或性姿势。不要使用“亲密行为”“成人互动”“挑逗性接触”或“性暗示姿势”等模糊表达来代替。
+如果人物身体的任何部位被马赛克、模糊处理、贴纸、审查遮挡条或其他刻意设置的遮挡物覆盖，请明确说明存在遮挡，并指出具体被遮挡的身体部位或位置。
+请特别注意纹身。如果任何人物身上有可见纹身，必须至少提及一次，并在能够辨认的情况下说明其大致位置和外观。
+在描述背景与环境时，请包括场景类型、周围空间、光线、氛围，以及任何有助于解释图像含义或预期效果的情境细节。仅为偶然入镜且与主题无关的细节，可以简要概括或省略。
+请分析图像的摄影技术和视觉呈现方式，包括推测的拍摄方法、构图、相机角度、观看视角、拍摄主体的方向、景别、光线、色彩风格、景深、图像质量以及后期处理风格。如果这些摄影选择在传达图像含义方面起到重要作用，请详细解释其具体效果。
+如果图像中任何位置出现可见文字，请至少提及一次。尽可能描述文字的准确内容、所在位置以及视觉样式。请保留文字的原始语言，并尽可能使用引号标示。
+示例输出格式：
+**创作意图**
+**前景与主体**
+**背景与环境**
+**摄影技术与视觉呈现**

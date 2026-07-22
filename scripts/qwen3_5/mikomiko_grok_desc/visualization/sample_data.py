@@ -20,7 +20,7 @@ zero or more than one language are skipped rather than guessed at.
 Output: WORK_DIR/samples.json
         [{split, lang, name, post_id, image, gold, instruction}]
 Next:   ../../mikomiko_tagger/infer_mikomiko.py --input WORK/samples.json --output WORK/..._pred.json
-        (or just run build_html.sh, which drives all steps)
+        (or just run ../infer_desc_9b.sh viz, which drives all steps)
 
 Usage:
     python sample_data.py [--n 20] [--seed 42] [--work-dir SAVES/viz_desc_0721]

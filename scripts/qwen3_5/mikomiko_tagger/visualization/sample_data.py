@@ -8,7 +8,7 @@ Output: WORK_DIR/samples.json  [{split,name,post_id,image,gemini,post_tag,catego
 Usage:
     python sample_data.py [--n 200] [--seed 42] [--work-dir SAVES/viz_review]
 Next: ../infer_mikomiko.py --input WORK/samples.json --output WORK/samples_pred.json
-(or just run build_html.sh, which drives all three steps)
+(or just run ../infer_tag_2b.sh viz, which drives all three steps)
 """
 import argparse, csv, json, os, random, sys
 from pathlib import Path

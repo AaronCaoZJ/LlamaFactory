@@ -2,7 +2,7 @@
 """infer_mikomiko.py — the single inference entry point for the mikomiko image->tag tagger.
 
 One implementation of the prompt, the image preprocessing and the decode loop, behind two
-backends. Everything else (test_mikomiko.sh's scoring, the review page, ad-hoc evals) should call
+backends. Everything else (infer_tag_2b.sh eval's scoring, the review page, ad-hoc evals) should call
 this rather than re-implement generation.
 
 TRAINING PARITY — the three things that silently cost accuracy if you get them wrong:
@@ -37,10 +37,10 @@ Usage:
     python infer_mikomiko.py --input data/mikomiko_tag/jsonl/eval_mini.jsonl \\
         --output saves/.../predictions.jsonl --score --step 17296
 
-    # predictions for the review page (called by visualization/build_html.sh)
+    # predictions for the review page (called by ../infer_tag_2b.sh viz)
     CUDA_VISIBLE_DEVICES=6 python infer_mikomiko.py --input WORK/samples.json --output WORK/samples_pred.json
 
-    # against a running vLLM server (start_vllm_server_mikomiko.sh)
+    # against a running vLLM server (infer_tag_2b.sh serve)
     python infer_mikomiko.py --backend vllm --api http://localhost:8110 --input ... --output ...
 """
 import argparse, base64, json, math, os, sys, time
@@ -192,7 +192,7 @@ def check_prompt_parity(api, model):
         return
     if THINK_OPEN_ID in tokens:
         sys.exit("[fatal] server injects an empty <think></think> block (train/infer mismatch, "
-                 "-1.2pt microF1). Restart it with start_vllm_server_mikomiko.sh, which passes "
+                 "-1.2pt microF1). Restart it with `infer_tag_2b.sh serve`, which passes "
                  "--chat-template chat_template_qwen3_5_lf.jinja")
     print("[vllm] prompt parity OK (no think block)")
 

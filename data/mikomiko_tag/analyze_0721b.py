@@ -15,7 +15,7 @@ import pyarrow.parquet as pq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PARQUET = os.path.join(HERE, "RAW", "effective_20260721_llm_training.parquet")
-PROMPT = os.path.join(HERE, "RAW", "0721_prompt.txt")
+PROMPT = os.path.join(HERE, "prompt_grokv8.txt")
 
 # the 4 section headers each language's prompt asks for
 HEADERS = {

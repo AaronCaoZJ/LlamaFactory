@@ -1,6 +1,6 @@
 ### model
-# checkpoint dir + eval_dataset + batch size are overwritten by test_mikomiko.sh per --step
-model_name_or_path: saves/qwen3.5-2b/mikomiko/full_v0/checkpoint-11530   # relative to repo root; test_mikomiko.sh overrides to an absolute ckpt
+# checkpoint dir + eval_dataset + batch size are overwritten by mikomiko_tagger/infer_tag_2b.sh per STEP
+model_name_or_path: saves/qwen3.5-2b/mikomiko/full_v0/checkpoint-11530   # relative to repo root; infer_tag_2b.sh overrides to an absolute ckpt
 image_max_pixels: 262144      # match training
 trust_remote_code: true
 flash_attn: fa2
@@ -11,7 +11,7 @@ do_predict: true
 finetuning_type: full
 
 ### dataset
-eval_dataset: mikomiko_tag_eval_mini   # 200 test_unseen + 200 test_stratified (overridden by test_mikomiko.sh)
+eval_dataset: mikomiko_tag_eval_mini   # 200 test_unseen + 200 test_stratified (overridden by infer_tag_2b.sh)
 template: qwen3_5_nothink
 cutoff_len: 1024
 preprocessing_num_workers: 4

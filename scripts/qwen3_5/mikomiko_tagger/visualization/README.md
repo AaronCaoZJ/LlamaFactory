@@ -5,7 +5,7 @@ seen(train)/unseen(test_unseen_mini)各 N 张图,推理后生成**自包含 HTML
 (图片 base64 内嵌,可直接发送):一行四卡,每卡列出 post tag / 分类标签 / gemini gold / pred,
 并给出每图 **tag 级 + 词级 P/R/F1**。
 
-**推理和打分都不在这个目录里实现**,统一走上级的两个模块,保证与 `test_mikomiko.sh` 口径一致:
+**推理和打分都不在这个目录里实现**,统一走上级的两个模块,保证与 `infer_tag_2b.sh eval` 口径一致:
 
 | 职责 | 模块 |
 |---|---|
@@ -17,11 +17,10 @@ seen(train)/unseen(test_unseen_mini)各 N 张图,推理后生成**自包含 HTML
 ## 一条命令
 
 ```bash
-cd scripts/qwen3_5/mikomiko_tagger/visualization
-export HF_HOME=/workspace1/zhijun/hf_download
+cd scripts/qwen3_5/mikomiko_tagger
 
-FORCE=1 N=200 GPU=4 bash build_html.sh     # 全量 400 张(200 seen + 200 unseen)
-bash build_html.sh                          # 复用已有预测,只重建 HTML(不占 GPU)
+FORCE=1 N=200 GPU=4 bash infer_tag_2b.sh viz     # 全量 400 张(200 seen + 200 unseen)
+bash infer_tag_2b.sh viz                          # 复用已有预测,只重建 HTML(不占 GPU)
 ```
 
 默认后端 **vLLM + bf16**,脚本自己起服务、等就绪、跑完自动关(日志在 `WORK_DIR/vllm_server.log`)。
@@ -33,13 +32,13 @@ bash build_html.sh                          # 复用已有预测,只重建 HTML(
 服务已经在跑就复用它(不重复起、跑完也不关):
 
 ```bash
-API=http://localhost:8111 FORCE=1 N=200 bash build_html.sh
+API=http://localhost:8111 FORCE=1 N=200 bash infer_tag_2b.sh viz
 ```
 
 不想起服务就走 transformers;要逐位可复现的产物再加 `DTYPE=fp32`:
 
 ```bash
-FORCE=1 N=200 GPU=4 BACKEND=hf bash build_html.sh
+FORCE=1 N=200 GPU=4 BACKEND=hf bash infer_tag_2b.sh viz
 ```
 
 ## 三个必须对齐的地方(错一个就白跑)

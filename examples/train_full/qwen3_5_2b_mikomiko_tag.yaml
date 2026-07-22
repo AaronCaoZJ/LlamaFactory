@@ -1,5 +1,5 @@
 ### model
-# relative to repo root (train_mikomiko.sh cd's there); also overridden by its `model_name_or_path=$MODELS_DIR/...`
+# relative to repo root (train_tag_2b.sh cd's there); also overridden by its `model_name_or_path=$MODELS_DIR/...`
 model_name_or_path: ../hf_download/models/Qwen3.5-2B
 image_max_pixels: 262144    # 512x512 cap; raise/lower to trade accuracy vs. memory
 trust_remote_code: true

@@ -8,7 +8,7 @@ Two modes, auto-detected from whether the samples carry gold tags:
   * SCORED (seen/unseen page) — each card lists post tag / category / gemini(gold) / pred with
     hit(TP)/miss(FN)/fp coloring and per-image F1. Scoring is NOT reimplemented here: every number
     comes from ../metrics_mikomiko.py's per_image() / aggregate(), the same functions
-    test_mikomiko.sh and infer_mikomiko.py --score use.
+    infer_tag_2b.sh eval and infer_mikomiko.py --score use.
   * UNSCORED (onlyfans page) — no gold exists, so F1 is undefined. The page becomes a distribution
     check: tags/atoms/composites per image, and which predicted tags fall outside the ~3.4k-tag
     training vocabulary (the interesting failure mode off-distribution).
