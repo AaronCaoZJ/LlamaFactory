@@ -41,11 +41,9 @@ LORA_MODULES=(
   # "mix_22-06_fk-pp_03=${SAVES}/mix_22-06_fk-pp/03_just_mix"
 
   # 方案 B（video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
-  "mix_22_27_v3_9_video=${SAVES}/mix_22_27_v3_video"
+  # "mix_22_27_v3_9_video=${SAVES}/mix_22_27_v3_video"
 
   # dual_cloth（双臂折衣，三种"一次推理出两个 token"的契约）。
-  # scheme 和 LoRA 一一对应，AgentRobot 端用 run_real_dual_mvtoken.sh 的 SCHEME 选，
-  # 混搭必然解析失败（prompt 和请求形状是同一份契约的两半）。
   "dual_cloth_twice=${SAVES}/dual_cloth/twice"
   "dual_cloth_once=${SAVES}/dual_cloth/once"
   "dual_cloth_chain=${SAVES}/dual_cloth/chain"

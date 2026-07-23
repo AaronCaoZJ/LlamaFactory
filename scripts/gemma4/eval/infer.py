@@ -1,224 +1,101 @@
-"""VLM 推理客户端 — 单条推理 + 批量评估（Gemma-4-12B）
+# Copyright 2025 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-配置通过环境变量传入（用 sh 脚本封装）：
-  API_URL      server 地址（默认 http://localhost:8110，见 start_hf_server.sh）
-  MODEL_NAME   OpenAI 请求里的 model 字段 / vllm --lora-modules 的 key
+"""MVTOKEN 推理 / 评测入口 —— Gemma-4（E4B / 12B，LF `template: gemma4n`）.
 
-模式:
-  python infer.py "描述图中场景" --image /path/to/img.png   # 单条推理
-  python infer.py eval [-n N] [--raw] [--seed S]           # 批量评估
+通用逻辑全在 `scripts/eval_common/mvtoken_client.py`，这里只声明 gemma4 的**硬约束**（详见
+`scripts/gemma4/GEMMA4_DEBUG.md` §4）。
 
-先启动 server:
-  bash scripts/gemma4/eval/start_hf_server.sh     # HF backend（推荐，gemma4 arch vllm 未必支持）
-  bash scripts/gemma4/eval/start_vllm_server.sh   # vLLM backend（需 vllm 支持 gemma4）
+用法（先起 server：`bash scripts/gemma4/eval/start_vllm_server.sh`）：
+
+```bash
+cd /workspace1/zhijun/LlamaFactory && source .venv-gemma4/bin/activate
+export DISABLE_VERSION_CHECK=1   # gemma4 需 transformers>=5.10，绕过 LF 硬编码上限
+
+python scripts/gemma4/eval/infer.py eval \
+  --api-url http://localhost:8104 --model gemma4_e4b_mix_22_27_v3 \
+  -e data/agentrobot/ood_sample/v3/rollout_lite.json -n 10 --logprobs
+
+python scripts/gemma4/eval/infer.py single "Describe the image in detail" --image a.png
+python scripts/gemma4/eval/infer.py tokens --model gemma4_e4b_mix_22_27_v3
+```
+
+注意 gemma4 的 action 切分比别家碎（`MV_FWD` = MV/_/FW/D，4 个 token），所以 `--max-tokens`
+默认 8 不能再往下调。
 """
-import argparse
-import base64
-import json
-import os
-import random
+
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 
-# ── 环境变量配置 ────────────────────────────────────────────────────────────
-API_URL = os.environ.get("API_URL", "http://localhost:8114")   # HF server 默认端口；vllm 用 8104
-MODEL_NAME = os.environ.get("MODEL_NAME", "gemma4_e4b_mix_22_27_v3")
 
-# 训练侧 gemma4n 模板会注入 default_system；推理必须给出同一句，否则 prompt 结构与训练不一致。
-SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", "You are a helpful assistant.")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # -> <repo>/scripts
 
-# ── 评估数据集配置 ──────────────────────────────────────────────────────────
-DATASET = "/workspace1/zhijun/LlamaFactory/data/robot_rollout.json"
-VALID_TOKENS = {"MV_FWD", "MV_BACK", "MV_LEFT", "MV_RIGHT", "MV_UP", "MV_DOWN", "GRASP", "RELEASE"}
-_IMAGE_TOKEN = "<image>"
+from eval_common.mvtoken_client import FamilySpec, MvTokenClient, fatal, main, probe_render  # noqa: E402
 
 
-# ── 消融：去掉 input 里的 "Stage:" 行 ────────────────────────────────────────
-def strip_stage(text: str) -> str:
-    """删除 input 中以 'Stage:' 开头的整行（消融实验：测试模型是否真的依赖 stage）。"""
-    return "\n".join(
-        line for line in text.split("\n") if not line.strip().lower().startswith("stage:")
-    )
+def preflight(client: MvTokenClient) -> None:
+    r"""确认 server 挂的是 LF 对齐的模板，而不是 gemma4 出厂 jinja.
+
+    官方 jinja 与训练渲染的差距是**结构性的**（GEMMA4_DEBUG.md §4）：
+      1. 它只在 enable_thinking=true / 有 tools / 数据显式带 system 时才发 system turn，
+         而 LF 无条件注入 default_system（还带 `<|think|>` 标记）；
+      2. add_generation_prompt 只给 `<|turn>model\\n`，缺训练时结尾那段**空 thought**
+         `<|channel>thought\\n<channel|>`（它是「关闭思考」的写法，不是在思考）。
+    实测 E4B 单轮：训练 26 tok vs 官方 10 tok，公共前缀只有 2 tok。
+    失配后果是复读 / 吞 `MV_` 前缀 / 乱答，不是掉几个点。
+    """
+    tokens = probe_render(client)
+    if not tokens:
+        print("[warn] /tokenize 无返回，prompt-parity 检查跳过", file=sys.stderr)
+        return
+
+    if "<|think|>" not in tokens:
+        fatal(
+            f"server ({client.api_url}) 渲染出的 prompt 没有 <|think|> system turn —— 用的是官方模板。",
+            "重启并挂上：--chat-template scripts/gemma4/eval/chat_template_gemma4n_lf.jinja",
+            "见 bash scripts/gemma4/eval/start_vllm_server.sh / scripts/gemma4/GEMMA4_DEBUG.md §4",
+        )
+
+    if tokens[-1] != "<channel|>":
+        fatal(
+            f"server ({client.api_url}) 的 generation prompt 结尾是 {tokens[-3:]}，缺训练时的空 thought 段。",
+            "同上：必须挂 scripts/gemma4/eval/chat_template_gemma4n_lf.jinja。",
+        )
+
+    print(f"[gemma4] prompt parity OK（{client.model} @ {client.api_url}，{len(tokens)} tok，system+空 thought 齐全）")
 
 
-# ── 图片编码 ────────────────────────────────────────────────────────────────
-def encode_image(path: str) -> str:
-    suffix = Path(path).suffix.lstrip(".").lower()
-    mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp"}.get(suffix, "jpeg")
-    with open(path, "rb") as f:
-        data = base64.b64encode(f.read()).decode()
-    return f"data:image/{mime};base64,{data}"
-
-
-# ── HTTP 推理 ───────────────────────────────────────────────────────────────
-def chat(
-    messages: list[dict],
-    image_paths: list[str],
-    max_tokens: int,
-    temperature: float = 0.0,
-    enable_thinking: bool = False,
-) -> str:
-    formatted: list[dict] = []
-    if SYSTEM_PROMPT:
-        formatted.append({"role": "system", "content": SYSTEM_PROMPT})
-
-    for msg in messages:
-        if msg["role"] == "user" and image_paths:
-            clean_text = msg["content"].replace(_IMAGE_TOKEN, "").strip()
-            # 图片必须排在文本之前：训练样本的 instruction 以 "<image><image>" 开头，
-            # 两个后端都按 content 顺序拼占位符，图片放文本后会与训练分布失配。
-            content: list[dict] = [
-                {"type": "image_url", "image_url": {"url": encode_image(p)}} for p in image_paths
-            ]
-            content.append({"type": "text", "text": clean_text})
-            formatted.append({"role": "user", "content": content})
-        else:
-            formatted.append(msg)
-
-    payload = json.dumps({
-        "model": MODEL_NAME,
-        "messages": formatted,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "chat_template_kwargs": {"enable_thinking": enable_thinking},
-    }).encode()
-
-    req = urllib.request.Request(
-        f"{API_URL}/v1/chat/completions",
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            result = json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        body = e.read().decode(errors="replace")
-        print(f"[ERROR] HTTP {e.code}: {body}", file=sys.stderr)
-        sys.exit(1)
-    except urllib.error.URLError:
-        print(f"[ERROR] Cannot reach server at {API_URL}. Run: bash scripts/gemma4/eval/start_hf_server.sh", file=sys.stderr)
-        sys.exit(1)
-
-    return result["choices"][0]["message"]["content"]
-
-
-# ── 单条推理模式 ────────────────────────────────────────────────────────────
-def run_single(args: argparse.Namespace) -> None:
-    image_paths = args.images or []
-    messages = [{"role": "user", "content": args.prompt}]
-
-    print(f"Server  : {API_URL}  model={MODEL_NAME}")
-    print(f"Prompt  : {args.prompt}")
-    if image_paths:
-        print(f"Images  : {image_paths}")
-    print("─" * 72)
-
-    response = chat(messages, image_paths, args.max_tokens, args.temperature, args.think)
-    print(response)
-
-
-# ── 批量评估模式 ────────────────────────────────────────────────────────────
-def run_eval(args: argparse.Namespace) -> None:
-    random.seed(args.seed)
-    dataset_path = args.evalset or DATASET
-    with open(dataset_path) as f:
-        all_samples = json.load(f)
-
-    samples = random.sample(all_samples, min(args.n_samples, len(all_samples)))
-    max_tokens = 128 if args.raw else 8
-
-    print(f"Server  : {API_URL}  model={MODEL_NAME}")
-    print(f"Dataset : {dataset_path}  ({len(samples)}/{len(all_samples)} samples, seed={args.seed})")
-    if args.no_stage:
-        print("Ablation: --no-stage 已开启（input 中的 'Stage:' 行已删除）")
-    print("─" * 88)
-    if args.raw:
-        print(f"{'#':>3}  {'Label':>10}  {'Pred':>14}  {'Match':>5}  Full Response")
-    else:
-        print(f"{'#':>3}  {'Label':>10}  {'Pred':>14}  {'Match':>5}  Input context")
-    print("─" * 88)
-
-    correct = 0
-    per_token_total: dict[str, int] = {}
-    per_token_correct: dict[str, int] = {}
-
-    for i, sample in enumerate(samples):
-        instruction = sample["instruction"]
-        sample_input = sample.get("input") or ""
-        if args.no_stage and sample_input:
-            sample_input = strip_stage(sample_input)
-        # 训练侧 alpaca converter 用 "\n".join([instruction, input])，此处必须同样用单个 "\n"
-        user_text = f"{instruction}\n{sample_input}" if sample_input else instruction
-        messages = [{"role": "user", "content": user_text}]
-        image_paths: list[str] = sample["images"]
-
-        pred_text = chat(messages, image_paths, max_tokens).strip()
-        label = sample["output"]
-        pred_token = next((w for w in pred_text.split() if w in VALID_TOKENS), pred_text[:20])
-        match = pred_token == label
-
-        if match:
-            correct += 1
-        per_token_total[label] = per_token_total.get(label, 0) + 1
-        per_token_correct[label] = per_token_correct.get(label, 0) + (1 if match else 0)
-
-        if args.raw:
-            print(f"{i+1:>3}  {label:>10}  {pred_token:>14}  {'✓' if match else '✗':>5}  {pred_text!r}")
-        else:
-            context = sample["input"].replace("\n", " | ")[:38]
-            print(f"{i+1:>3}  {label:>10}  {pred_token:>14}  {'✓' if match else '✗':>5}  {context}")
-
-    print("─" * 88)
-    print("Per-token accuracy:")
-    for token in sorted(per_token_total):
-        n = per_token_total[token]
-        c = per_token_correct.get(token, 0)
-        print(f"  {token:<12}  {c:>2}/{n:<2} = {c/n*100:5.1f}%")
-    print("─" * 88)
-    print(f"Overall : {correct}/{len(samples)} = {correct/len(samples)*100:.1f}%")
-
-
-# ── CLI ──────────────────────────────────────────────────────────────────────
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="VLM 推理客户端（配置通过 API_URL / MODEL_NAME 环境变量传入）"
-    )
-    subparsers = parser.add_subparsers(dest="mode")
-
-    # --- single: infer.py single "prompt" --image ...
-    sp = subparsers.add_parser("single", help="单条推理（默认模式，可省略 'single'）")
-    sp.add_argument("prompt", help="文本 prompt")
-    sp.add_argument("--image", action="append", dest="images", default=[], help="图片路径（可重复）")
-    sp.add_argument("--think", action="store_true", help="开启 thinking 模式")
-    sp.add_argument("--max-tokens", type=int, default=512)
-    sp.add_argument("--temperature", type=float, default=0.0)
-
-    # --- eval: infer.py eval [-n N] [--raw] [--seed S] [--evalset PATH]
-    ep = subparsers.add_parser("eval", help="批量评估")
-    ep.add_argument("-n", "--n-samples", type=int, default=10)
-    ep.add_argument("--seed", type=int, default=42)
-    ep.add_argument("--raw", action="store_true", help="显示完整原始回复")
-    ep.add_argument("--evalset", "-e", default=None, metavar="PATH", help="测试集 JSON 路径（默认用 infer.py 里的 DATASET）")
-    ep.add_argument("--no-stage", action="store_true", help="消融：删除 input 里的 'Stage:' 行后再推理")
-
-    # 兼容旧用法：第一个参数不是子命令时当作 single prompt
-    argv = sys.argv[1:]
-    if argv and argv[0] not in ("single", "eval", "-h", "--help"):
-        argv = ["single"] + argv
-
-    args = parser.parse_args(argv)
-    if args.mode is None:
-        parser.print_help()
-        sys.exit(0)
-
-    if args.mode == "single":
-        run_single(args)
-    else:
-        run_eval(args)
+SPEC = FamilySpec(
+    name="gemma4",
+    default_api_url="http://localhost:8104",
+    default_model="gemma4_e4b_mix_22_27_v3",
+    # ⚠️ 必须有 system。训练侧 LF 的 gemma4n 模板对每条样本都注入 default_system（数据集没有
+    #    system 列），HF backend 会自动补，**vLLM 不会** —— 所以客户端显式发一份。
+    #    挂了 chat_template_gemma4n_lf.jinja 时它与模板内置的默认值一字不差，是幂等的；
+    #    想改这句只能重训（GEMMA4_DEBUG.md §4.2，`default_system: ""` 会把 <|think|> 一起丢掉）。
+    system_prompt="You are a helpful assistant.",
+    # gemma4 没有训过 <video> 槽位的 LoRA，遇到 videos 样本直接报错而不是悄悄退化。
+    video_layout=None,
+    server_hint="bash scripts/gemma4/eval/start_vllm_server.sh",
+    preflight=preflight,
+    notes=(
+        "server 必须挂 --chat-template scripts/gemma4/eval/chat_template_gemma4n_lf.jinja"
+        "（官方模板缺 system turn + 空 thought 段，会复读 / 吞 MV_ 前缀）。",
+        "action 切分较碎（MV_FWD = 4 token），--max-tokens 不要低于 8。",
+    ),
+)
 
 
 if __name__ == "__main__":
-    main()
+    main(SPEC)

@@ -17,22 +17,22 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
-# ManiSkill BlockStack real2sim (RLinf rig), 100 episodes, fully randomised white + gray
-# block layout. Built with 方案 D (closed-loop follower): a continuous scripted demo is
-# recorded, then RE-EXECUTED with 2 cm single-axis atomic tokens, and only episodes whose
-# stack still succeeds are kept -- so every frame is a state the discrete controller really
-# reached and every frame-to-frame move is strictly single-axis.
+# ManiSkill BlockPAP real2sim (RLinf rig), 100 episodes, fully randomised block + coaster
+# layout. Built with 方案 D (closed-loop follower): a continuous scripted demo is recorded,
+# then RE-EXECUTED with 2 cm single-axis atomic tokens, keeping only episodes that still
+# succeed. Same scene/task/camera as ms0717_blockpap_oracle_wide (方案 A) -- the pair is a
+# clean A-vs-D comparison, differing only in how the token sequence is derived.
 # Images are the deployment pair: agentview = the rig's calibrated front RealSense,
 # wrist = centred hand camera, already flipped the way the runner sends it.
 # Data/generator: LlamaFactory/data/agentrobot/MVTOKEN/ms_0717/ (see its README).
-dataset: ms0717_blockstack_follow
+dataset: ms0717_blockpap_follow
 template: intern_vl
 cutoff_len: 2048
 preprocessing_num_workers: 4
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/internvl3.5-2b/robot/ms0717_blockstack_follow
+output_dir: saves/internvl3.5-2b/robot/ms0717_blockpap_follow
 logging_steps: 2
 save_steps: 200
 plot_loss: true
@@ -40,18 +40,14 @@ overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
 project: llamafactory
-# Must be a TEAM entity, not the organization: "aaroncaozj_showlab" is the org and W&B
-# rejects it at wandb.init ("you may not log runs directly to your organization"), which
-# kills the run right after "Total optimization steps". Valid entities for this login:
-# aaron_cao (personal), aaroncaozj_team, lovashi514-nus.
 wandb_entity: aaroncaozj_team
-run_name: internvl3.5-2b-robot-ms0717_blockstack_follow
+run_name: internvl3.5-2b-robot-ms0717_blockpap_follow
 
 ### train
 per_device_train_batch_size: 4
 gradient_accumulation_steps: 4
 learning_rate: 1.0e-4
-num_train_epochs: 30.0
+num_train_epochs: 40.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 max_grad_norm: 1.0

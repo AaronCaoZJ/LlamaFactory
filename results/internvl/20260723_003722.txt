@@ -1,0 +1,39 @@
+=== Eval Log ===
+Timestamp : 20260723_003722
+Model     : internvl3.5-2b
+API_URL   : http://localhost:8202
+Evalset   : /tmp/claude-3014/-workspace1-zhijun/6a801ac6-4b1b-49b8-98d6-d62501f4249c/scratchpad/_ood3.json
+Command   : python scripts/internvl/eval/infer.py eval -e /tmp/claude-3014/-workspace1-zhijun/6a801ac6-4b1b-49b8-98d6-d62501f4249c/scratchpad/_ood3.json -n 50 --logprobs
+================
+[internvl] server 必须同时带 --chat-template …/chat_template_internvl_lf.jinja、--chat-template-content-format openai、--hf-overrides 强制 untie lm_head、--mm-processor-kwargs 把归一化拉回 ImageNet（后两条 HTTP 查不到，靠 start_vllm_server.sh 保证）。
+[internvl] ood_sample 只适用于 2 图的 internvl3.5-1b / internvl3.5-2b；-History2* 是 6 图契约、-ms0717_* 是 ManiSkill 数据。
+[internvl] prompt parity OK（internvl3.5-2b @ http://localhost:8202，system turn 在、图像块后无多余换行）
+Server  : http://localhost:8202  model=internvl3.5-2b
+Dataset : /tmp/claude-3014/-workspace1-zhijun/6a801ac6-4b1b-49b8-98d6-d62501f4249c/scratchpad/_ood3.json  (3/3 samples, seed=42)
+Layout  : image layout (<image><image>)
+Tokens  : action 切分（internvl @ http://localhost:8202, model=internvl3.5-2b）
+          MV_FWD    n=2  ['MV', '_FWD']
+          MV_BACK   n=2  ['MV', '_BACK']
+          MV_LEFT   n=2  ['MV', '_LEFT']
+          MV_RIGHT  n=2  ['MV', '_RIGHT']
+          MV_UP     n=2  ['MV', '_UP']
+          MV_DOWN   n=2  ['MV', '_DOWN']
+          GRASP     n=2  ['GR', 'ASP']
+          RELEASE   n=1  ['RELEASE']
+          DONE      n=1  ['DONE']
+          首 token 只能区分 4 类 ['DONE', 'GR', 'MV', 'RELEASE'] -> action 概率必须逐 token 前缀累乘
+Logprobs: /workspace1/zhijun/LlamaFactory/results/logprobs/internvl__internvl3.5-2b__scratchpad__ood3__20260723_003722.jsonl
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+  #       Label        Pred   ok  P(pred)   P(label)      H  Context
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+  1     MV_LEFT     MV_LEFT    ✓   0.9848    0.9848  0.000  
+  2     MV_LEFT     MV_LEFT    ✓   0.9973    0.9973  0.000  
+  3     MV_LEFT     MV_LEFT    ✓   1.0000    1.0000  0.000  
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+Per-label:
+  MV_LEFT      3/3  = 100.0%   meanP(pred)=0.9940  meanP(label)=0.9940
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+Overall : 3/3 = 100.0%
+          meanP(pred)=0.9940  meanH=0.000  mean legal_mass=1.0000  mean first-token legal mass=1.0000
+          logprobs -> /workspace1/zhijun/LlamaFactory/results/logprobs/internvl__internvl3.5-2b__scratchpad__ood3__20260723_003722.jsonl
+          summary  -> /workspace1/zhijun/LlamaFactory/results/logprobs/internvl__internvl3.5-2b__scratchpad__ood3__20260723_003722_summary.json

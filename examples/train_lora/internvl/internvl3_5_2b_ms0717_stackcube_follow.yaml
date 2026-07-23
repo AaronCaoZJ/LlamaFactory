@@ -17,20 +17,20 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
-# ManiSkill BlockPAP real2sim, 100 episodes / 5338 pairs, fully randomised block + coaster
-# layout. Every MV_* token is one 2 cm single-axis end-effector move (closed-loop generated,
-# measured 19.58 +- 0.41 mm, 0% diagonal steps). Images are the deployment pair:
-# agentview = BlockPAP's calibrated front RealSense, wrist = centred hand camera already
-# flipped the way run_maniskill_mvtoken.py sends it.
+# ManiSkill's OFFICIAL StackCube-v1 (stack the red cube on the green one), 100 episodes,
+# with the cameras swapped to BlockPAP's rig -- agentview extrinsics/intrinsics and the
+# wrist mount pose are byte-identical to BlockPAP (verified numerically), so the two
+# datasets are directly mixable. Both cubes are randomised natively by the task (position
+# + yaw). Built with 方案 D (closed-loop follower), success-validated per episode.
 # Data/generator: LlamaFactory/data/agentrobot/MVTOKEN/ms_0717/ (see its README).
-dataset: ms0717_blockpap_oracle_wide
+dataset: ms0717_stackcube_follow
 template: intern_vl
 cutoff_len: 2048
 preprocessing_num_workers: 4
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/internvl3.5-2b/robot/ms0717_blockpap_oracle_wide
+output_dir: saves/internvl3.5-2b/robot/ms0717_stackcube_follow
 logging_steps: 2
 save_steps: 200
 plot_loss: true
@@ -39,13 +39,13 @@ save_only_model: false
 report_to: wandb
 project: llamafactory
 wandb_entity: aaroncaozj_team
-run_name: internvl3.5-2b-robot-ms0717_blockpap_oracle_wide
+run_name: internvl3.5-2b-robot-ms0717_stackcube_follow
 
 ### train
 per_device_train_batch_size: 4
 gradient_accumulation_steps: 4
 learning_rate: 1.0e-4
-num_train_epochs: 30.0
+num_train_epochs: 40.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 max_grad_norm: 1.0

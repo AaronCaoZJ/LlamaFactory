@@ -1,0 +1,120 @@
+{
+  "meta": {
+    "family": "gemma4",
+    "api_url": "http://localhost:8104",
+    "model": "gemma4_e4b_mix_22_27_v3",
+    "evalset": "data/agentrobot/ood_sample/v3/rollout_lite.json",
+    "n_samples": 10,
+    "n_total": 50,
+    "seed": 42,
+    "layout": "image",
+    "video_fps": null,
+    "max_tokens": 8,
+    "no_stage": false,
+    "timestamp": "2026-07-22 18:31:30",
+    "action_token_split": {
+      "MV_FWD": [
+        "MV",
+        "_",
+        "FW",
+        "D"
+      ],
+      "MV_BACK": [
+        "MV",
+        "_",
+        "BACK"
+      ],
+      "MV_LEFT": [
+        "MV",
+        "_",
+        "LEFT"
+      ],
+      "MV_RIGHT": [
+        "MV",
+        "_",
+        "RIGHT"
+      ],
+      "MV_UP": [
+        "MV",
+        "_",
+        "UP"
+      ],
+      "MV_DOWN": [
+        "MV",
+        "_",
+        "DOWN"
+      ],
+      "GRASP": [
+        "GR",
+        "ASP"
+      ],
+      "RELEASE": [
+        "RELEASE"
+      ],
+      "DONE": [
+        "DONE"
+      ]
+    }
+  },
+  "overall": {
+    "n": 10,
+    "correct": 9,
+    "accuracy": 0.9,
+    "mean_pred_prob": 0.9637550663500205,
+    "mean_label_prob": 0.8875974569544425,
+    "mean_entropy": 3.7283287241973664e-05,
+    "mean_margin": 0.9999961668386638,
+    "mean_action_margin": 0.9363040284525412,
+    "mean_legal_mass": 0.9912181903869094,
+    "mean_first_token_legal_mass": 0.999996769466021
+  },
+  "per_label": {
+    "MV_DOWN": {
+      "n": 3,
+      "correct": 3,
+      "accuracy": 1.0,
+      "mean_pred_prob": 0.9244776346702882,
+      "mean_label_prob": 0.9244776346702882,
+      "mean_entropy": 2.4717245163828407e-06
+    },
+    "MV_FWD": {
+      "n": 5,
+      "correct": 4,
+      "accuracy": 0.8,
+      "mean_pred_prob": 0.9733851687184357,
+      "mean_label_prob": 0.8210699499272798,
+      "mean_entropy": 6.867989617630837e-05
+    },
+    "MV_LEFT": {
+      "n": 1,
+      "correct": 1,
+      "accuracy": 1.0,
+      "mean_pred_prob": 0.9971962074150447,
+      "mean_label_prob": 0.9971962074150447,
+      "mean_entropy": 1.9268504892861066e-05
+    },
+    "MV_RIGHT": {
+      "n": 1,
+      "correct": 1,
+      "accuracy": 1.0,
+      "mean_pred_prob": 0.9999957084821176,
+      "mean_label_prob": 0.9999957084821176,
+      "mean_entropy": 2.7497130961851235e-06
+    }
+  },
+  "confusion": {
+    "MV_DOWN": {
+      "MV_DOWN": 3
+    },
+    "MV_FWD": {
+      "MV_FWD": 4,
+      "MV_DOWN": 1
+    },
+    "MV_LEFT": {
+      "MV_LEFT": 1
+    },
+    "MV_RIGHT": {
+      "MV_RIGHT": 1
+    }
+  }
+}

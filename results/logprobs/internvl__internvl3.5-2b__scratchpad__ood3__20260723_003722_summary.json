@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "family": "internvl",
+    "api_url": "http://localhost:8202",
+    "model": "internvl3.5-2b",
+    "evalset": "/tmp/claude-3014/-workspace1-zhijun/6a801ac6-4b1b-49b8-98d6-d62501f4249c/scratchpad/_ood3.json",
+    "n_samples": 3,
+    "n_total": 3,
+    "seed": 42,
+    "layout": "image",
+    "video_fps": null,
+    "max_tokens": 8,
+    "no_stage": false,
+    "timestamp": "2026-07-23 00:37:22",
+    "action_token_split": {
+      "MV_FWD": [
+        "MV",
+        "_FWD"
+      ],
+      "MV_BACK": [
+        "MV",
+        "_BACK"
+      ],
+      "MV_LEFT": [
+        "MV",
+        "_LEFT"
+      ],
+      "MV_RIGHT": [
+        "MV",
+        "_RIGHT"
+      ],
+      "MV_UP": [
+        "MV",
+        "_UP"
+      ],
+      "MV_DOWN": [
+        "MV",
+        "_DOWN"
+      ],
+      "GRASP": [
+        "GR",
+        "ASP"
+      ],
+      "RELEASE": [
+        "RELEASE"
+      ],
+      "DONE": [
+        "DONE"
+      ]
+    }
+  },
+  "overall": {
+    "n": 3,
+    "correct": 3,
+    "accuracy": 1.0,
+    "mean_pred_prob": 0.9940130580982559,
+    "mean_label_prob": 0.9940130580982559,
+    "mean_entropy": 4.2830642207997815e-05,
+    "mean_margin": 0.9999941224686371,
+    "mean_action_margin": 0.989426390118258,
+    "mean_legal_mass": 0.999963092637552,
+    "mean_first_token_legal_mass": 0.9999968910007393
+  },
+  "per_label": {
+    "MV_LEFT": {
+      "n": 3,
+      "correct": 3,
+      "accuracy": 1.0,
+      "mean_pred_prob": 0.9940130580982559,
+      "mean_label_prob": 0.9940130580982559,
+      "mean_entropy": 4.2830642207997815e-05
+    }
+  },
+  "confusion": {
+    "MV_LEFT": {
+      "MV_LEFT": 3
+    }
+  }
+}

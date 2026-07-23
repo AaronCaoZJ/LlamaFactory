@@ -1,0 +1,86 @@
+{
+ "qwen0.8b": {
+  "0.9": {
+   "coverage": 0.94,
+   "acc_pass": 0.8297872340425532,
+   "err_caught": 0.2,
+   "n_pass": 47
+  },
+  "0.99": {
+   "coverage": 0.8,
+   "acc_pass": 0.875,
+   "err_caught": 0.5,
+   "n_pass": 40
+  }
+ },
+ "qwen2b": {
+  "0.9": {
+   "coverage": 0.88,
+   "acc_pass": 0.9090909090909091,
+   "err_caught": 0.5,
+   "n_pass": 44
+  },
+  "0.99": {
+   "coverage": 0.74,
+   "acc_pass": 0.918918918918919,
+   "err_caught": 0.625,
+   "n_pass": 37
+  }
+ },
+ "qwen9b": {
+  "0.9": {
+   "coverage": 0.94,
+   "acc_pass": 0.8085106382978723,
+   "err_caught": 0.18181818181818182,
+   "n_pass": 47
+  },
+  "0.99": {
+   "coverage": 0.82,
+   "acc_pass": 0.9024390243902439,
+   "err_caught": 0.6363636363636364,
+   "n_pass": 41
+  }
+ },
+ "gemma-e4b": {
+  "0.9": {
+   "coverage": 0.82,
+   "acc_pass": 0.8536585365853658,
+   "err_caught": 0.5,
+   "n_pass": 41
+  },
+  "0.99": {
+   "coverage": 0.72,
+   "acc_pass": 0.8888888888888888,
+   "err_caught": 0.6666666666666666,
+   "n_pass": 36
+  }
+ },
+ "intern1b": {
+  "0.9": {
+   "coverage": 0.98,
+   "acc_pass": 0.8571428571428571,
+   "err_caught": 0.0,
+   "n_pass": 49
+  },
+  "0.99": {
+   "coverage": 0.92,
+   "acc_pass": 0.9130434782608695,
+   "err_caught": 0.42857142857142855,
+   "n_pass": 46
+  }
+ },
+ "intern2b": {
+  "0.9": {
+   "coverage": 0.92,
+   "acc_pass": 0.8260869565217391,
+   "err_caught": 0.2727272727272727,
+   "n_pass": 46
+  },
+  "0.99": {
+   "coverage": 0.82,
+   "acc_pass": 0.8536585365853658,
+   "err_caught": 0.45454545454545453,
+   "n_pass": 41
+  }
+ }
+}

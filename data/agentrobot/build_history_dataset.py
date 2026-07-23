@@ -22,6 +22,14 @@ def _image_tokens(num_images: int) -> str:
 
 
 def _history_prefix(history_frames: int) -> str:
+    """TRAINING CONTRACT -- the deployed prompt must reproduce this text byte-for-byte.
+
+    For history_frames=2 (the only case actually trained) the deployment copy is the prompt
+    file ``AgentRobot/prompts/v3/history2_mvtoken_generator_lite.txt`` (this preamble + the v3
+    body). Change this function and that file goes stale: re-render it and re-verify against
+    the emitted dataset. ``AgentRobot/vlm/mvtoken_roles.py:_history_prefix`` is the legacy
+    runtime copy, kept only for other history_frames values.
+    """
     num_pairs = history_frames + 1
     lines = [
         "Temporal visual history is provided before the current observation.",
