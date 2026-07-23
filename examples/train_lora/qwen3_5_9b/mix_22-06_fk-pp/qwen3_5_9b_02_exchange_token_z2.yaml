@@ -18,7 +18,7 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
-dataset: mix_22-06_fk-pp_02_exchange_token_task_aug
+dataset: mix_22-06_fk-pp_02_exchange_token
 template: qwen3_5_nothink
 cutoff_len: 2048
 overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）；全量重算仅 ~17s
@@ -26,14 +26,14 @@ preprocessing_num_workers: 4
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_task_aug_2_schedule
+output_dir: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_2_schedule_z2
 logging_steps: 2
 save_steps: 1000
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
-run_name: qwen3.5-9b-robot-mix_22-06_fk-pp-02_exchange_token_task_aug_2_schedule
+run_name: qwen3.5-9b-robot-mix_22-06_fk-pp-02_exchange_token_2_schedule_z2
 
 ### train
 # 7933 samples (2863 piper + 5070 franka), 1 H200 (single card), batch=4, grad_acc=8 -> eff_bs=32 -> ~248 steps/epoch
@@ -48,4 +48,4 @@ bf16: true
 ddp_timeout: 180000000
 
 ### distributed (ZeRO-2: 9B×bf16=18GB fits easily in H200 141GB, less comm overhead)
-deepspeed: examples/deepspeed/ds_z0_config.json
+deepspeed: examples/deepspeed/ds_z2_config.json

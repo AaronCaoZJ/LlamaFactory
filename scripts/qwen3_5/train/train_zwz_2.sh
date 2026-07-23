@@ -6,12 +6,10 @@ LF_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 VENV_PATH="${VENV_PATH:-/storage/wenzheng/showrobot/LlamaFactory/.venv}"
 
-CONFIG="${CONFIG:-examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_03_just_mix_zwz_new_prompt_add_horizon_flip.yaml}"
+CONFIG="${1:-${CONFIG:-examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_03_just_mix_zwz_new_prompt_add_horizon_flip.yaml}}"
 MODEL_PATH="${MODEL_PATH:-/storage/wenzheng/showrobot/hf_download/models/Qwen3.5-9B}"
 
-
 GPUS="${GPUS:-6,7}"
-
 cd "${LF_ROOT}"
 
 export PYTHONPATH="${LF_ROOT}/src:${PYTHONPATH:-}"

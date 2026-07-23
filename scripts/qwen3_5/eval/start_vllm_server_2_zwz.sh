@@ -38,11 +38,14 @@ SAVES="${LF_ROOT}/saves/qwen3.5-9b/robot"
 LORA_MODULES=(
   "franka_only=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22_27_04_v3_zwz_new_prompt"
   "02_exchange_franka_prompt=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_zwz_new_prompt"
+  "02_mix_22-06_fk-pp_03=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token"
+  "02_exchange_task_aug=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_task_aug"
   "03_just_mix_tailed_prompt=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt"
   "03_just_mix_tailed_prompt_spatial_aug=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt_add_horizon_flip"
   "03_just_mix_tailed_prompt_spatial_aug_rule_aug=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt_add_horizon_flip_add_augment_rules"
 )
 
+# "03_just_mix_tailed_prompt_spatial_aug_2_training_schedule=/storage/wenzheng/showrobot/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt_add_horizon_flip_2_training_schedule"
 # LF 对齐的 chat template（必需）。Qwen3.5 官方模板即使 enable_thinking=false 也会在
 # '<|im_start|>assistant\n' 后插一个空 think 块 '<think>\n\n</think>\n\n'，而 LF 的
 # qwen3_5_nothink 什么都不插 —— 不挂这个文件，prompt 与训练分布差 4 个 token（HANDOFF §4.2）。
