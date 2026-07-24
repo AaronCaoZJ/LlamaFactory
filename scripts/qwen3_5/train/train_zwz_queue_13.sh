@@ -9,14 +9,20 @@ GPUS="${GPUS:-0,1,2,3,4,5,6,7}"
 echo "GPUS=${GPUS}"
 echo "TRAIN_SH=${TRAIN_SH}"
 
-echo "================================================================================"
-echo "[queue] 1/2 task_aug_13"
-echo "================================================================================"
-GPUS="${GPUS}" bash "${TRAIN_SH}" \
-  "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_task_aug_plus_robovqa_clean_ans6k_under500_13.yaml"
+# echo "================================================================================"
+# echo "[queue] 1/3 task_aug_13"
+# echo "================================================================================"
+# GPUS="${GPUS}" bash "${TRAIN_SH}" \
+#   "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_task_aug_plus_robovqa_clean_ans6k_under500_13.yaml"
+
+# echo "================================================================================"
+# echo "[queue] 2/3 exchange_token_13"
+# echo "================================================================================"
+# GPUS="${GPUS}" bash "${TRAIN_SH}" \
+#   "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_13.yaml"
 
 echo "================================================================================"
-echo "[queue] 2/2 exchange_token_13"
+echo "[queue] 3/3 task_aug_13 + robovqa clean ans6k under500 + zwz_0723"
 echo "================================================================================"
 GPUS="${GPUS}" bash "${TRAIN_SH}" \
-  "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_13.yaml"
+  "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_task_aug_plus_robovqa_clean_ans6k_under500_plus_zwz_0723_13.yaml"
