@@ -37,6 +37,19 @@ echo "==========================================================================
 GPUS="${GPUS}" bash "${TRAIN_SH}" \
   "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_task_aug_plus_zwz_0723.yaml"
 
+# 0724 plan: first two runs on the local training queue.
+echo "================================================================================"
+echo "[queue] 0724 1/2 exchange_token + zwz_0724 easy_spatial_left_right"
+echo "================================================================================"
+GPUS="${GPUS}" bash "${TRAIN_SH}" \
+  "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_plus_zwz_0724_easy_spatial.yaml"
+
+echo "================================================================================"
+echo "[queue] 0724 2/2 exchange_token + zwz_0723 + zwz_0724"
+echo "================================================================================"
+GPUS="${GPUS}" bash "${TRAIN_SH}" \
+  "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_plus_zwz_0723_0724.yaml"
+
 # 5) z2
 # echo "================================================================================"
 # echo "[queue] 5/6 z2"

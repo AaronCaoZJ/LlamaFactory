@@ -1,0 +1,57 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+video_max_pixels: 65536
+video_min_pixels: 1024
+video_fps: 2.0
+video_maxlen: 64
+image_max_pixels: 65536    # 256x256; matches rollout image resolution
+trust_remote_code: true
+# flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# Robot samples use current zwz v2 prompts on top of 03_just_mix; RoboVQA keeps its
+# own video QA prompts. Piper is detected only from 0705_piper/0706_piper paths.
+dataset: mix_22-06_fk-pp_03_just_mix_plus_zwz_0723_0724_v2_prompt_plus_robovqa_clean_ans6k_under500
+media_dir: /storage/wenzheng/showrobot/hf_download/datasets/raw/RoboVQA
+template: qwen3_5_nothink
+cutoff_len: 8192
+overwrite_cache: true      # image/video files can be replaced in place; paths alone do not change fingerprints
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/03_just_mix_plus_zwz_0723_0724_v2_prompt_plus_robovqa_clean_ans6k_under500_13
+logging_steps: 2
+save_steps: 1000
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: qwen3.5-9b-robot-mix_22-06_fk-pp-03_just_mix-plus-zwz-0723-0724-v2-prompt-plus-robovqa-clean-ans6k-under500_13
+
+### train
+# 19970 samples: 13470 robot v2 + 6000 RoboVQA answer-only reasoning + 500 RoboVQA understanding.
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 2
+learning_rate: 1.0e-4
+num_train_epochs: 20.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed
+deepspeed: examples/deepspeed/ds_z0_config.json

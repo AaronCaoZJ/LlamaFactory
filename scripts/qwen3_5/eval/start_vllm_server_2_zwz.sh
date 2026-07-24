@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vLLM OpenAI server: Qwen3.5-2B + MVTOKEN LoRA adapters (default :8102).
+# vLLM OpenAI server: Qwen3.5-9B + MVTOKEN LoRA adapters (default :8103).
 set -euo pipefail
 
 # ================================================================================
@@ -44,8 +44,12 @@ LORA_MODULES=(
   "02_exchange_2_schedule=${SAVES}/mix_22-06_fk-pp/02_exchange_token_2_schedule"
   "02_exchange_2_schedule_z2=${SAVES}/mix_22-06_fk-pp/02_exchange_token_2_schedule_z2"
   "02_exchange_task_aug_2_schedule=${SAVES}/mix_22-06_fk-pp/02_exchange_token_task_aug_2_schedule"
-  # "02_exchange_2_schedule_13=${SAVES}/mix_22-06_fk-pp/02_exchange_token_2_schedule_13"
+  "02_exchange_2_schedule_13=${SAVES}/mix_22-06_fk-pp/02_exchange_token_2_schedule_13"
   "02_exchange_task_aug_robovqa_2_schedule_13=${SAVES}/mix_22-06_fk-pp/02_exchange_token_task_aug_plus_robovqa_clean_ans6k_under500_2_schedule_13"
+  # latest local queue: still training; keep commented until root adapter_model.safetensors exists.
+  "02_exchange_task_aug_zwz_0723=${SAVES}/mix_22-06_fk-pp/02_exchange_token_task_aug_plus_zwz_0723"
+  # latest 13 queue: still training; keep commented until root adapter_model.safetensors exists.
+  # "02_exchange_task_aug_robovqa_zwz_0723_13=${SAVES}/mix_22-06_fk-pp/02_exchange_token_task_aug_plus_robovqa_clean_ans6k_under500_plus_zwz_0723_13"
   "03_just_mix_tailed_prompt=${SAVES}/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt"
   "03_just_mix_tailed_prompt_spatial_aug=${SAVES}/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt_add_horizon_flip"
   "03_just_mix_tailed_prompt_spatial_aug_rule_aug=${SAVES}/mix_22-06_fk-pp/03_just_mix_zwz_new_prompt_add_horizon_flip_add_augment_rules"
