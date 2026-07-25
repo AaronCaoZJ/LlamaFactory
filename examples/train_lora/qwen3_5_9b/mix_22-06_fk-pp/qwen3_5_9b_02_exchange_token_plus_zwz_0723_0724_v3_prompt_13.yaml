@@ -18,9 +18,9 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
-# Prompt split: original exchange_token samples keep their existing prompt; new zwz_0723/0724
-# samples use AgentRobot/prompts/v4/franka_mvtoken_lite.txt, not the zwz v2 prompt.
-dataset: mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724
+# V3 prompt reverses Piper MV_FWD/MV_BACK wording to match the exchanged visual frame.
+# Use 02_exchange_token because its Piper labels are swapped accordingly.
+dataset: mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_v3_prompt
 template: qwen3_5_nothink
 cutoff_len: 2048
 overwrite_cache: true      # image files can be replaced in place; paths alone do not change fingerprints
@@ -28,18 +28,18 @@ preprocessing_num_workers: 4
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724
+output_dir: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_v3_prompt_13
 logging_steps: 2
 save_steps: 1000
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
-run_name: qwen3.5-9b-robot-mix_22-06_fk-pp-02_exchange_token-plus-zwz-0723-0724
+run_name: qwen3.5-9b-robot-mix_22-06_fk-pp-02-exchange-token-plus-zwz-0723-0724-v3-prompt_13
 
 ### train
-# 13470 samples: 7933 exchange_token base + 2471 zwz_0723 + 3066 zwz_0724.
-per_device_train_batch_size: 8
+# 13470 robot samples with v3 prompt: 10607 franka + 2863 piper.
+per_device_train_batch_size: 2
 gradient_accumulation_steps: 2
 learning_rate: 1.0e-4
 num_train_epochs: 20.0

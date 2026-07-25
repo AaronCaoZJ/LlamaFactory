@@ -108,6 +108,25 @@
       "videos": "videos"
     }
   },
+  "mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_v3_prompt": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724_v3_prompt.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_v3_prompt_plus_robovqa_clean_ans6k_under500": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724_v3_prompt_plus_robovqa_clean_ans6k_under500.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images",
+      "videos": "videos"
+    }
+  },
   "mix_22-06_fk-pp_02_exchange_token_zwz_0723": {
     "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_zwz_0723.json",
     "columns": {

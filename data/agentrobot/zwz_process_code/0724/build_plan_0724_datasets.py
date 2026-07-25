@@ -31,6 +31,8 @@ ZWZ_0724_EASY_ROOT = ZWZ_0724_ROOT / "easy_spatial_left_right"
 PROMPT_V4_FRANKA = LF_ROOT.parent / "AgentRobot" / "prompts" / "v4" / "franka_mvtoken_lite.txt"
 PROMPT_V2_FRANKA = PROCESS_ROOT / "prompt_franka_zwz_v2.txt"
 PROMPT_V2_PIPER = PROCESS_ROOT / "prompt_piper_zwz_v2.txt"
+PROMPT_V3_FRANKA = PROCESS_ROOT / "prompt_franka_zwz_v3.txt"
+PROMPT_V3_PIPER = PROCESS_ROOT / "prompt_piper_zwz_v3.txt"
 
 ROBOVQA_REASONING = LF_ROOT / "data" / "robovqa" / "robovqa_reasoning_lf_ans6k.jsonl"
 ROBOVQA_UNDERSTANDING = LF_ROOT / "data" / "robovqa" / "robovqa_understanding_lf_500.jsonl"
@@ -39,8 +41,13 @@ OUT_1 = OUT_EXCHANGE_DIR / "rollout_lite_plus_zwz_0724_easy_spatial.json"
 OUT_2 = OUT_EXCHANGE_DIR / "rollout_lite_plus_zwz_0723_0724.json"
 OUT_3 = OUT_JUST_MIX_DIR / "rollout_lite_plus_zwz_0723_0724_v2_prompt.json"
 OUT_4 = OUT_JUST_MIX_DIR / "rollout_lite_plus_zwz_0723_0724_v2_prompt_plus_robovqa_clean_ans6k_under500.json"
+OUT_5 = OUT_EXCHANGE_DIR / "rollout_lite_plus_zwz_0723_0724_v3_prompt.json"
+OUT_6 = OUT_EXCHANGE_DIR / "rollout_lite_plus_zwz_0723_0724_v3_prompt_plus_robovqa_clean_ans6k_under500.json"
 
 PIPER_SOURCE_MARKERS = ("0705_piper", "0706_piper")
+OLD_MVTOKEN_ROOTS = (
+    "/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN",
+)
 MEDIA_PREFIX_RE = re.compile(r"^(?:(?:<image>)|(?:<video>))+")
 TASK_RE = re.compile(r"^Task:\s*(?P<task>.+?)\s*$", re.MULTILINE)
 RECENT_RE = re.compile(
@@ -173,7 +180,7 @@ def sample_source(sample: dict[str, Any]) -> str:
     return "franka"
 
 
-def rewrite_v2_prompt(
+def rewrite_robot_prompt(
     samples: list[dict[str, Any]],
     *,
     franka_template: str,
@@ -209,6 +216,26 @@ def with_media_keys(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return normalized
 
 
+def normalize_mvtoken_media_paths(samples: list[dict[str, Any]]) -> None:
+    local_root = str(MVTOKEN_ROOT)
+    for sample in samples:
+        for key in ("images", "videos"):
+            media = sample.get(key)
+            if not isinstance(media, list):
+                continue
+            sample[key] = [
+                normalize_mvtoken_path(path, local_root) if isinstance(path, str) else path
+                for path in media
+            ]
+
+
+def normalize_mvtoken_path(path: str, local_root: str) -> str:
+    for old_root in OLD_MVTOKEN_ROOTS:
+        if path.startswith(old_root):
+            return local_root + path[len(old_root):]
+    return path
+
+
 def write_stats(path: Path, stats: dict[str, Any]) -> None:
     write_json(path.with_suffix(path.suffix + ".stats.json"), stats)
 
@@ -230,12 +257,20 @@ def main() -> None:
     prompt_v4_franka = PROMPT_V4_FRANKA.read_text(encoding="utf-8").rstrip("\n")
     prompt_v2_franka = PROMPT_V2_FRANKA.read_text(encoding="utf-8").rstrip("\n")
     prompt_v2_piper = PROMPT_V2_PIPER.read_text(encoding="utf-8").rstrip("\n")
+    prompt_v3_franka = PROMPT_V3_FRANKA.read_text(encoding="utf-8").rstrip("\n")
+    prompt_v3_piper = PROMPT_V3_PIPER.read_text(encoding="utf-8").rstrip("\n")
     validate_template(prompt_v2_franka, PROMPT_V2_FRANKA)
     validate_template(prompt_v2_piper, PROMPT_V2_PIPER)
+    validate_template(prompt_v3_franka, PROMPT_V3_FRANKA)
+    validate_template(prompt_v3_piper, PROMPT_V3_PIPER)
     legacy_prompt_info = prompt_fingerprint(PROMPT_V4_FRANKA)
     v2_prompt_info = {
         "franka": prompt_fingerprint(PROMPT_V2_FRANKA),
         "piper": prompt_fingerprint(PROMPT_V2_PIPER),
+    }
+    v3_prompt_info = {
+        "franka": prompt_fingerprint(PROMPT_V3_FRANKA),
+        "piper": prompt_fingerprint(PROMPT_V3_PIPER),
     }
 
     task_0723 = load_task_txt(ZWZ_0723_ROOT / "task.txt")
@@ -266,14 +301,26 @@ def main() -> None:
     exp1 = base_exchange_samples + zwz_0724_easy
     exp2 = base_exchange_samples + zwz_0723_all + zwz_0724_all
     exp3_source = base_just_mix_samples + zwz_0723_all + zwz_0724_all
-    exp3, exp3_source_counts = rewrite_v2_prompt(
+    exp3, exp3_source_counts = rewrite_robot_prompt(
         exp3_source,
         franka_template=prompt_v2_franka,
         piper_template=prompt_v2_piper,
     )
+    # V3 intentionally describes Piper MV_FWD/MV_BACK in the exchanged visual frame.
+    # Use 02_exchange_token so Piper labels are swapped to match that prompt meaning.
+    exp5_source = base_exchange_samples + zwz_0723_all + zwz_0724_all
+    exp5, exp5_source_counts = rewrite_robot_prompt(
+        exp5_source,
+        franka_template=prompt_v3_franka,
+        piper_template=prompt_v3_piper,
+    )
     robovqa_reasoning = load_jsonl(ROBOVQA_REASONING)
     robovqa_understanding = load_jsonl(ROBOVQA_UNDERSTANDING)
     exp4 = with_media_keys(exp3) + with_media_keys(robovqa_reasoning) + with_media_keys(robovqa_understanding)
+    exp6 = with_media_keys(exp5) + with_media_keys(robovqa_reasoning) + with_media_keys(robovqa_understanding)
+
+    for samples in (exp1, exp2, exp3, exp4, exp5, exp6):
+        normalize_mvtoken_media_paths(samples)
 
     outputs = [
         (
@@ -344,6 +391,42 @@ def main() -> None:
                 "robot_prompt": {
                     "kind": "zwz_v2_mixed_by_source",
                     **v2_prompt_info,
+                },
+            },
+        ),
+        (
+            OUT_5,
+            exp5,
+            {
+                "total_samples": len(exp5),
+                "source_counts": dict(sorted(exp5_source_counts.items())),
+                "base_samples": len(base_exchange_samples),
+                "base_path": str(BASE_EXCHANGE_JSON),
+                "zwz_0723_samples": len(zwz_0723_all),
+                "zwz_0724_samples": len(zwz_0724_all),
+                "prompt": {
+                    "kind": "zwz_v3_piper_fwd_back_reversed_mixed_by_source",
+                    **v3_prompt_info,
+                },
+            },
+        ),
+        (
+            OUT_6,
+            exp6,
+            {
+                "total_samples": len(exp6),
+                "robot_v3_samples": len(exp5),
+                "robovqa_reasoning_samples": len(robovqa_reasoning),
+                "robovqa_understanding_samples": len(robovqa_understanding),
+                "source_counts": {
+                    **dict(sorted(exp5_source_counts.items())),
+                    "robovqa_reasoning": len(robovqa_reasoning),
+                    "robovqa_understanding": len(robovqa_understanding),
+                },
+                "media_columns": ["images", "videos"],
+                "robot_prompt": {
+                    "kind": "zwz_v3_piper_fwd_back_reversed_mixed_by_source",
+                    **v3_prompt_info,
                 },
             },
         ),
