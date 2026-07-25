@@ -44,11 +44,11 @@ echo "TRAIN_SH=${TRAIN_SH}"
 # GPUS="${GPUS}" bash "${TRAIN_SH}" \
 #   "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_plus_zwz_0724_easy_spatial.yaml"
 
-echo "================================================================================"
-echo "[queue] 0724 2/2 exchange_token + zwz_0723 + zwz_0724"
-echo "================================================================================"
-GPUS="${GPUS}" bash "${TRAIN_SH}" \
-  "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_plus_zwz_0723_0724.yaml"
+# echo "================================================================================"
+# echo "[queue] 0724 2/2 exchange_token + zwz_0723 + zwz_0724"
+# echo "================================================================================"
+# GPUS="${GPUS}" bash "${TRAIN_SH}" \
+#   "examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b_02_exchange_token_plus_zwz_0723_0724.yaml"
 
 # 0724 v3 prompt ablation: run the RoboVQA-heavy job on the local queue.
 echo "================================================================================"

@@ -13,7 +13,7 @@ source "$(
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
-GPU="${GPU:-4}"
+GPU="${GPU:-6,7}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
 if [ -x /usr/local/cuda-12.9/bin/nvcc ]; then
   export CUDA_HOME=/usr/local/cuda-12.9
@@ -25,7 +25,7 @@ fi
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8103}"
-GPU_UTIL="${GPU_UTIL:-0.35}"
+GPU_UTIL="${GPU_UTIL:-0.55}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192

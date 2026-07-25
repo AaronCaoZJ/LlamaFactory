@@ -22,9 +22,9 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
-# Robot samples use zwz v3 prompts on top of 02_exchange_token; RoboVQA keeps its
-# own video QA prompts. Piper is detected only from 0705_piper/0706_piper paths.
-dataset: mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_v3_prompt_plus_robovqa_clean_ans6k_under500
+# Keep image-only robot samples and video-only RoboVQA samples as separate datasets
+# so HuggingFace Datasets infers media columns independently before concatenation.
+dataset: mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_v3_prompt,robovqa_reasoning_lf_ans6k,robovqa_understanding_lf_500
 media_dir: /storage/wenzheng/showrobot/hf_download/datasets/raw/RoboVQA
 template: qwen3_5_nothink
 cutoff_len: 8192
@@ -45,8 +45,8 @@ run_name: qwen3.5-9b-robot-mix_22-06_fk-pp-02-exchange-token-plus-zwz-0723-0724-
 
 ### train
 # 19970 samples: 13470 robot v3 + 6000 RoboVQA answer-only reasoning + 500 RoboVQA understanding.
-per_device_train_batch_size: 8
-gradient_accumulation_steps: 2
+per_device_train_batch_size: 16
+gradient_accumulation_steps: 1
 learning_rate: 1.0e-4
 num_train_epochs: 20.0
 lr_scheduler_type: cosine

@@ -22,6 +22,8 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
+# Keep image-only robot samples and video-only RoboVQA samples as separate datasets
+# so HuggingFace Datasets infers media columns independently before concatenation.
 dataset: mix_22-06_fk-pp_02_exchange_token_task_aug_13,mix_22-06_fk-pp_02_exchange_token_zwz_0723,robovqa_reasoning_lf_ans6k,robovqa_understanding_lf_500
 media_dir: /storage/wenzheng/showrobot/hf_download/datasets/raw/RoboVQA
 template: qwen3_5_nothink
