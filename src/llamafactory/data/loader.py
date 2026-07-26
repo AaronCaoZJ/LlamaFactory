@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 import numpy as np
-from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
+from datasets import Dataset, DatasetDict, Features, Sequence, Value, load_dataset, load_from_disk
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
@@ -226,6 +226,71 @@ def _get_dataset_processor(
     return dataset_processor_class(template=template, tokenizer=tokenizer, processor=processor, data_args=data_args)
 
 
+def _get_preprocessed_dataset_features(
+    dataset: Union["Dataset", "IterableDataset"],
+    dataset_processor: "DatasetProcessor",
+) -> Optional[Features]:
+    r"""Return explicit output features to avoid Arrow inferring null media columns from early batches."""
+    media_features = {}
+    dataset_features = getattr(dataset, "features", None)
+    for source_name, target_name in (("_images", "images"), ("_videos", "videos"), ("_audios", "audios")):
+        if dataset_features is not None and source_name in dataset_features:
+            media_features[target_name] = dataset_features[source_name]
+        else:
+            media_features[target_name] = Sequence(Value("string"))
+
+    int_sequence = Sequence(Value("int32"))
+    features: dict[str, Any]
+    if isinstance(dataset_processor, PackedSupervisedDatasetProcessor):
+        features = {
+            "input_ids": int_sequence,
+            "attention_mask": int_sequence,
+            "position_ids": int_sequence,
+            "labels": int_sequence,
+            **media_features,
+        }
+        if dataset_processor.data_args.neat_packing:
+            features["packing_params"] = {
+                "sequence_boundaries": Sequence(Value("int32")),
+                "image_subseq_ids": Sequence(Value("int64")),
+                "video_subseq_ids": Sequence(Value("int64")),
+                "audio_subseq_ids": Sequence(Value("int64")),
+                "right_padding_length": Value("int32"),
+            }
+    elif isinstance(dataset_processor, (SupervisedDatasetProcessor, UnsupervisedDatasetProcessor)):
+        features = {
+            "input_ids": int_sequence,
+            "attention_mask": int_sequence,
+            "labels": int_sequence,
+            **media_features,
+        }
+    elif isinstance(dataset_processor, PairwiseDatasetProcessor):
+        features = {
+            "chosen_input_ids": int_sequence,
+            "chosen_attention_mask": int_sequence,
+            "chosen_labels": int_sequence,
+            "rejected_input_ids": int_sequence,
+            "rejected_attention_mask": int_sequence,
+            "rejected_labels": int_sequence,
+            **media_features,
+        }
+    elif isinstance(dataset_processor, FeedbackDatasetProcessor):
+        features = {
+            "input_ids": int_sequence,
+            "attention_mask": int_sequence,
+            "labels": int_sequence,
+            "kl_input_ids": int_sequence,
+            "kl_attention_mask": int_sequence,
+            "kl_labels": int_sequence,
+            "kto_tags": Value("bool"),
+            **media_features,
+        }
+    else:
+        return None
+
+    return Features(features)
+
+
 def _get_preprocessed_dataset(
     dataset: Union["Dataset", "IterableDataset"] | None,
     data_args: "DataArguments",
@@ -250,6 +315,7 @@ def _get_preprocessed_dataset(
             num_proc=data_args.preprocessing_num_workers,
             load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
             desc="Running tokenizer on dataset",
+            features=_get_preprocessed_dataset_features(dataset, dataset_processor),
         )
 
     dataset = dataset.map(
