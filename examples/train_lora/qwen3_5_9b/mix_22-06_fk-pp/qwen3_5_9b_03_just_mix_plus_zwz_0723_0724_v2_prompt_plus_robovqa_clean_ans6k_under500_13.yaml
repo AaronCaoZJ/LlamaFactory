@@ -22,9 +22,9 @@ lora_dropout: 0.05
 lora_target: all
 
 ### dataset
-# Robot samples use current zwz v2 prompts on top of 03_just_mix; RoboVQA keeps its
-# own video QA prompts. Piper is detected only from 0705_piper/0706_piper paths.
-dataset: mix_22-06_fk-pp_03_just_mix_plus_zwz_0723_0724_v2_prompt_plus_robovqa_clean_ans6k_under500
+# Keep image-only robot samples and video-only RoboVQA samples as separate datasets
+# so HuggingFace Datasets infers media columns independently before concatenation.
+dataset: mix_22-06_fk-pp_03_just_mix_plus_zwz_0723_0724_v2_prompt,robovqa_reasoning_lf_ans6k,robovqa_understanding_lf_500
 media_dir: /storage/wenzheng/showrobot/hf_download/datasets/raw/RoboVQA
 template: qwen3_5_nothink
 cutoff_len: 8192
