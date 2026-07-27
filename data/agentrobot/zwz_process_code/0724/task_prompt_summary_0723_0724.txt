@@ -1,0 +1,232 @@
+0723/0724 task prompt summary
+Generated on 2026-07-27.
+
+Terminology
+===========
+- "Task prompt" here means the natural-language task line inside each LF sample:
+  Task: ...
+- "Prompt template" means the surrounding instruction text that describes the
+  cameras, valid action tokens, action meanings, and output format.
+
+Main conclusion
+===============
+1. easy_spatial is not a pure-new-data dataset. It is:
+   - 7933 old 02_exchange_token base samples, keeping their existing prompts.
+   - 2264 new zwz_0724/easy_spatial_left_right samples, using the legacy
+     AgentRobot v4 Franka lite prompt template:
+     /storage/wenzheng/showrobot/AgentRobot/prompts/v4/franka_mvtoken_lite.txt
+
+2. The easy_spatial new samples use 8 task prompts from
+   data/agentrobot/MVTOKEN/zwz_0724/task.txt:
+   - easy_spatial_left_right/task_5
+   - easy_spatial_left_right/task_6
+   - easy_spatial_left_right/task_7
+   - easy_spatial_left_right/task_8
+   - easy_spatial_left_right/task_9
+   - easy_spatial_left_right/task_10
+   - easy_spatial_left_right/task_11
+   - easy_spatial_left_right/task_12
+
+3. Full 0723+0724 robot datasets use 18 new ZWZ task prompts:
+   - 6 from zwz_0723/task.txt.
+   - 12 from zwz_0724/task.txt.
+
+4. Prompt-template variants:
+   - v4 legacy Franka lite: short prompt, no explicit coordinate/action meaning
+     block. Used for easy_spatial and the plain 0723+0724 exchange_token dataset.
+   - v2 mixed-by-source: rewrites robot prompts with separate Franka/Piper
+     templates from data/agentrobot/zwz_process_code/.
+   - v3 mixed-by-source: same Franka template as v2, but Piper MV_FWD/MV_BACK
+     wording is reversed to match the exchanged visual frame used by
+     02_exchange_token.
+
+Datasets and prompt-template use
+================================
+1. qwen3_5_9b_02_exchange_token_plus_zwz_0724_easy_spatial.yaml
+   Dataset key:
+   mix_22-06_fk-pp_02_exchange_token_plus_zwz_0724_easy_spatial
+   JSON:
+   data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0724_easy_spatial.json
+   Samples:
+   - total: 10197
+   - base 02_exchange_token: 7933
+   - zwz_0724 easy_spatial_left_right: 2264
+   Prompt template for new ZWZ samples:
+   - kind: legacy_agentrobot_v4_franka_lite
+   - path: /storage/wenzheng/showrobot/AgentRobot/prompts/v4/franka_mvtoken_lite.txt
+
+2. qwen3_5_9b_02_exchange_token_plus_zwz_0723_0724.yaml
+   Dataset key:
+   mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724
+   JSON:
+   data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724.json
+   Samples:
+   - total: 13470
+   - base 02_exchange_token: 7933
+   - zwz_0723: 2471
+   - zwz_0724: 3066
+   Prompt template for new ZWZ samples:
+   - kind: legacy_agentrobot_v4_franka_lite
+   - path: /storage/wenzheng/showrobot/AgentRobot/prompts/v4/franka_mvtoken_lite.txt
+
+3. qwen3_5_9b_03_just_mix_plus_zwz_0723_0724_v2_prompt_13.yaml
+   Dataset key:
+   mix_22-06_fk-pp_03_just_mix_plus_zwz_0723_0724_v2_prompt
+   JSON:
+   data/agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite_plus_zwz_0723_0724_v2_prompt.json
+   Samples:
+   - total: 13470
+   - franka-source robot samples: 10607
+   - piper-source robot samples: 2863
+   Prompt templates:
+   - Franka: data/agentrobot/zwz_process_code/prompt_franka_zwz_v2.txt
+   - Piper: data/agentrobot/zwz_process_code/prompt_piper_zwz_v2.txt
+
+4. qwen3_5_9b_02_exchange_token_plus_zwz_0723_0724_v3_prompt_13.yaml
+   Dataset key:
+   mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_v3_prompt
+   JSON:
+   data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724_v3_prompt.json
+   Samples:
+   - total: 13470
+   - franka-source robot samples: 10607
+   - piper-source robot samples: 2863
+   Prompt templates:
+   - Franka: data/agentrobot/zwz_process_code/prompt_franka_zwz_v3.txt
+     Note: same content/hash as prompt_franka_zwz_v2.txt.
+   - Piper: data/agentrobot/zwz_process_code/prompt_piper_zwz_v3.txt
+     Note: Piper MV_FWD/MV_BACK wording is reversed relative to v2.
+
+easy_spatial final Task lines
+=============================
+The final easy_spatial JSON contains the 17 old base tasks below plus 8 new
+0724 easy_spatial tasks.
+
+Old base 02_exchange_token tasks in easy_spatial:
+- 247: Pick up the white block and place it on the orange block
+- 269: Pick up the white cube and place it on the pink cube
+- 458: pick up the banana and place it on the blue plate
+- 469: pick up the banana and place it on the plate
+- 374: pick up the blue block and place it on the plate
+- 274: pick up the gray cup and stack it on the yellow cup
+- 88: pick up the gray mug and place it on the green coaster
+- 379: pick up the mango and place it in the bowl
+- 928: pick up the mango and place it on the blue plate
+- 511: pick up the orange block and place it on the plate
+- 333: pick up the pink cube and place it on the plate
+- 99: pick up the pink cup and stack it on the blue cup
+- 410: pick up the tennis ball and place it on the plate
+- 1631: pick up the white bowl and stack it on the pink bowl
+- 122: pick up the wrench and place it on the plate
+- 928: pick up the yellow cup and place it on the green coaster
+- 413: rearrange the letters to spell "SHOW"
+
+New 0724 easy_spatial_left_right tasks in easy_spatial:
+- 159: Pick up the letter O and place it to the left of the letter S.
+- 249: Pick up the carrot and place it to the right of the orange block.
+- 235: Pick up the pink block and place it to the left of the blue block.
+- 464: Pick up the left cup and place it into the right cup.
+- 314: Pick up the right cup and place it into the middle cup.
+- 356: Pick up the letter S and place it to the left of the pink block.
+- 216: Pick up the pink block and place it to the right of the orange block.
+- 271: Pick up the letter H and place it to the right of the carrot.
+
+0723 task prompts
+=================
+Source:
+data/agentrobot/MVTOKEN/zwz_0723/task.txt
+
+- zwz_task_1: Pick up the letter S and place it to the right of the letter H.
+  Samples in full 0723+0724 set: 480
+- zwz_task_2: Pick up the letter M and place it on the belly of the white bear.
+  Samples in full 0723+0724 set: 425
+- zwz_task_3: Pick up the tennis ball and place it to the left of the white block.
+  Samples in full 0723+0724 set: 471
+- zwz_task_4: Pick up the middle cup and place it on top of the right cup.
+  Samples in full 0723+0724 set: 255
+- zwz_task_5: Pick up the leftmost cup and place it between the letter M and the letter S.
+  Samples in full 0723+0724 set: 477
+- zwz_task_6: Pick up the tennis ball and place it into the leftmost cup.
+  Samples in full 0723+0724 set: 363
+
+0724 task prompts
+=================
+Source:
+data/agentrobot/MVTOKEN/zwz_0724/task.txt
+
+dif_wrist_and_gripper:
+- task_1: Pick up the carrot and place it on the plate that contains one white block.
+  Samples in full 0723+0724 set: 314
+- task_2: Pick up the white block and place it on top of the orange block in the gray plate.
+  Samples in full 0723+0724 set: 142
+- task_3: Pick up the tennis ball and place it on the plate that contains the letter O.
+  Samples in full 0723+0724 set: 179
+- task_4: Pick up the letter M and place it at the center of the book.
+  Samples in full 0723+0724 set: 167
+
+easy_spatial_left_right:
+- task_5: Pick up the letter O and place it to the left of the letter S.
+  Samples in easy_spatial set/full 0723+0724 set: 159/159
+- task_6: Pick up the carrot and place it to the right of the orange block.
+  Samples in easy_spatial set/full 0723+0724 set: 249/249
+- task_7: Pick up the pink block and place it to the left of the blue block.
+  Samples in easy_spatial set/full 0723+0724 set: 235/235
+- task_8: Pick up the left cup and place it into the right cup.
+  Samples in easy_spatial set/full 0723+0724 set: 464/464
+- task_9: Pick up the right cup and place it into the middle cup.
+  Samples in easy_spatial set/full 0723+0724 set: 314/314
+- task_10: Pick up the letter S and place it to the left of the pink block.
+  Samples in easy_spatial set/full 0723+0724 set: 356/356
+- task_11: Pick up the pink block and place it to the right of the orange block.
+  Samples in easy_spatial set/full 0723+0724 set: 216/216
+- task_12: Pick up the letter H and place it to the right of the carrot.
+  Samples in easy_spatial set/full 0723+0724 set: 271/271
+
+Prompt-template notes
+=====================
+v4 legacy Franka lite:
+- Path: /storage/wenzheng/showrobot/AgentRobot/prompts/v4/franka_mvtoken_lite.txt
+- Used for: new ZWZ samples in easy_spatial and plain 0723+0724 exchange_token.
+- Camera wording: Agentview overhead view; Wristview close-up view.
+- Action wording: only lists the valid action tokens and high-level rules. It does
+  not define MV_FWD/MV_BACK/MV_LEFT/MV_RIGHT coordinate semantics explicitly.
+
+v2 Franka:
+- Path: data/agentrobot/zwz_process_code/prompt_franka_zwz_v2.txt
+- Camera wording: AgentView overhead/global view; WristView close-up view.
+- AgentView MV_FWD: closer to the AgentView camera, away from robot body.
+- AgentView MV_BACK: farther from the AgentView camera, toward robot body.
+- WristView MV_FWD: toward bottom of WristView image, away from robot body.
+- WristView MV_BACK: toward top of WristView image, toward robot body.
+
+v2 Piper:
+- Path: data/agentrobot/zwz_process_code/prompt_piper_zwz_v2.txt
+- Camera wording: AgentView first-person/front view; WristView close-up view.
+- AgentView MV_FWD: away from robot body, toward far side of AgentView image.
+- AgentView MV_BACK: toward robot body, toward near side of AgentView image.
+- WristView MV_FWD: toward top of WristView image, away from robot body.
+- WristView MV_BACK: toward bottom of WristView image, toward robot body.
+
+v3 Franka:
+- Path: data/agentrobot/zwz_process_code/prompt_franka_zwz_v3.txt
+- Same content/hash as v2 Franka.
+
+v3 Piper:
+- Path: data/agentrobot/zwz_process_code/prompt_piper_zwz_v3.txt
+- Purpose: Piper MV_FWD/MV_BACK wording follows the exchanged visual frame in
+  02_exchange_token.
+- AgentView MV_FWD: toward robot body, toward near side of AgentView image.
+- AgentView MV_BACK: away from robot body, toward far side of AgentView image.
+- WristView MV_FWD: toward bottom of WristView image, toward robot body.
+- WristView MV_BACK: toward top of WristView image, away from robot body.
+
+Source files checked
+====================
+- data/agentrobot/MVTOKEN/plan_0724.md
+- data/agentrobot/zwz_process_code/0724/build_plan_0724_datasets.py
+- data/agentrobot/MVTOKEN/zwz_0723/task.txt
+- data/agentrobot/MVTOKEN/zwz_0724/task.txt
+- data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0724_easy_spatial.json.stats.json
+- data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724.json.stats.json
+- data/agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite_plus_zwz_0723_0724_v2_prompt.json.stats.json
+- data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724_v3_prompt.json.stats.json
