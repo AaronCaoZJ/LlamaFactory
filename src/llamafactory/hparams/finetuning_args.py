@@ -385,7 +385,7 @@ class BAdamArgument:
             "help": (
                 "The mode of the mask for BAdam optimizer. "
                 "`adjacent` means that the trainable parameters are adjacent to each other, "
-                "`scatter` means that trainable parameters are randomly choosed from the weight."
+                "`scatter` means that trainable parameters are randomly chosen from the weight."
             )
         },
     )
@@ -482,6 +482,21 @@ class FinetuningArguments(
             )
         },
     )
+    use_megatron_bridge: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether or not to use Megatron Bridge training backend. "
+                "Controlled by USE_MEGATRON_BRIDGE environment variable."
+            )
+        },
+    )
+    megatron_bridge_args: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Megatron Bridge specific arguments, set when USE_MEGATRON_BRIDGE=1."},
+    )
     use_hyper_parallel: bool = field(
         default=False,
         metadata={
@@ -530,7 +545,7 @@ class FinetuningArguments(
     )
     freeze_vision_tower: bool = field(
         default=True,
-        metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},
+        metadata={"help": "Whether or not to freeze the vision tower in MLLM training."},
     )
     freeze_multi_modal_projector: bool = field(
         default=True,
