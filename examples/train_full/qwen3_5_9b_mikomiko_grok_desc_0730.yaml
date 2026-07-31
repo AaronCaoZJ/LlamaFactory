@@ -1,0 +1,112 @@
+### model
+# 9B 全参微调,20260730 描述任务(4 段散文描述,en/ja/zh 三语,4 个来源合并)。
+# 与 examples/train_full/qwen3_5_2b_mikomiko_tag.yaml 是两个独立任务:那个输出逗号标签列表(~30 tok),
+# 这个输出 ~500-950 tok 的四段描述。除 model/ds 外几乎每项都不同,不要互相 copy 数值。
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 262144    # 512x512 -> patch16 x merge2 = 32px/token -> 256 visual token/图
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+freeze_vision_tower: false
+freeze_multi_modal_projector: false
+
+### dataset
+# mikomiko_desc_0730_train = 4 个来源包外部洗牌合并(data/mikomiko_tag/mix_desc_0730.py --merge):
+#   pornpics 1,625,718 (49.1%)  av 805,995 (24.3%)  of 748,234 (22.6%)  oneione 132,156 (4.0%)
+#   = 3,312,103 行。语言 en~62% / ja~24% / zh~14%。
+# 注意 pornpics 是 oneione 的 12 倍,等权合并意味着 oneione 的中文特征几乎不影响梯度;
+# 要按来源均衡得改成加权采样,不是改这里。
+dataset: mikomiko_desc_0730_train
+# 4 个来源各自的 unseen mini(各 200 行,语言分层;pornpics 额外按 v8/v10 分层)。
+# eval_on_each_dataset 是这一行能分开报 loss 的前提:不设它,LlamaFactory 会把 4 个集合并成
+# 一个 validation 集,只吐一条 eval_loss —— 恰恰看不到哪个来源在退化。
+# 设了以后 HF Trainer 逐个 key 跑 evaluation_loop,指标名前缀成 eval_<dataset_name>_,
+# wandb 里就是 4 条独立曲线(eval_mikomiko_av_0730_test_unseen_mini_loss 等)。
+eval_dataset: mikomiko_av_0730_test_unseen_mini, mikomiko_of_0730_test_unseen_mini, mikomiko_oneione_0730_test_unseen_mini, mikomiko_pornpics_0730_test_unseen_mini
+eval_on_each_dataset: true
+template: qwen3_5_nothink
+# 2560,不是 0721 那次的 2048。超长样本走 infer_seqlen 被【截断】而不是丢弃,截掉的是答案尾部,
+# 等于教模型在第四段中途停笔。用 Qwen3.5-9B 分词器对 4 个包各采样 900 行实测
+# (system + instruction + output + 256 图像 token + 25 模板开销):
+#   av       en p99=2182  ja p99=2132(max 2934)  zh p99=1617
+#   of       en p99=1675  ja p99=2015            zh p99=1514
+#   oneione  en p99=1558  ja p99=1704            zh p99=1286
+#   pornpics en p99=1520  ja p99=1796            zh p99=1378
+# 2048 会截到 av 的 en/ja 两个单元;2560 覆盖全部 12 个「来源 x 语言」单元的 p99。
+# av 偏长是因为只有它带一段独立 system prompt(规格是 system + 含元数据的 user prompt)。
+# 改这个值必须换掉下方 tokenized_path —— 缓存按原文本键、不校验 cutoff。
+#
+# 仍有约 0.04% 的 av 行超过 2560 会被截断。这曾经是**致命**的:av 原本把 <image> 放在
+# prompt 末尾(忠实还原标注顺序),infer_seqlen 从右截 source 时正好砍进图像 token 块,
+# get_rope_index 随即抛
+#   RuntimeError: shape mismatch: value tensor of shape [3, 2618] ... shape [3, 2560]
+# 0730 的 probe 撞到了(bs=2 的 smoke 只跑到第 480 行,躲过去了)。修法是把 av 的 <image>
+# 移到开头,和另外三个源一致 —— 截断改为吃掉元数据尾巴,图像块碰不到。详见
+# data/mikomiko_tag/dataset_builder_desc_av_0730.py 的 IMAGE POSITION 段。
+cutoff_len: 2560
+preprocessing_num_workers: 64   # 128 核;3.31M 行多模态预处理是一次性开销,给足
+dataloader_num_workers: 16
+# 路径里带 cut2560:换 cutoff 时若忘了改这行,缓存会静默复用旧长度的 token。
+tokenized_path: saves/qwen3.5-9b/mikomiko/tokenized_desc_0730_cut2560
+
+### output
+output_dir: saves/qwen3.5-9b/mikomiko/grok_desc_v1
+logging_steps: 10
+save_steps: 2000             # 34,501 步 -> 17 个存档点
+save_total_limit: 2          # 9b 全参 ckpt ~100GB/个;共享盘只剩 ~960G,只留 2 个
+plot_loss: true
+overwrite_output_dir: false
+save_only_model: false       # 盘紧时设 true 省 ~72GB/ckpt(代价:不可续训)
+report_to: wandb
+project: llamafactory
+wandb_entity: lovashi514-nus
+run_name: qwen3.5-9b-mikomiko-grok_desc_0730_v1
+
+### train
+# 有效 batch 96 = 8 卡 x per_device 6 x grad_accum 2。
+# 2026-07-30 在 8xH200(143,771MiB/卡)node1 上用本数据、cutoff 2560 实测(**内核缓存热态**,
+# 15 步取第 11-15 步的 tqdm 速率;2,400 行「4 来源 x 3 语言」分层集):
+#   bs=6   峰值  73,162MiB(50.9%)  2.18s/step  22.0 samp/s   <- 本档(跑两次都是 2.17-2.18)
+#   bs=8   峰值  88,962MiB(61.9%)  2.76s/step  23.2 samp/s
+#   bs=12  峰值 136,240MiB(94.8%)  3.97s/step  24.2 samp/s
+#   bs=16  OOM
+#
+# ⚠ **必须在内核缓存热了之后再读这些数**。同一批配置在冷态下量出来是 5.45/4.69/13.98 s/step
+# (8.8/13.6/6.9 samp/s),慢 2.5-3.5 倍,而且"慢"是按**执行顺序**排的、不按配置排 —— 会骗人到
+# 得出"吞吐随 batch 增大不升反降""瓶颈在 dataloader"这种完全错误的结论。冷态的根因是 Triton
+# 每次重新 autotune;确保 ~/.triton/autotune 存在即可(train_desc_9b_0730.sh 已代建)。
+# 图片 I/O 早已排除:虚拟盘冷读 3,509 img/s / 572 MiB/s,训练只需要 ~22 img/s。
+#
+# 取 bs=12 x accum 1 = eff 96(最快档)。备选是 bs=6 x accum 2,同样 eff 96,慢 10% 但显存只占
+# 50.9% —— 若本档跑出 OOM,直接换成 6x2 重启即可,accum 不增加激活显存,超参等价。
+#
+# 本档吃到 94.8%,只剩 7.5GB 余量要扛 34,501 步,所以 full 那条路径额外开了
+# PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True 压碎片(见 train_desc_9b_0730.sh)。
+# 一点余地:这个峰值是在「4 来源 x 3 语言」等量分层的 smoke 集上量的,其中 av(最长的源)占 1/3;
+# 真实训练里 av 只占 24.3%,batch 的平均长度略短,峰值只会更低不会更高。
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-5
+# 3,312,103 / 96 = 34,501 步。实测 24.2 samples/s -> 约 38 小时。
+# 与 0721 一致(那次 1.7M 行 / 15h ≈ 31.5 samp/s,cutoff 2048、无 system prompt、序列更短)。
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05           # 1,725 步
+bf16: true
+ddp_timeout: 180000000
+
+### eval
+# 每轮 eval 只有 4 x 200 = 800 行,前向无梯度,bs 4 安全(训练档 bs 12 才 74%)。
+# 8 卡 x 4 = 32/批 -> 全部 4 个集合约 25 步,一轮约 1 分钟。
+# eval_steps 500 -> 69 个采样点,累计约 70 分钟,占 38 小时的 3%。换 1000 可减半,
+# 代价是每条曲线只剩 34 个点,早期分化看不清。
+per_device_eval_batch_size: 4
+eval_strategy: steps
+eval_steps: 500
+
+### distributed
+deepspeed: examples/deepspeed/ds_z3_config.json

@@ -195,13 +195,15 @@ predictions_score.json
 /data/agentrobot/ood_sample
 
 /.ai/agent_todo/
+/.ai/plan/
 
-/data/mikomiko_tag/img/
-/data/mikomiko_tag/img_0716/
-/data/mikomiko_tag/jsonl/
-/data/mikomiko_tag/jsonl_0716/
-/data/mikomiko_tag/jsonl_desc_0721/
-/data/mikomiko_tag/onlyfans/
-/data/mikomiko_tag/RAW/
+# /data/mikomiko_tag/img/
+# /data/mikomiko_tag/img_0716/
+# /data/mikomiko_tag/jsonl/
+# /data/mikomiko_tag/jsonl_0716/
+# /data/mikomiko_tag/jsonl_desc_0721/
+# /data/mikomiko_tag/onlyfans/
+# /data/mikomiko_tag/RAW/
+/data/mikomiko_tag/jsonl_*_0730/
 
-/data/mikomiko_tag/mix_train.jsonl
+/logs/
