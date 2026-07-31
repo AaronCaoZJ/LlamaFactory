@@ -34,14 +34,25 @@ sys.path.insert(0, str(HERE.parents[1] / "mikomiko_tagger"))
 from infer_mikomiko import check_prompt_parity, encode_image_b64, prompt_of  # noqa: E402
 
 
-def chat(api, model, text, image_path, max_tokens, retries=3):
-    """One completion. Returns (content, finish_reason, completion_tokens)."""
+def chat(api, model, text, image_path, max_tokens, system="", retries=3):
+    """One completion. Returns (content, finish_reason, completion_tokens).
+
+    `system` matters from the 20260730 delivery on: av was annotated with a separate system
+    prompt (its spec is system + a user prompt carrying title/tags/actress), while of / oneione
+    / pornpics have none. av is 24.3% of training, so dropping its system message here would
+    serve those rows a prompt shape the SFT model never saw — and the only symptom would be
+    quietly worse av output, on the source whose descriptions lean hardest on the metadata.
+    """
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": [
+        {"type": "image_url", "image_url": {"url": encode_image_b64(image_path)}},  # image FIRST
+        {"type": "text", "text": text},
+    ]})
     payload = json.dumps({
         "model": model,
-        "messages": [{"role": "user", "content": [
-            {"type": "image_url", "image_url": {"url": encode_image_b64(image_path)}},  # image FIRST
-            {"type": "text", "text": text},
-        ]}],
+        "messages": messages,
         "max_tokens": max_tokens,
         "temperature": 0.0,
         "chat_template_kwargs": {"enable_thinking": False},
@@ -86,7 +97,8 @@ def main():
     done, t0 = 0, time.time()
     with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
         futs = {ex.submit(chat, args.api, args.model, prompt_of(r["instruction"]),
-                          r["image"], args.max_new_tokens): i for i, r in enumerate(rows)}
+                          r["image"], args.max_new_tokens, r.get("system", "")): i
+                for i, r in enumerate(rows)}
         for fut in as_completed(futs):
             out[futs[fut]] = fut.result()
             done += 1

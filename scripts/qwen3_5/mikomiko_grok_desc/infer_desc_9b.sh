@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # INFER + VIZ — mikomiko 图 -> 四段描述(Qwen3.5-9B)。起服务和出审阅页都在这。
 #
+# 默认 checkpoint 是 20260730 那轮训练的输出 saves/qwen3.5-9b/mikomiko/grok_desc_v1
+# (=yaml 的 output_dir);要看某个中间存档就 CKPT=.../grok_desc_v1/checkpoint-20000 覆盖。
+#
 #   bash infer_desc_9b.sh serve              起 vLLM 服务 :8121(前台,Ctrl-C 停)
 #   bash infer_desc_9b.sh viz                复用已有预测重建 HTML(不占 GPU,4 秒)
 #   FORCE=1 bash infer_desc_9b.sh viz        完整流水线(2 张空闲 H200 约 6 分钟)
@@ -17,7 +20,7 @@ source "$(d="$(dirname "${BASH_SOURCE[0]}")"; until [ -e "$d/scripts/workspace_d
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SAVE_DIR="${LF_ROOT}/saves/qwen3.5-9b/mikomiko"
-CKPT="${CKPT:-${SAVE_DIR}/grok_desc_v0}"
+CKPT="${CKPT:-${SAVE_DIR}/grok_desc_v1}"
 BASE_MODEL="${BASE_MODEL:-${MODELS_DIR}/Qwen3.5-9B}"
 MAX_PIXELS=262144                    # 必须等于训练的 image_max_pixels,否则就是另一个输入
 # 用 tag 任务那份 chat 模板,不用模型自带的 —— 原因见下面 serve_vllm 的注释
@@ -79,18 +82,19 @@ serve)
 # 审阅页:按 seen/unseen × en/ja/zh 抽样,微调 checkpoint 和未微调基座各跑一遍,出一个自包含
 # HTML,gold / 微调后 / 基座三栏并排。
 #
-# 抽样按语言等量,不是随机:数据 80/10/10 en/zh/ja 且每张图只有一种语言,随机抽 60 条会落到
-# 约 48 en / 6 zh / 6 ja,对 ja 什么都说不了。
+# 抽样按「来源 x 语言」等量,不是随机。两层都必要:合并集是 49.1% pornpics / 24.3% av /
+# 22.6% of / 4.0% oneione,随机抽 25 张只落到约 1 张 oneione(唯一以中文为主的来源);而语言是
+# 60.9/27.5/11.7 en/ja/zh,不分层则中文样本太少。4 来源 x 3 语言 x 2 split x N。
 #
-# 耗时(120 张,H200):抽样 ~90s(要流式扫 7.3 GB 的 train.jsonl)| 每个服务起 ~110s |
+# 耗时(N=5 即 120 张,H200):抽样 ~4min(流式扫 18.9 GB 的 train.jsonl)| 每个服务起 ~110s |
 # 每次推理 ~40s | 缩略图+出页 ~40s。
 #
-# Env: FORCE | N (每语言每 split 20 张 -> 6N 张) | SEED (42) | WITH_BASE (1)
+# Env: FORCE | N (每来源每语言每 split 5 张 -> 24N 张) | SEED (42) | WITH_BASE (1)
 #      GPU_SFT (0) | GPU_BASE (1) | PORT_SFT (8121) | PORT_BASE (8122) | MAX_NEW (1536)
 #      CKPT | BASE_MODEL | WORK_DIR | OUT
 viz)
-  N="${N:-20}"
-  WORK_DIR="${WORK_DIR:-${SAVE_DIR}/viz_desc_0721}"
+  N="${N:-5}"
+  WORK_DIR="${WORK_DIR:-${SAVE_DIR}/viz_desc_0730}"
   OUT="${OUT:-${WORK_DIR}/mikomiko_grok_desc_review_$(date +%Y%m%d).html}"
   mkdir -p "${WORK_DIR}"
   PIDS=()
@@ -128,7 +132,7 @@ viz)
 
   if [ "${FORCE:-0}" = "1" ] || [ ! -f "${WORK_DIR}/samples_pred.json" ]; then
     ls "${CKPT}"/*.safetensors >/dev/null 2>&1 || { echo "[viz] ERROR: ${CKPT} 下没有 ckpt" >&2; exit 1; }
-    echo "[viz] 1/3 抽样:每语言每 split ${N} 张,seed=${SEED:-42}"
+    echo "[viz] 1/3 抽样:每来源每语言每 split ${N} 张(共 $((24*N)) 张),seed=${SEED:-42}"
     python3 -u sample_data.py --n "${N}" --seed "${SEED:-42}" --work-dir "${WORK_DIR}"
     cp "${WORK_DIR}/samples.json" "${WORK_DIR}/samples_pred.json"   # 两次预测累加进同一个文件
 
@@ -146,8 +150,8 @@ viz)
 
   echo "[viz] 3/3 出页"
   python3 -u build_html.py --work-dir "${WORK_DIR}" --out "${OUT}" \
-    --subtitle "${SUBTITLE:-Qwen3.5-9B 全参 SFT · 1 epoch · 13963 步 · eval_loss 0.4257 · 贪心解码}" \
-    --note "每语言 seen/unseen 各 ${N} 张；同一 prompt、同一 chat 模板下，微调后与未微调基座的输出并排。"
+    --subtitle "${SUBTITLE:-Qwen3.5-9B 全参 SFT · 20260730 四来源合并 3,312,103 行 · 1 epoch · 34,501 步 · 贪心解码}" \
+    --note "每来源每语言 seen/unseen 各 ${N} 张；同一 prompt、同一 chat 模板下，微调后与未微调基座的输出并排。"
   echo "[viz] DONE (${SECONDS}s) -> ${OUT}"
   ;;
 esac

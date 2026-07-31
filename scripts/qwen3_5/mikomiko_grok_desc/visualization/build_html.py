@@ -18,7 +18,7 @@ prediction, in two reading modes:
 Scoring lives in metrics_desc.py; this file renders, it does not judge.
 
 Usage:
-    python build_html.py --work-dir SAVES/viz_desc_0721 --out review.html
+    python build_html.py --work-dir SAVES/viz_desc_0730 --out review.html
 """
 import argparse
 import base64
@@ -33,11 +33,11 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]                                   # .../LlamaFactory
 sys.path.insert(0, str(HERE))
-from metrics_desc import (HEADERS, LANGS, gold_row, header_lang, per_row, strip_think)  # noqa: E402
+from metrics_desc import (LANGS, gold_row, header_lang, header_set, per_row, strip_think)  # noqa: E402
 
 from PIL import Image  # noqa: E402
 
-DEFAULT_WORK = ROOT / "saves/qwen3.5-9b/mikomiko/viz_desc_0721"
+DEFAULT_WORK = ROOT / "saves/qwen3.5-9b/mikomiko/viz_desc_0730"
 THUMB_W, THUMB_H, JPEG_Q = 420, 540, 80
 
 
@@ -59,7 +59,7 @@ def split_sections(text, lang):
     text = (text or "").strip()
     if not text:
         return None
-    hs = HEADERS[header_lang(text) or lang]
+    hs = header_set(text, header_lang(text) or lang)
     pos = [text.find(h) for h in hs]
     if any(p < 0 for p in pos) or pos != sorted(pos):
         return None
@@ -92,7 +92,9 @@ def build_payload(samples, tags, args):
             texts[t] = {"text": answer, "think": think,
                         "sections": split_sections(answer, s["lang"]), "m": per_row(s, t)}
         rows.append({"i": i, "name": s["name"], "post_id": s["post_id"], "split": s["split"],
-                     "lang": s["lang"], "img": s["b64"], "texts": texts})
+                     # source 从 20260730 起随样本带过来(av/of/oneione/pornpics)。页面上还没有
+                     # 按来源过滤的按钮,但它进 payload 后,导出的 JSON 自己就能说明每条来自哪批。
+                     "lang": s["lang"], "source": s.get("source", ""), "img": s["b64"], "texts": texts})
 
     cols = [{"key": "gold", "label": args.gold_label, "cls": "gold"}]
     cols += [{"key": t, "label": lbl, "cls": t} for t, lbl in

@@ -30,14 +30,34 @@ import re
 from collections import Counter
 
 LANGS = ("en", "ja", "zh")
-# Keep in sync with data/mikomiko_tag/dataset_builder_desc_0721.py:HEADERS.
-HEADERS = {
-    "en": ("Creative Intent", "Foreground and Subject",
-           "Background and Environment", "Photography Techniques and Visual Presentation"),
-    "ja": ("創作意図", "前景と主要な被写体", "背景と周囲の環境", "撮影技法と視覚的表現"),
-    "zh": ("创作意图", "前景与主体", "背景与环境", "摄影技术与视觉呈现"),
+# The 20260730 delivery has TWO header vocabularies per language, because av was annotated
+# under its own spec (data/mikomiko_tag/prompt/AV_prompt/*.md) while of / oneione / pornpics
+# use grokv8/grokv10 (prompt/prompt_grokv{8,10}.txt). They differ most in ja:
+# 制作意図 vs 創作意図, 前景と主要被写体 vs 前景と主要な被写体, ...
+# av is 24.3% of the merged set and 80% of it is ja, so recognising only the grokv10 spelling
+# would mark ~645k rows "wrong language" and refuse to split their sections — silently, and
+# only on the source you'd least want to misread.
+# First tuple per language is the canonical one (grokv8/v10) used for display.
+HEADER_VARIANTS = {
+    "en": [("Creative Intent", "Foreground and Subject",
+            "Background and Environment", "Photography Techniques and Visual Presentation"),
+           ("Creative Intent", "Foreground and Main Subject",
+            "Background and Environment", "Photographic Techniques and Visual Presentation")],
+    "ja": [("創作意図", "前景と主要な被写体", "背景と周囲の環境", "撮影技法と視覚的表現"),
+           ("制作意図", "前景と主要被写体", "背景と環境", "撮影技法と視覚表現")],
+    "zh": [("创作意图", "前景与主体", "背景与环境", "摄影技术与视觉呈现")],
 }
+HEADERS = {lg: v[0] for lg, v in HEADER_VARIANTS.items()}
 LANG_LABEL = {"en": "English", "ja": "日本語", "zh": "中文", "other": "无法判定", None: "无"}
+
+
+def header_set(text, lang):
+    """The header tuple `lang` actually uses in `text` — the variant with the most hits.
+
+    Ties go to the canonical (first) variant, so text carrying no headers at all still gets a
+    usable tuple back instead of None.
+    """
+    return max(HEADER_VARIANTS[lang], key=lambda hs: sum(1 for h in hs if h in text))
 
 REP_N = 40                      # same gram size the dataset builder filtered on
 REP_BAD = 0.3                   # builder's MAX_REP: rows at/above this were dropped from training
@@ -45,7 +65,7 @@ REP_BAD = 0.3                   # builder's MAX_REP: rows at/above this were dro
 _KANA = re.compile(r"[぀-ヿ]")
 _CJK = re.compile(r"[一-鿿]")
 _LATIN_WORD = re.compile(r"[A-Za-z]{2,}")
-_ALL_HEADERS = [h for hs in HEADERS.values() for h in hs]
+_ALL_HEADERS = [h for vs in HEADER_VARIANTS.values() for hs in vs for h in hs]
 _THINK = re.compile(r"\A\s*<think>(.*?)</think>", re.S)
 
 
@@ -89,19 +109,23 @@ def repetition_score(s):
 
 
 def header_lang(text):
-    """Which language's 4 headers are ALL present? None if zero or more than one match."""
-    hit = [lg for lg, hs in HEADERS.items() if all(h in text for h in hs)]
+    """Which language's 4 headers are ALL present? None if zero or more than one match.
+
+    Any variant counts (see HEADER_VARIANTS) — av's ja spelling must not read as "no language".
+    """
+    hit = [lg for lg, vs in HEADER_VARIANTS.items()
+           if any(all(h in text for h in hs) for hs in vs)]
     return hit[0] if len(hit) == 1 else None
 
 
 def n_sections(text, lang):
     """How many of `lang`'s 4 required headers appear at all (0-4)."""
-    return sum(1 for h in HEADERS[lang] if h in text)
+    return sum(1 for h in header_set(text, lang) if h in text)
 
 
 def sections_ordered(text, lang):
     """All 4 headers present AND in the prompt's order."""
-    pos = [text.find(h) for h in HEADERS[lang]]
+    pos = [text.find(h) for h in header_set(text, lang)]
     return all(p >= 0 for p in pos) and pos == sorted(pos)
 
 

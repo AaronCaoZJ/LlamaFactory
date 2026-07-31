@@ -1,6 +1,6 @@
 # grok_desc 抽样审阅页生成器
 
-对 20260721 描述模型（`saves/qwen3.5-9b/mikomiko/grok_desc_v0`）抽样 seen/unseen × en/ja/zh 各 N 张，
+对 20260730 描述模型（`saves/qwen3.5-9b/mikomiko/grok_desc_v1`）抽样 seen/unseen × 4 来源 × en/ja/zh 各 N 张，
 推理后生成**自包含 HTML 审阅页**（图片 base64 内嵌，可直接发送）：每张图把
 **gold / 微调后 / 未微调基座**三栏并排，支持按语言、数据划分、异常类型筛选和分页。
 
@@ -17,13 +17,13 @@ bash infer_desc_9b.sh viz                  # 复用已有预测，只重建 HTML
 FORCE=1 WITH_BASE=0 bash infer_desc_9b.sh viz   # 只跑微调模型，省一半 GPU 时间
 ```
 
-中间产物在 `saves/qwen3.5-9b/mikomiko/viz_desc_0721/`（samples.json → samples_pred.json → *.html）。
-常用 env：`N`（每语言每划分的张数，默认 20）、`SEED`、`WITH_BASE`、`GPU_SFT`/`GPU_BASE`、
+中间产物在 `saves/qwen3.5-9b/mikomiko/viz_desc_0730/`（samples.json → samples_pred.json → *.html）。
+常用 env：`N`（每来源每语言每划分的张数，默认 5 → 24N 张）、`SEED`、`WITH_BASE`、`GPU_SFT`/`GPU_BASE`、
 `PORT_SFT`/`PORT_BASE`、`CKPT`、`WORK_DIR`、`OUT`。
 
 | 职责 | 模块 |
 |---|---|
-| 分层抽样（每语言等量）+ 反查图片 | `sample_data.py` |
+| 分层抽样（每来源 × 每语言等量）+ 反查图片 | `sample_data.py` |
 | 生成（vLLM，保留 finish_reason / token 数） | `infer_desc.py`（图像预处理与 prompt 对齐复用 `../../mikomiko_tagger/infer_mikomiko.py`） |
 | 结构体检判据 | `metrics_desc.py` |
 | 起服务（微调 / 基座各一次） | `../infer_desc_9b.sh` 的 `serve_vllm` |
