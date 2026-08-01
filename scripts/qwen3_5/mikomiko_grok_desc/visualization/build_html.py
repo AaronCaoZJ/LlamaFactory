@@ -103,6 +103,10 @@ def build_payload(samples, tags, args):
         "title": args.title, "subtitle": args.subtitle, "note": args.note,
         "generated_at": str(date.today()), "columns": cols,
         "lang_order": list(LANGS), "split_order": ["seen", "unseen"],
+        # 20260730 起样本带 source。只列真的出现过的,老的 samples_pred.json 没有这个字段时
+        # 这里是空数组,前端就不渲染来源按钮 —— 页面对两种数据都能用。
+        "source_order": [x for x in ("av", "of", "oneione", "pornpics")
+                         if any(s.get("source") == x for s in samples)],
         "samples": rows, "page_size": args.page_size,
     }
 
@@ -300,7 +304,9 @@ PAGE = """<!DOCTYPE html>
     </section>
 
     <section class="panel">
-      <h2>语言</h2>
+      <h2>来源</h2>
+      <div id="sourceButtons" class="btn-grid two"></div>
+      <h2 style="margin-top:6px">语言</h2>
       <div id="langButtons" class="btn-grid two"></div>
       <h2 style="margin-top:6px">数据划分</h2>
       <div id="splitButtons" class="btn-grid three"></div>
@@ -361,7 +367,7 @@ PAGE = """<!DOCTYPE html>
   const PRED_COLS = COLS.filter(function (c) { return c.key !== "gold"; });
   const LANG_LABEL = { en: "English", ja: "日本語", zh: "中文", other: "无法判定" };
 
-  const state = { lang: "all", split: "all", flag: "none", query: "", mode: "full", page: 1,
+  const state = { source: "all", lang: "all", split: "all", flag: "none", query: "", mode: "full", page: 1,
                   pageSize: DATA.page_size || 5 };
 
   const $ = function (id) { return document.getElementById(id); };
@@ -394,6 +400,7 @@ PAGE = """<!DOCTYPE html>
   function filtered() {
     const q = state.query.trim().toLowerCase();
     return SAMPLES.filter(function (r) {
+      if (state.source !== "all" && r.source !== state.source) return false;
       if (state.lang !== "all" && r.lang !== state.lang) return false;
       if (state.split !== "all" && r.split !== state.split) return false;
       if (!FLAGS[state.flag](r)) return false;
@@ -533,7 +540,10 @@ PAGE = """<!DOCTYPE html>
         '<div class="sample-title"><strong>' + esc(row.name) + "</strong><span>#" + (row.i + 1) +
           " · post " + esc(row.post_id) + "</span></div>" +
         '<div class="chips">' + chip(row.split === "seen" ? "seen（训练见过）" : "unseen（post 级零重叠）", "neutral") +
-          chip(langLabel(row.lang), "neutral") + "</div>" +
+          chip(langLabel(row.lang), "neutral") +
+          // 来源 chip:按来源过滤时不看这个就分不清当前是哪一批,而四个来源的图像风格
+          // 差别很大(av 是截图/封面、of 是自拍、pornpics 是影棚套图、oneione 是 cosplay)
+          (row.source ? chip(row.source, "neutral") : "") + "</div>" +
         '<div class="chips">' + predChips(row) + "</div>" +
         miniTable(row) +
       "</div>" +
@@ -552,6 +562,16 @@ PAGE = """<!DOCTYPE html>
     return SAMPLES.filter(function (r) { return val === "all" || r[key] === val; }).length;
   }
   function renderControls() {
+    const srcs = DATA.source_order || [];
+    if (srcs.length) {
+      buttons($("sourceButtons"), [{ key: "all", label: "全部 (" + SAMPLES.length + ")" }].concat(
+        srcs.map(function (x) { return { key: x, label: x + " (" + counts("source", x) + ")" }; })),
+        state.source, "source");
+    } else {                       // 老数据没有 source 字段,连标题一起藏掉
+      $("sourceButtons").innerHTML = "";
+      $("sourceButtons").previousElementSibling.style.display = "none";
+      $("sourceButtons").style.display = "none";
+    }
     buttons($("langButtons"), [{ key: "all", label: "全部 (" + SAMPLES.length + ")" }].concat(
       DATA.lang_order.map(function (l) { return { key: l, label: langLabel(l) + " (" + counts("lang", l) + ")" }; })),
       state.lang, "lang");
@@ -606,6 +626,7 @@ PAGE = """<!DOCTYPE html>
       render();
     });
   }
+  bind("sourceButtons", "source", "source");
   bind("langButtons", "lang", "lang");
   bind("splitButtons", "split", "split");
   bind("flagButtons", "flag", "flag");

@@ -248,8 +248,16 @@ def print_table(samples, tags):
     print("-" * len(hdr))
     for tag in tags:
         ms = [per_row(s, tag) for s in samples]
+        # 来源分组从 20260730 起加入:合并集是 4 个来源等权拼的,而它们的难度差得很远
+        # (最终 eval loss pornpics 0.4157 / of 0.5168 / av 0.6636 / oneione 0.9138),
+        # 只按语言看会把这个差异摊平。samples 里没有 source 字段时自动跳过这几行。
+        srcs = [s for s in ("av", "of", "oneione", "pornpics")
+                if any(x.get("source") == s for x in samples)]
         groups = [("all", lambda s: True)]
         groups += [(f"{sp}", (lambda sp: lambda s: s["split"] == sp)(sp)) for sp in ("seen", "unseen")]
+        groups += [(f"@{src}", (lambda src: lambda s: s.get("source") == src)(src)) for src in srcs]
+        groups += [(f"@{src}/{lg}", (lambda src, lg: lambda s: s.get("source") == src and s["lang"] == lg)(src, lg))
+                   for src in srcs for lg in LANGS]
         groups += [(f"{sp}/{lg}", (lambda sp, lg: lambda s: s["split"] == sp and s["lang"] == lg)(sp, lg))
                    for sp in ("seen", "unseen") for lg in LANGS]
         for label, f in groups:
