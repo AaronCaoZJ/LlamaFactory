@@ -19,7 +19,7 @@ export CUDA_VISIBLE_DEVICES="${GPU}"
 # ================================================================================
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
-GPU_UTIL="${GPU_UTIL:-0.7}"
+GPU_UTIL="${GPU_UTIL:-0.5}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192
@@ -55,6 +55,7 @@ LORA_MODULES=(
   "internvl3.5-2b-ms0717_blockpap_follow=${SAVES}/ms0717_blockpap_follow"
   "internvl3.5-2b-ms0717_blockpap_follow_wood=${SAVES}/ms0717_blockpap_follow_wood"
   "internvl3.5-2b-ms0717_stackcube_follow=${SAVES}/ms0717_stackcube_follow"
+  "internvl3.5-2b-SimBlockPap=${ZECHEN}/InternVL3.5-2b-SimBlockPap"
 )
 
 #* Internvl3.5-1b

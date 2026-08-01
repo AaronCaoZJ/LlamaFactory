@@ -20,6 +20,16 @@ export UV_CACHE_DIR="${LLAMA_FACTORY_ROOT}/.uv-cache"
 export UV_LINK_MODE=copy
 
 uv venv --python "${PYTHON_VERSION}" "${VENV_PATH}" --prompt "llamafactory"
+
+# 防 uv 意外重装本环境：`uv run` 会隐式 sync，把 pyproject 里声明的包换成 uv.lock 锁定的版本
+# （不在 pyproject 里的手工包如 fla-core/tilelang 实测不受影响）。2026-07-22 就是这样把
+# torch 2.8.0+cu129 换成 2.13.0，导致 flash-attn 与 vllm 的全部 C++ 扩展 undefined symbol，
+# 静默坏了 6 天。写进 activate 而非 ~/.bashrc，作用域仅限本 venv，不影响其他项目。
+cat >> "${VENV_PATH}/bin/activate" <<'ACTIVATE_EOF'
+
+export UV_NO_SYNC=1
+ACTIVATE_EOF
+
 source "${VENV_PATH}/bin/activate"
 
 # Install PyTorch with CUDA 12.9 support first (flash-attn needs torch headers)

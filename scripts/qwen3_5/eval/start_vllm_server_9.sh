@@ -20,7 +20,7 @@ export CUDA_VISIBLE_DEVICES="${GPU}"
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8109}"
-GPU_UTIL="${GPU_UTIL:-0.7}"
+GPU_UTIL="${GPU_UTIL:-0.5}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192
@@ -40,16 +40,16 @@ LORA_MODULES=(
   "mix_22-06_fk-pp_02=${SAVES}/mix_22-06_fk-pp/02_exchange_token" # ✅
   # "mix_22-06_fk-pp_03=${SAVES}/mix_22-06_fk-pp/03_just_mix"
 
-  # 方案 B（video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
+  # (video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
   # "mix_22_27_v3_9_video=${SAVES}/mix_22_27_v3_video"
 
   # input image random dropout
   "cam-dropout=${SAVES}/mix_22-06_fk-pp/02_exchange_token_cam_dropout"
 
   # dual_cloth（双臂折衣，三种"一次推理出两个 token"的契约）。
-  "dual_cloth_twice=${SAVES}/dual_cloth/twice"
+  # "dual_cloth_twice=${SAVES}/dual_cloth/twice"
   "dual_cloth_once=${SAVES}/dual_cloth/once"
-  "dual_cloth_chain=${SAVES}/dual_cloth/chain"
+  # "dual_cloth_chain=${SAVES}/dual_cloth/chain"
 )
 
 # 启动前自检：vLLM 是先把 base model 全部加载完、再去解析 --lora-modules 的，所以一个还没
