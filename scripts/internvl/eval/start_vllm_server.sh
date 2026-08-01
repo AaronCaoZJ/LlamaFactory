@@ -53,6 +53,7 @@ LORA_MODULES=(
   "internvl3.5-2b-History2-PlainPrompt=${ZECHEN}/InternVL3.5-2b-History2-PlainPrompt"
   # "internvl3.5-2b-ms0717_blockpap=${SAVES}/ms0717_blockpap_oracle_wide"
   "internvl3.5-2b-ms0717_blockpap_follow=${SAVES}/ms0717_blockpap_follow"
+  "internvl3.5-2b-ms0717_blockpap_follow_wood=${SAVES}/ms0717_blockpap_follow_wood"
   "internvl3.5-2b-ms0717_stackcube_follow=${SAVES}/ms0717_stackcube_follow"
 )
 

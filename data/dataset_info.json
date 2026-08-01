@@ -8,6 +8,15 @@
       "images": "images"
     }
   },
+  "ms0717_blockpap_follow_wood": {
+    "file_name": "agentrobot/MVTOKEN/ms_0717/blockpap_follow_wood/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "ms0717_stackcube_follow": {
     "file_name": "agentrobot/MVTOKEN/ms_0717/stackcube_follow/rollout_lite.json",
     "columns": {
