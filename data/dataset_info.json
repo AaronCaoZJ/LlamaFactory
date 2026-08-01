@@ -89,6 +89,24 @@
       "images": "images"
     }
   },
+  "mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_0802_long_collect": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724_0802_long_collect.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "mix_22-06_fk-pp_02_exchange_token_plus_zwz_0723_0724_0802_long_collect_no_task3": {
+    "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/rollout_lite_plus_zwz_0723_0724_0802_long_collect_no_task3.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mix_22-06_fk-pp_03_just_mix_plus_zwz_0723_0724_v2_prompt": {
     "file_name": "agentrobot/MVTOKEN/mix_22-06_fk-pp/03_just_mix/rollout_lite_plus_zwz_0723_0724_v2_prompt.json",
     "columns": {
