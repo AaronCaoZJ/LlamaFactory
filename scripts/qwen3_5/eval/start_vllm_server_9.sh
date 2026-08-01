@@ -43,6 +43,9 @@ LORA_MODULES=(
   # 方案 B（video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
   # "mix_22_27_v3_9_video=${SAVES}/mix_22_27_v3_video"
 
+  # input image random dropout
+  "cam-dropout=${SAVES}/mix_22-06_fk-pp/02_exchange_token_cam_dropout"
+
   # dual_cloth（双臂折衣，三种"一次推理出两个 token"的契约）。
   "dual_cloth_twice=${SAVES}/dual_cloth/twice"
   "dual_cloth_once=${SAVES}/dual_cloth/once"

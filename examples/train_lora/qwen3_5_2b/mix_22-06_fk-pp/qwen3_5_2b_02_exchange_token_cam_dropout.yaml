@@ -1,0 +1,71 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-2B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution
+trust_remote_code: true
+# flash_attn: fa2
+#   The venv's flash_attn_2_cuda.so no longer matches the installed torch:
+#   "undefined symbol: _ZN3c104cuda29c10_cuda_check_implementationEiPKcS2_ib" at import.
+#   Left off (= sdpa) exactly like the 9B config, which was already commented out for the
+#   same reason. Note the 02_exchange_token BASELINE still says `flash_attn: fa2` -- it was
+#   trained before the env drifted, so if you re-run the baseline for a strict comparison,
+#   comment it out there too.
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+dataset: mix_22-06_fk-pp_02_exchange_token
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）；全量重算仅 ~17s
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### camera dropout (唯一与 02_exchange_token 基线不同的地方)
+# 每张图独立以 0.15 概率被同尺寸黑图替换，两张都被抽中时随机保一张 ->
+# 全保留 72.3% / 只丢 agentview 13.9% / 只丢 wrist 13.9%，永不两张全丢。
+# 目的：防止策略塌缩到单一视角。白桌面上贴近桌面的 wrist 画面几乎不变，而模型对
+# wrist 依赖很重；随机屏蔽一路迫使它在任一路失效时仍能从另一路取到信号。
+# 0.1-0.2 是多视角/多模态 dropout 的常用区间，取中值 0.15。
+# 在 collator 里逐 batch 施加，所以同一样本每个 epoch 拿到不同的 mask；推理不丢。
+camera_dropout: 0.15
+
+### output
+output_dir: saves/qwen3.5-2b/robot/mix_22-06_fk-pp/02_exchange_token_cam_dropout
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+# 显式归到与 InternVL 木纹 run 同一处，便于三者横向对比。
+# 注意：当前正在跑的这条 run 是在补这两行之前启动的，wandb 缺省把它落到了
+# lovashi514-nus/huggingface；下面两行只对将来重启的 run 生效。
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-2b-robot-mix_22-06_fk-pp-02_exchange_token_cam_dropout
+
+### train
+# 7933 samples (2863 piper + 5070 franka), 1 H200 (single card), batch=4, grad_acc=8 -> eff_bs=32 -> ~248 steps/epoch
+# 30 epochs ≈ 7440 steps
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 30.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-0: 2B×bf16=4GB fits easily in H200 141GB, no sharding overhead)
+deepspeed: examples/deepspeed/ds_z0_config.json

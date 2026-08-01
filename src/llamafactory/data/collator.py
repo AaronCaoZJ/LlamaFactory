@@ -17,7 +17,9 @@
 
 import copy
 import inspect
+import random
 from dataclasses import dataclass
+from io import BytesIO
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import numpy as np
@@ -133,6 +135,23 @@ def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype
     return attention_mask_4d
 
 
+def _blank_like(image: Any) -> "Image.Image":
+    r"""A black image with the same size as the given image (path / bytes / dict / PIL).
+
+    Opening a file with PIL is lazy (header only), so this does not decode the pixels of
+    the image it is about to discard.
+    """
+    if isinstance(image, dict):
+        image = image["bytes"] if image.get("bytes") is not None else image["path"]
+
+    if isinstance(image, bytes):
+        image = Image.open(BytesIO(image))
+    elif isinstance(image, str):
+        image = Image.open(image)
+
+    return Image.new("RGB", image.size, (0, 0, 0))
+
+
 @dataclass
 class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
     r"""Data collator that supports VLMs.
@@ -142,6 +161,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
     template: Optional["Template"] = None
     processor: Optional["ProcessorMixin"] = None
+    camera_dropout: float = 0.0
 
     def __post_init__(self):
         if self.template is None:
@@ -321,6 +341,28 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 f"got {features['position_ids'].shape}, expected {expected_position_ids_shape}."
             )
 
+    def _apply_camera_dropout(self, images: list[Any]) -> list[Any]:
+        r"""Blank out a random subset of a sample's images, never all of them.
+
+        Multi-camera policies can collapse onto whichever view is easiest to read and then
+        fall apart when that view is uninformative (a close-up wrist frame on a featureless
+        table) or missing at deployment. Each image is independently replaced by a black
+        frame of the SAME SIZE with probability ``camera_dropout``; if the draw would blank
+        every view, one is picked at random to survive, so the sample always keeps signal.
+
+        Same size means the same number of vision tokens, so the sequence length computed
+        during preprocessing still holds. Applied per batch in the collator, so a sample
+        gets a fresh mask every epoch. Training-time only -- inference sends all cameras.
+        """
+        keep = [random.random() >= self.camera_dropout for _ in images]
+        if not any(keep):
+            keep[random.randrange(len(images))] = True
+
+        if all(keep):
+            return images
+
+        return [image if k else _blank_like(image) for image, k in zip(images, keep)]
+
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
         batch_images, batch_videos, batch_audios = [], [], []
         batch_imglens, batch_vidlens, batch_audlens, batch_input_ids = [], [], [], []
@@ -329,6 +371,9 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             images = feature.pop("images", None) or []
             videos = feature.pop("videos", None) or []
             audios = feature.pop("audios", None) or []
+            if self.camera_dropout > 0.0 and len(images) > 1:
+                images = self._apply_camera_dropout(images)
+
             batch_images.extend(images)
             batch_videos.extend(videos)
             batch_audios.extend(audios)

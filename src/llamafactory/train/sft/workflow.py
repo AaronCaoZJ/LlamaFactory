@@ -68,6 +68,7 @@ def run_sft(
         neat_packing=data_args.neat_packing,
         attn_implementation=getattr(model.config, "_attn_implementation", None),
         compute_dtype=model_args.compute_dtype,
+        camera_dropout=data_args.camera_dropout if training_args.do_train else 0.0,
         **tokenizer_module,
     )
 

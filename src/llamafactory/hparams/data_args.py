@@ -113,6 +113,16 @@ class DataArguments:
         default=False,
         metadata={"help": "Enable sequence packing without cross-attention."},
     )
+    camera_dropout: float = field(
+        default=0.0,
+        metadata={
+            "help": (
+                "Probability of independently blanking out each image of a multi-image sample "
+                "during training (a black frame of the same size, so the token count is "
+                "unchanged). At least one image always survives. 0.0 disables it."
+            )
+        },
+    )
     tool_format: str | None = field(
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
