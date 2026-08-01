@@ -41,6 +41,7 @@ LORA_MODULES=(
   "02_mix_22-06_fk-pp_03=${SAVES}/mix_22-06_fk-pp/02_exchange_token"
   "02_exchange_task_aug=${SAVES}/mix_22-06_fk-pp/02_exchange_token_task_aug"
   "02_exchange_base=${SAVES}/mix_22-06_fk-pp/02_exchange_token_base"
+  "02_exchange_base_z0=${SAVES}/mix_22-06_fk-pp/02_exchange_token_base_z0"
   "02_exchange_2_schedule=${SAVES}/mix_22-06_fk-pp/02_exchange_token_2_schedule"
   "02_exchange_2_schedule_z2=${SAVES}/mix_22-06_fk-pp/02_exchange_token_2_schedule_z2"
   "02_exchange_task_aug_2_schedule=${SAVES}/mix_22-06_fk-pp/02_exchange_token_task_aug_2_schedule"
