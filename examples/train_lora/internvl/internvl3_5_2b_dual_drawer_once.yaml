@@ -1,0 +1,73 @@
+### model
+model_name_or_path: OpenGVLab/InternVL3_5-2B-HF
+image_max_pixels: 65536    # 256x256; all three views are stored at exactly this resolution
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# Dual-arm piper drawer task, v4 --dual --once: THREE views (agentview + wrist_left +
+# wrist_right) per step and ONE sample per step whose output is "<left> <right>", so a single
+# image forward supervises both arms and the right token is conditioned on the left one
+# through the decoder's own autoregression.
+#
+# 21 rollouts / 1207 steps -> 1228 samples (incl. 21 synthesized "DONE DONE"), minus 5 samples
+# removed by data/agentrobot/MVTOKEN/dual_drawer/v4/clean_once_regrasp.py (three episodes had
+# an in-place GRASP -> RELEASE -> GRASP where the gripper reopened without the arm moving at
+# all) -> 1223 samples. The pre-clean file is kept as rollout_dual_once.orig.json.
+#
+# Task: "open the drawer, put the blue cup into the drawer, then close the drawer" -- the
+# right arm pulls the drawer open and later pushes it shut, the left arm transports the cup,
+# and STILL is a first-class token for the arm that waits for the other one.
+dataset: dual_drawer_v4_once
+template: intern_vl
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖 / json 被清洗时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/internvl3.5-2b/robot/dual_drawer_once
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: internvl3.5-2b-robot-dual_drawer_once
+
+### train
+# 1223 samples on TWO GPUs: batch=4 x grad_acc=2 x 2 cards -> eff_bs=16 -> ~77 steps/epoch,
+# 30 epochs ≈ 2310 steps. The set is ~1/5 of ms0717_blockpap_follow (5826 @ 40 epochs) and
+# ~1/2 of dual_cloth once (2182 @ 20 epochs), so the epoch count sits between the two to keep
+# the total optimizer steps in the same range.
+#
+# grad_acc is 2 (not 4 like the single-card ms0717 configs) precisely BECAUSE this defaults to
+# two cards: world_size multiplies the effective batch, so acc=4 would give eff_bs=32 and
+# halve the optimizer steps on an already small set. If you run this on ONE card, put
+# gradient_accumulation_steps back to 4 to keep eff_bs=16.
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 2
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+max_grad_norm: 1.0
+bf16: true
+ddp_timeout: 180000000
+
+### distributed
+deepspeed: examples/deepspeed/ds_z2_config.json

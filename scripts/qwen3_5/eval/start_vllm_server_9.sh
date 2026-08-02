@@ -13,7 +13,7 @@ source "$(
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
-GPU="${GPU:-6}"
+GPU="${GPU:-2}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
 
 # ================================================================================
@@ -50,6 +50,7 @@ LORA_MODULES=(
   # "dual_cloth_twice=${SAVES}/dual_cloth/twice"
   "dual_cloth_once=${SAVES}/dual_cloth/once"
   # "dual_cloth_chain=${SAVES}/dual_cloth/chain"
+  "dual_drawer_once=${SAVES}/dual_drawer/once"
 )
 
 # 启动前自检：vLLM 是先把 base model 全部加载完、再去解析 --lora-modules 的，所以一个还没

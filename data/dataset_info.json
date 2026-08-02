@@ -76,6 +76,15 @@
       "assistant_tag": "assistant"
     }
   },
+  "dual_drawer_v4_once": {
+    "file_name": "agentrobot/MVTOKEN/dual_drawer/v4/rollout_dual_once.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
   "mix_22_27_04_v3_lite": {
     "file_name": "agentrobot/MVTOKEN/mix_22_27_04/v3/rollout_lite.json",
     "columns": {

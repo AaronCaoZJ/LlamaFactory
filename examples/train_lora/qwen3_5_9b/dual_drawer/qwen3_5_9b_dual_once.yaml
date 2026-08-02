@@ -1,0 +1,69 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution (3 views -> ~192 vis tokens)
+trust_remote_code: true
+# flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# Dual-arm piper drawer task, v4 --dual --once: THREE views (agentview + wrist_left +
+# wrist_right) per step and ONE sample per step whose output is "<left> <right>", so a single
+# image forward supervises both arms and the right token is conditioned on the left one
+# through the decoder's own autoregression.
+#
+# 21 rollouts / 1207 steps -> 1228 samples (incl. 21 synthesized "DONE DONE"), minus 5 samples
+# removed by data/agentrobot/MVTOKEN/dual_drawer/v4/clean_once_regrasp.py (three episodes had
+# an in-place GRASP -> RELEASE -> GRASP where the gripper reopened without the arm moving at
+# all) -> 1223 samples. The pre-clean file is kept as rollout_dual_once.orig.json.
+#
+# Task: "open the drawer, put the blue cup into the drawer, then close the drawer" -- the
+# right arm pulls the drawer open and later pushes it shut, the left arm transports the cup,
+# and STILL is a first-class token for the arm that waits for the other one.
+dataset: dual_drawer_v4_once
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖 / json 被清洗时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/dual_drawer/once
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: qwen3.5-9b-robot-dual_drawer-once
+
+### train
+# 1223 samples on TWO GPUs: batch=4 x grad_acc=4 x 2 cards -> eff_bs=32 -> ~39 steps/epoch,
+# 40 epochs ≈ 1560 steps. Same eff_bs / lr as dual_cloth once (2182 @ 20 epochs ≈ 1365 steps),
+# which is the configuration already validated on this model; the epoch count is doubled
+# because this set is a bit over half the size, keeping total optimizer steps comparable.
+#
+# world_size multiplies the effective batch. On ONE card raise gradient_accumulation_steps to
+# 8 to keep eff_bs=32 (that is exactly what the dual_cloth configs do).
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 9B×bf16=18GB fits easily in H200 141GB, less comm overhead)
+deepspeed: examples/deepspeed/ds_z2_config.json
