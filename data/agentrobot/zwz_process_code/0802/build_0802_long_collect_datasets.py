@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Build 0802 long-collect training datasets.
 
-Two datasets are generated from the existing 02_exchange_token + zwz_0723/0724
+Three datasets are generated from the existing 02_exchange_token + zwz_0723/0724
 setting:
 
 1. Add all zwz_0802_long_collect tasks.
 2. Add zwz_0802_long_collect but exclude task_3, the mixed sort task.
+3. Add zwz_0802_long_collect but exclude task_3 and task_4_1.
 """
 
 from __future__ import annotations
@@ -35,6 +36,10 @@ OUT_ALL = OUT_EXCHANGE_DIR / "rollout_lite_plus_zwz_0723_0724_0802_long_collect.
 OUT_NO_TASK3 = (
     OUT_EXCHANGE_DIR
     / "rollout_lite_plus_zwz_0723_0724_0802_long_collect_no_task3.json"
+)
+OUT_NO_TASK3_TASK4_1 = (
+    OUT_EXCHANGE_DIR
+    / "rollout_lite_plus_zwz_0723_0724_0802_long_collect_no_task3_task4_1.json"
 )
 
 TASK_PROMPTS = {
@@ -81,7 +86,7 @@ def convert_0802(
     converter: Any,
     helper: Any,
     prompt_template: str,
-    include_task3: bool,
+    excluded_tasks: set[str],
 ) -> tuple[list[dict[str, Any]], Counter[str], Counter[str], int]:
     samples: list[dict[str, Any]] = []
     per_task_key: Counter[str] = Counter()
@@ -90,7 +95,7 @@ def convert_0802(
 
     task_dirs = sorted(p for p in ZWZ_0802_ROOT.iterdir() if p.is_dir() and p.name.startswith("task_"))
     for task_dir in task_dirs:
-        if task_dir.name == "task_3" and not include_task3:
+        if task_dir.name in excluded_tasks:
             continue
         try:
             task_prompt = TASK_PROMPTS[task_dir.name]
@@ -140,13 +145,24 @@ def main() -> None:
         converter=converter,
         helper=helper,
         prompt_template=prompt_v4_franka,
-        include_task3=True,
+        excluded_tasks=set(),
     )
     zwz_no_task3, per_task_no_task3, per_prompt_no_task3, rollouts_no_task3 = convert_0802(
         converter=converter,
         helper=helper,
         prompt_template=prompt_v4_franka,
-        include_task3=False,
+        excluded_tasks={"task_3"},
+    )
+    (
+        zwz_no_task3_task4_1,
+        per_task_no_task3_task4_1,
+        per_prompt_no_task3_task4_1,
+        rollouts_no_task3_task4_1,
+    ) = convert_0802(
+        converter=converter,
+        helper=helper,
+        prompt_template=prompt_v4_franka,
+        excluded_tasks={"task_3", "task_4_1"},
     )
 
     common_stats = {
@@ -187,6 +203,20 @@ def main() -> None:
             "zwz_0802_per_task": dict(sorted(per_task_no_task3.items())),
             "zwz_0802_per_prompt": dict(sorted(per_prompt_no_task3.items())),
             "excluded_tasks": ["task_3"],
+        },
+    )
+    build_dataset(
+        helper=helper,
+        base_samples=base_samples,
+        zwz_samples=zwz_no_task3_task4_1,
+        output_path=OUT_NO_TASK3_TASK4_1,
+        stats={
+            **common_stats,
+            "zwz_0802_samples": len(zwz_no_task3_task4_1),
+            "zwz_0802_rollouts": rollouts_no_task3_task4_1,
+            "zwz_0802_per_task": dict(sorted(per_task_no_task3_task4_1.items())),
+            "zwz_0802_per_prompt": dict(sorted(per_prompt_no_task3_task4_1.items())),
+            "excluded_tasks": ["task_3", "task_4_1"],
         },
     )
 

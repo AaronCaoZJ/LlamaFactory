@@ -58,6 +58,9 @@ LORA_MODULES=(
   "02_exchange_0723_0724_v3_prompt_robovqa=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_v3_prompt_plus_robovqa_clean_ans6k_under500"
   "03_just_mix_0723_0724_v2_prompt_13=${SAVES}/mix_22-06_fk-pp/03_just_mix_plus_zwz_0723_0724_v2_prompt_13"
   "03_just_mix_0723_0724_v2_prompt_robovqa=${SAVES}/mix_22-06_fk-pp/03_just_mix_plus_zwz_0723_0724_v2_prompt_plus_robovqa_clean_ans6k_under500"
+  "02_exchange_0723_0724_0802_long_collect=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_0802_long_collect"
+  "02_exchange_0723_0724_0802_long_collect_no_task3=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_0802_long_collect_no_task3"
+  "02_exchange_0723_0724_0802_long_collect_no_task3_task4_1=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_0802_long_collect_no_task3_task4_1"
 )
 
 # 启动前自检：vLLM 是先把 base model 全部加载完、再去解析 --lora-modules 的，所以一个还没
