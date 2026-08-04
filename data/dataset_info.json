@@ -251,5 +251,14 @@
       "system": "system",
       "images": "images"
     }
+  },
+  "chess_mixup_filtered": {
+    "file_name": "agentrobot/MVTOKEN/chess/mixup_filtered/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }

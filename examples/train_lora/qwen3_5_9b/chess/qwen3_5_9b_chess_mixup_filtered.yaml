@@ -1,0 +1,74 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution (2 views -> ~128 vis tokens)
+trust_remote_code: true
+# flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# Chinese Xiangqi ("Play Chinese Xiangqi based on the current condition"), single arm, TWO
+# views per step (agentview + wrist) and one action token per sample.
+#
+# 11 rollouts / 1714 source steps -> 1690 samples after zechen's review pass dropped 25 steps
+# (rollout_005/006/008 only; the other eight are kept whole). Every rollout ends in DONE.
+# Token histogram: MV_LEFT 370, MV_FWD 284, MV_DOWN 280, MV_RIGHT 260, MV_BACK 202, MV_UP 195,
+# GRASP 44, RELEASE 44, DONE 11 -- the same imbalance shape as the other MVTOKEN sets.
+#
+# The prompt carries a TEXT history ("Recent moves, newest first: ..."), not history frames,
+# so images stay at 2/sample. Any closed-loop runner must reproduce that history line
+# byte-for-byte (see the history-frames contract used by the real-robot runner).
+#
+# Source data lives in zechen's tree; data/agentrobot/MVTOKEN/chess/mixup is a symlink to
+# /workspace1/zechen/DATA/chess/mixup and the json here is the prefix-rewritten copy produced
+# by data/agentrobot/MVTOKEN/chess/relocate_images.py (the shipped json points at
+# /users/zechen/... which this account cannot read).
+dataset: chess_mixup_filtered
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖 / json 被重新导出时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/chess/mixup_filtered
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-9b-robot-chess-mixup_filtered
+
+### train
+# 1690 samples on TWO GPUs: batch=4 x grad_acc=4 x 2 cards -> eff_bs=32 -> ~52 steps/epoch,
+# 40 epochs ≈ 2110 steps. Same eff_bs / lr as dual_drawer once (1223 @ 40 epochs ≈ 1560 steps)
+# and dual_cloth once (2182 @ 20 epochs ≈ 1365 steps), the configuration already validated on
+# this model; only the epoch count follows the request.
+#
+# world_size multiplies the effective batch. On ONE card raise gradient_accumulation_steps to
+# 8 to keep eff_bs=32 (that is exactly what the single-card configs do).
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 9B×bf16=18GB fits easily in H200 141GB, less comm overhead)
+deepspeed: examples/deepspeed/ds_z2_config.json

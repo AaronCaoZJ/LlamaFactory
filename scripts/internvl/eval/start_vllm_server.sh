@@ -48,15 +48,16 @@ PORT="${PORT:-8202}"
 BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-2B-HF"
 LORA_MODULES=(
   "internvl3.5-2b=${ZECHEN}/InternVL3.5-2b"
-  "internvl3.5-2b-History2=${ZECHEN}/InternVL3.5-2b-History2"
-  "internvl3.5-2b-History2-VideoSlot=${ZECHEN}/InternVL3.5-2b-History2-VideoSlot"
-  "internvl3.5-2b-History2-PlainPrompt=${ZECHEN}/InternVL3.5-2b-History2-PlainPrompt"
+  # "internvl3.5-2b-History2=${ZECHEN}/InternVL3.5-2b-History2"
+  # "internvl3.5-2b-History2-VideoSlot=${ZECHEN}/InternVL3.5-2b-History2-VideoSlot"
+  # "internvl3.5-2b-History2-PlainPrompt=${ZECHEN}/InternVL3.5-2b-History2-PlainPrompt"
   # "internvl3.5-2b-ms0717_blockpap=${SAVES}/ms0717_blockpap_oracle_wide"
   # "internvl3.5-2b-ms0717_blockpap_follow=${SAVES}/ms0717_blockpap_follow"
   "internvl3.5-2b-ms0717_blockpap_follow_wood=${SAVES}/ms0717_blockpap_follow_wood"
   "internvl3.5-2b-ms0717_stackcube_follow=${SAVES}/ms0717_stackcube_follow"
   # "internvl3.5-2b-SimBlockPap=${ZECHEN}/InternVL3.5-2b-SimBlockPap"
   "internvl3.5-2b-dual_drawer=${SAVES}/dual_drawer_once"
+  "internvl3.5-2b-xiangqi=${ZECHEN}/InternVL3.5-2b-Xiangqi-1k"
 )
 
 #* Internvl3.5-1b
