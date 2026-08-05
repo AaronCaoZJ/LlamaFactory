@@ -31,6 +31,8 @@ plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
 run_name: internvl3.5-8b-robot-mix_22-06_fk-pp_02_exchange_token_zechen_reproduce
 
 ### train

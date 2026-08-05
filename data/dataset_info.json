@@ -260,5 +260,14 @@
       "response": "output",
       "images": "images"
     }
+  },
+  "robolab_0805_12task": {
+    "file_name": "agentrobot/MVTOKEN/robolab_0805_12task/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }

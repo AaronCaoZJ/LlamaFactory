@@ -36,6 +36,8 @@ plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
 run_name: qwen3.5-9b-robot-dual_cloth-twice
 
 ### train

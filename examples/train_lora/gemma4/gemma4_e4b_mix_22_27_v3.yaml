@@ -34,6 +34,8 @@ plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
 run_name: gemma4-e4b-robot-mix_22_27_v3
 
 ### train

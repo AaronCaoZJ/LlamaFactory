@@ -36,6 +36,8 @@ BASE_MODEL="/workspace1/zechen/hf_download/InternVL3_5-8B-HF-realworld-merged"
 LORA_MODULES=(
   "internvl3.5-8b=${ZECHEN}/InternVL3.5-8b"
   "internvl3.5-8b-chess-posttrain=${ZECHEN}/InternVL3.5-8b-chess-posttrain"
+  "internvl3.5-8b-chess-posttrain-10ep=${ZECHEN}/InternVL3.5-8b-chess-posttrain-10ep"
+  "internvl3.5-8b-chess-posttrain-800iter=${ZECHEN}/InternVL3.5-8b-chess-posttrain-800iter"
 )
 
 #* Internvl3.5-4b

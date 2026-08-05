@@ -32,6 +32,8 @@ save_steps: 50
 plot_loss: true
 overwrite_output_dir: true
 report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
 run_name: gemma4-12b-robot-overfit
 
 ### train
