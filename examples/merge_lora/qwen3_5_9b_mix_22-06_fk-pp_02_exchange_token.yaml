@@ -1,0 +1,13 @@
+### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
+
+### model
+model_name_or_path: /workspace1/zhijun/hf_download/models/Qwen3.5-9B
+adapter_name_or_path: /workspace1/zhijun/LlamaFactory/saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token
+template: qwen3_5_nothink
+trust_remote_code: true
+
+### export
+export_dir: /workspace1/zhijun/hf_download/models/Qwen3.5-9B_mix-fk-pp_merged
+export_size: 5
+export_device: cpu  # choices: [cpu, auto]
+export_legacy_format: false

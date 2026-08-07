@@ -53,6 +53,8 @@ LORA_MODULES=(
   "dual_drawer_once=${SAVES}/dual_drawer/once"
 
   "xiangqi_mixup=${SAVES}/chess/mixup_filtered"
+
+  "qwen3.5_9b_robolab_0805_12task=${SAVES}/robolab_0805_12task"
 )
 
 # 启动前自检：vLLM 是先把 base model 全部加载完、再去解析 --lora-modules 的，所以一个还没
