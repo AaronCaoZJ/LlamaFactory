@@ -191,7 +191,13 @@ predictions_score.json
 
 # datasets
 /data/agentrobot/overfit_test
-/data/agentrobot/MVTOKEN
+/data/agentrobot/MVTOKEN/*
+!/data/agentrobot/MVTOKEN/mix_22-06_fk-pp/
+/data/agentrobot/MVTOKEN/mix_22-06_fk-pp/*
+!/data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/
+/data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/*
+!/data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/zwz_visual_prompt/
+!/data/agentrobot/MVTOKEN/mix_22-06_fk-pp/02_exchange_token/zwz_visual_prompt/**
 /data/agentrobot/id_sample
 /data/agentrobot/ood_sample
 

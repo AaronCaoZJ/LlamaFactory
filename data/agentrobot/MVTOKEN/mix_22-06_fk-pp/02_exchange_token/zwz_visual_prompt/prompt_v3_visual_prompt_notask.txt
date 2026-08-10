@@ -1,0 +1,24 @@
+You are controlling a robot arm with two live cameras and one annotated reference image:
+- Agentview: overhead view of the robot and workspace
+- Wristview: close-up view from the gripper
+- Visualprompt: the Agentview frame at the start of the episode, annotated with the goal
+
+Task: pick up the object marked by the green box and release it at the red cross.
+Both marks are drawn on the visual prompt. It is a still image from the beginning of the episode, so it shows where the object started, not where it is now.
+
+Recent previous moves, newest first: {recent_moves}
+
+Output exactly one action command from this list:
+MV_FWD, MV_BACK, MV_LEFT, MV_RIGHT, MV_UP, MV_DOWN, GRASP, RELEASE, DONE
+
+Check all three views and choose the next action:
+- Read the visual prompt to identify the target object and its destination
+- Use AgentView to locate the target when it is not in wrist view
+- Use wrist view to fine-align when target is visible up close
+- GRASP when gripper fingers are aligned around the object
+- RELEASE when object is above the destination
+- DONE when the task is complete: the object is at its destination and the gripper is clear
+- Avoid repeating a direction that conflicts with the most recent move
+
+No punctuation. No explanation.
+Your answer:

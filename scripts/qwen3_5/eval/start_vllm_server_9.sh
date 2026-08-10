@@ -43,6 +43,15 @@ LORA_MODULES=(
   # 方案 B（video 槽位）——训练跑完后解注释；vLLM 加载不存在的 LoRA 路径会直接启动失败。
   "mix_22_27_v3_9_video=${SAVES}/mix_22_27_v3_video"
 
+  # visual prompt：每步 3 张图（agentview / wrist / visual_prompt）。只能配 AgentRobot 的
+  # run_real_mvtoken_visual_prompt.sh 用，喂给 2 图的 entrypoint 必然对不上。
+  # 两个变体只差 prompt 里 "Task:" 那一行，LoRA 和 prompt 是一对一绑定的，不能混搭：
+  #   notask -> prompts/v3_visual_prompt_notask/  固定句子，绿框红叉是唯一指令（主实验）
+  #   task   -> prompts/v3_visual_prompt/         带真实任务描述（对照组）
+  # 训练跑完后解注释（train_queue_visual_prompt.sh）。
+  # "02_exchange_visual_prompt_notask_9=${SAVES}/mix_22-06_fk-pp/02_exchange_token_zwz_visual_prompt_notask"
+  # "02_exchange_visual_prompt_9=${SAVES}/mix_22-06_fk-pp/02_exchange_token_zwz_visual_prompt"
+
   # dual_cloth（双臂折衣，三种"一次推理出两个 token"的契约）。
   # scheme 和 LoRA 一一对应，AgentRobot 端用 run_real_dual_mvtoken.sh 的 SCHEME 选，
   # 混搭必然解析失败（prompt 和请求形状是同一份契约的两半）。
