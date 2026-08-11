@@ -13,7 +13,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TRAIN_SH="${SCRIPT_DIR}/train_zwz_2.sh"   # 9B driver (MODEL_PATH defaults to Qwen3.5-9B)
 
-GPUS="${GPUS:-6,7}"
+GPUS="${GPUS:-4,5}"
 
 echo "GPUS=${GPUS}"
 echo "TRAIN_SH=${TRAIN_SH}"

@@ -10,6 +10,7 @@ CONFIG="${1:-${CONFIG:-examples/train_lora/qwen3_5_9b/mix_22-06_fk-pp/qwen3_5_9b
 MODEL_PATH="${MODEL_PATH:-/storage/wenzheng/showrobot/hf_download/models/Qwen3.5-9B}"
 
 GPUS="${GPUS:-6,7}"
+export CUDA_VISIBLE_DEVICES="${GPUS}"
 cd "${LF_ROOT}"
 
 export PYTHONPATH="${LF_ROOT}/src:${PYTHONPATH:-}"
@@ -42,5 +43,5 @@ print("image_processor:", getattr(processor, "image_processor", None).__class__.
 print("crop_to_patches:", getattr(processor, "crop_to_patches", None))
 PY
 
-DISABLE_VERSION_CHECK=1 CUDA_VISIBLE_DEVICES="${GPUS}" \
+DISABLE_VERSION_CHECK=1 \
   llamafactory-cli train "${CONFIG}" model_name_or_path="${MODEL_PATH}"

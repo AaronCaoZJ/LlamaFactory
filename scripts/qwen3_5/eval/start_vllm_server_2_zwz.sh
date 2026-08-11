@@ -61,6 +61,15 @@ LORA_MODULES=(
   "02_exchange_0723_0724_0802_long_collect=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_0802_long_collect"
   "02_exchange_0723_0724_0802_long_collect_no_task3=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_0802_long_collect_no_task3"
   "02_exchange_0723_0724_0802_long_collect_no_task3_task4_1=${SAVES}/mix_22-06_fk-pp/02_exchange_token_plus_zwz_0723_0724_0802_long_collect_no_task3_task4_1"
+
+  # visual prompt：每步 3 张图（agentview / wrist / visual_prompt）。只能配 AgentRobot 的
+  # run_real_mvtoken_visual_prompt.sh 用，喂给 2 图的 entrypoint 必然对不上。
+  # 两个变体只差 prompt 里 "Task:" 那一行，LoRA 和 prompt 一一绑定，不能混搭：
+  #   notask -> prompts/v3_visual_prompt_notask/  固定句子，绿框红叉是唯一指令（主实验）✅ 已训完
+  #   task   -> prompts/v3_visual_prompt/         带真实任务描述（对照组），还没训
+  #     （train_queue_visual_prompt.sh 里第 2 块，跑完再解注释）
+  "02_exchange_visual_prompt_notask_9=${SAVES}/mix_22-06_fk-pp/02_exchange_token_zwz_visual_prompt_notask"
+  # "02_exchange_visual_prompt_9=${SAVES}/mix_22-06_fk-pp/02_exchange_token_zwz_visual_prompt"
 )
 
 # 启动前自检：vLLM 是先把 base model 全部加载完、再去解析 --lora-modules 的，所以一个还没
