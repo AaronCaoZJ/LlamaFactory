@@ -43,5 +43,7 @@ print("image_processor:", getattr(processor, "image_processor", None).__class__.
 print("crop_to_patches:", getattr(processor, "crop_to_patches", None))
 PY
 
+# 第 2 个及之后的参数原样透传成 `key=value` 覆盖项（parser.py:90-93 的 OmegaConf.from_cli），
+# 调用方（如 train_queue_chazuo.sh）用它按 GPU 数改 gradient_accumulation_steps。
 DISABLE_VERSION_CHECK=1 \
-  llamafactory-cli train "${CONFIG}" model_name_or_path="${MODEL_PATH}"
+  llamafactory-cli train "${CONFIG}" model_name_or_path="${MODEL_PATH}" "${@:2}"

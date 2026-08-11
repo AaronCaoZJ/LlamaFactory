@@ -1,0 +1,23 @@
+### Bake 02_exchange_token_base into a full Qwen3.5-9B checkpoint.
+#
+# Only needed for the TWO-LoRA path (qwen3_5_9b_chazuo_posttrain_new_adapter.yaml): that run's
+# adapter is a delta on top of the MERGED model, and vLLM applies at most one adapter per
+# request, so the first LoRA has to live in the weights.
+#
+#   llamafactory-cli export examples/merge_lora/qwen3_5_9b_merge_02_exchange_token_base.yaml
+#
+# Produces ~18GB in export_dir. Serve THAT as the vLLM base model, with the chazuo adapter as
+# the --lora-modules entry (scripts/qwen3_5/eval/start_vllm_server_chazuo.sh).
+# The ..._continue.yaml training path does not need this file at all.
+
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+adapter_name_or_path: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_base
+template: qwen3_5_nothink
+trust_remote_code: true
+
+### export
+export_dir: saves/qwen3.5-9b/robot/merged/02_exchange_token_base_merged
+export_size: 5
+export_device: cpu  # choices: [cpu, auto]
+export_legacy_format: false

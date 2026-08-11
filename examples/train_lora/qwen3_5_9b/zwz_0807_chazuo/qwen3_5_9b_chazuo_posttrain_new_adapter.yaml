@@ -1,0 +1,78 @@
+### 0807 chazuo (plug-into-socket) post-training -- SECOND LoRA on top of the first.
+#
+# Same data and same schedule as ..._continue.yaml; the only difference is
+# create_new_adapter: true. LlamaFactory then takes the `adapter_to_merge` branch
+# (adapter.py:179-194): 02_exchange_token_base is merge_and_unload()-ed into the Qwen3.5-9B
+# weights, and a FRESH randomly-initialised LoRA is created and trained on that merged model.
+#
+# So output_dir holds a delta adapter that is only meaningful on top of
+# (Qwen3.5-9B + 02_exchange_token_base), NOT on bare Qwen3.5-9B. vLLM applies one adapter per
+# request, so before serving you must bake the base LoRA into a full checkpoint:
+#
+#   llamafactory-cli export examples/merge_lora/qwen3_5_9b_merge_02_exchange_token_base.yaml
+#
+# then serve that merged model with THIS adapter as the --lora-modules entry
+# (scripts/qwen3_5/eval/start_vllm_server_chazuo.sh does exactly that).
+#
+# Worth the extra step only if you want the base behaviour preserved bit-exactly and the chazuo
+# skill to be a droppable delta. Otherwise use ..._continue.yaml.
+
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+adapter_name_or_path: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_base
+image_max_pixels: 65536
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+create_new_adapter: true   # freeze+merge the loaded adapter, train a new one on top
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+# These DO apply here -- the new adapter is built from scratch with them.
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# Rebuild: python data/agentrobot/zwz_process_code/0807/build_0807_chazuo_dataset.py
+dataset: zwz_0807_chazuo
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/zwz_0807_chazuo/chazuo_posttrain_new_adapter
+logging_steps: 2
+save_steps: 40
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: qwen3.5-9b-robot-zwz_0807_chazuo-posttrain-new-adapter
+
+### train
+# 513 samples, 8 GPUs x bs 4 x grad_acc 1 -> eff_bs 32 -> ~16 steps/epoch; 10 epochs ~= 160 steps.
+# eff_bs 恒定 32，换卡数只改 grad_acc：8卡->1, 4卡->2, 2卡->4（train_queue_chazuo.sh 自动覆盖）。
+#
+# 1e-4 (the base run's LR) is kept here, unlike ..._continue.yaml: this adapter starts from
+# lora_B = 0 and contributes nothing until it is trained, so it needs the full LR to learn at
+# all. Note the frozen base only buys reversibility, not safety -- at 1e-4 this delta can still
+# grow ~2.5x larger than the base LoRA's own lora_B (rms 3.2e-3) and dominate the behaviour.
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-4
+num_train_epochs: 10.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed
+deepspeed: examples/deepspeed/ds_z2_config.json

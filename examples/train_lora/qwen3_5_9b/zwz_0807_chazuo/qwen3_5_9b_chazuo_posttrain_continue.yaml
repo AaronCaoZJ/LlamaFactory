@@ -1,0 +1,89 @@
+### 0807 chazuo (plug-into-socket) post-training -- CONTINUE the existing LoRA.
+#
+# Starting point is NOT bare Qwen3.5-9B but the already-trained
+# saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_base adapter, and this run keeps
+# training THOSE SAME LoRA weights (create_new_adapter: false -> LlamaFactory's
+# adapter.py:175 puts the adapter in `adapter_to_resume` and loads it with is_trainable=True).
+#
+# Consequence -- and the reason this is the default of the two variants: the output_dir holds
+# ONE self-contained adapter that sits directly on Qwen3.5-9B. Nothing to merge at inference,
+# no second LoRA, no change to the vLLM server beyond one more --lora-modules entry.
+# The trade-off is that the base LoRA's own weights drift, so the original pick-and-place
+# behaviour will degrade; 02_exchange_token_base on disk is untouched, this writes elsewhere.
+#
+# The other variant (..._new_adapter.yaml) freezes the base LoRA instead and stacks a second
+# one on top -- reversible, but it needs an export/merge before vLLM can serve it.
+
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+adapter_name_or_path: saves/qwen3.5-9b/robot/mix_22-06_fk-pp/02_exchange_token_base
+image_max_pixels: 65536    # 256x256; matches rollout image resolution
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+create_new_adapter: false  # keep training the loaded adapter -> single self-contained output
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+# Ignored while resuming an adapter (rank/alpha/target come from the loaded adapter_config.json),
+# kept here only so the file reads the same as the base run. 02_exchange_token_base is r=64/a=128.
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# 513 samples / 11 rollouts, chazuo only. Same v3 prompt and same <image><image> shape as
+# 02_exchange_token, so the base LoRA is actually reusable.
+# Rebuild: python data/agentrobot/zwz_process_code/0807/build_0807_chazuo_dataset.py
+# Stats:   data/agentrobot/MVTOKEN/zwz_0807_chazuo/rollout_lite_chazuo.json.stats.json
+dataset: zwz_0807_chazuo
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/zwz_0807_chazuo/chazuo_posttrain_continue
+logging_steps: 2
+# 160 total steps, so the base run's save_steps: 1000 would only ever save at the end.
+# 513 samples overfit fast -- keep intermediates so a less-overfit checkpoint can be picked.
+save_steps: 40
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: qwen3.5-9b-robot-zwz_0807_chazuo-posttrain-continue
+
+### train
+# 513 samples, 8 GPUs x bs 4 x grad_acc 1 -> eff_bs 32 -> ~16 steps/epoch; 10 epochs ~= 160 steps.
+# eff_bs 恒定 32，所以换卡数只改 grad_acc、步数和 LR schedule 都不变：8卡->1, 4卡->2, 2卡->4。
+# train_queue_chazuo.sh 会按 GPUS 里的卡数自动算好再从命令行覆盖这两行，直接 llamafactory-cli
+# 跑这个 yaml 才需要自己对齐。
+#
+# LR is the one place this must NOT copy the base run's 1.0e-4. Loading an adapter here is
+# weight INIT only -- optimiser, LR schedule and global_step all start from zero (LlamaFactory
+# only ever sets resume_from_checkpoint from a checkpoint inside output_dir, parser.py:497), so
+# this is a fresh cosine 0 -> lr -> 0 over 160 steps on top of already-trained weights.
+# Adam's per-step update is ~lr regardless of gradient scale, so 160 steps of cosine at 1e-4
+# can displace each weight by ~1e-4 * 160 * 0.5 = 8e-3. The trained lora_B in
+# 02_exchange_token_base has rms 3.2e-3 (lora_A barely moved off its kaiming init) -- i.e. 1e-4
+# would let the update overwrite the base LoRA ~2.5x over, which is just "retrain from scratch
+# on 513 samples" with extra steps. 2e-5 keeps the cumulative move at ~50% of the existing B.
+# Go 1e-5 if it still forgets the old pick-and-place; go back to 1e-4 only if it underfits chazuo.
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-4
+num_train_epochs: 10.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed
+deepspeed: examples/deepspeed/ds_z2_config.json

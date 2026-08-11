@@ -13,7 +13,7 @@ source "$(
 
 # ================================================================================
 #! Cuda device / runtime knobs (edit here)
-GPU="${GPU:-0}"
+GPU="${GPU:-4}"
 export CUDA_VISIBLE_DEVICES="${GPU}"
 if [ -x /usr/local/cuda-12.9/bin/nvcc ]; then
   export CUDA_HOME=/usr/local/cuda-12.9
@@ -70,6 +70,19 @@ LORA_MODULES=(
   #     （train_queue_visual_prompt.sh 里第 2 块，跑完再解注释）
   "02_exchange_visual_prompt_notask_9=${SAVES}/mix_22-06_fk-pp/02_exchange_token_zwz_visual_prompt_notask"
   # "02_exchange_visual_prompt_9=${SAVES}/mix_22-06_fk-pp/02_exchange_token_zwz_visual_prompt"
+
+  # chazuo（插头插插座）post-train，起点是 02_exchange_token_base 而不是裸 Qwen3.5-9B。
+  # 普通 2 图 v3 prompt，所以直接用 AgentRobot 的 run_real_chazuo.sh / run_real_mvtoken.py。
+  # 只有 "continue" 那条（create_new_adapter: false）能挂在这里 —— 它继续训的是 base LoRA 自己的
+  # 权重，产出仍是一个自洽的 adapter，直接叠在裸 9B 上。✅ 已训完（10ep / 170 步）。
+  "chazuo_continue_9=${SAVES}/zwz_0807_chazuo/chazuo_posttrain_continue"
+  #
+  # ⚠️ 别把 chazuo_posttrain_new_adapter 加到这里。它是叠在 MERGED 模型
+  #    （9B + 02_exchange_token_base）上的 delta，而本文件的 BASE_MODEL 是裸 9B，对不上。
+  #    坑在于它的 adapter_config.json 里 base_model_name_or_path 写的也是裸 Qwen3.5-9B
+  #    （merge 是在显存里做的，PEFT 只记下了 model_name_or_path），所以 vLLM 会照单全收、
+  #    不报任何错，只是输出全是垃圾。它必须用 start_vllm_server_chazuo.sh（:8110，基座指向
+  #    saves/qwen3.5-9b/robot/merged/02_exchange_token_base_merged）。
 )
 
 # 启动前自检：vLLM 是先把 base model 全部加载完、再去解析 --lora-modules 的，所以一个还没

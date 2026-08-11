@@ -1157,5 +1157,14 @@
       "response": "output",
       "images": "images"
     }
+  },
+  "zwz_0807_chazuo": {
+    "file_name": "agentrobot/MVTOKEN/zwz_0807_chazuo/rollout_lite_chazuo.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
   }
 }
