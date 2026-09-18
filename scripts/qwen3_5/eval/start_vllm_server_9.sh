@@ -20,7 +20,7 @@ export CUDA_VISIBLE_DEVICES="${GPU}"
 #! Args (server knobs / model / LoRA)
 #* Overrides: GPU | PORT | GPU_UTIL | TEMPERATURE
 PORT="${PORT:-8109}"
-GPU_UTIL="${GPU_UTIL:-0.5}"
+GPU_UTIL="${GPU_UTIL:-0.4}"
 TEMPERATURE="${TEMPERATURE:-0}"
 
 MAX_LEN=8192
@@ -28,6 +28,7 @@ MAX_NUM_SEQS=256
 ENFORCE_EAGER=0
 
 BASE_MODEL="${MODELS_DIR}/Qwen3.5-9B"
+# BASE_MODEL="${MODELS_DIR}/Qwen3.5-9B_mix-fk-pp_merged"
 SAVES="${LF_ROOT}/saves/qwen3.5-9b/robot"
 
 LORA_MODULES=(
@@ -52,7 +53,8 @@ LORA_MODULES=(
   # "dual_cloth_chain=${SAVES}/dual_cloth/chain"
   "dual_drawer_once=${SAVES}/dual_drawer/once"
 
-  "xiangqi_mixup=${SAVES}/chess/mixup_filtered"
+  "xiangqi_full_long=${SAVES}/chess/mixup_filtered"
+  "xiangqi_mix_long_short=${SAVES}/chess/mixup_long_horizon"
 
   "qwen3.5_9b_robolab_0805_12task=${SAVES}/robolab_0805_12task"
 )

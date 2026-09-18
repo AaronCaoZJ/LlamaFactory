@@ -32,7 +32,7 @@ fi
 [ -f "${VENV_PATH}/bin/activate" ] || { echo "ERROR: venv 不存在 ${VENV_PATH}，先跑 env_setup.sh" >&2; exit 1; }
 [ -f "${TRAIN_CONFIG}" ]  || { echo "ERROR: 训练配置不存在 ${TRAIN_CONFIG}" >&2; exit 1; }
 [ -f "${DATASET_JSON}" ]  || { echo "ERROR: 数据集不存在 ${DATASET_JSON}
-  先跑: bash /workspace1/zhijun/AgentRobot/scripts/robolab/prepare_lf_dataset.sh" >&2; exit 1; }
+  先跑: bash /workspace1/zhijun/Show-Harness/scripts/robolab/prepare_lf_dataset.sh" >&2; exit 1; }
 
 source "${VENV_PATH}/bin/activate"
 

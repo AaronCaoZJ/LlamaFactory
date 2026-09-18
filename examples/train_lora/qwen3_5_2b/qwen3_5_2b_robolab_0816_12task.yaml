@@ -1,0 +1,64 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-2B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# RoboLab 12 任务混训（0816 版，v3 prompt）。12 条不同的自然语言指令：
+#   Put the {orange,red,blue,green,yellow} block in the bowl   颜色/外观泛化
+#   Put the orange block in the {left,right} bowl              空间关系
+#   Put the {cube,soup can} in the bowl                        物体类别
+#   Put the small red yogurt in the red bowl / canned food in the grey bin / Throw away the apple
+# 主任务 OrangeBlockInBowl 20 集,其余各 10 集。130 集全部以 DONE 收尾
+# (倒数第二步一律 MV_UP 退避),0805 版的 RELEASE 收尾问题已修。
+dataset: robolab_0816_12task
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-2b/robot/robolab_0816_12task
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-2b-robot-robolab_0816_12task
+
+### train
+# 7813 samples (130 集 x ~60 步,含每集 1 个 DONE)。12 个任务的样本分布：
+#   OrangeBlock 1112 (主, 20集) | ThrowAwayApple 1028 | CannedFood 641
+#   Red 582 | Yellow 582 | Blue 581 | Green 581 | SoupCan 561
+#   Yogurt 555 | BlockLeft 552 | BlockRight 523 | RubiksCube 515
+# 1 H200 (single card), batch=4, grad_acc=8 -> eff_bs=32 -> ~244 steps/epoch
+# 40 epochs ≈ 9760 steps。超参与已发布的 qwen3_5_2b_showpro_pt 完全一致。
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-0: 2B×bf16=4GB fits easily in H200 141GB, no sharding overhead)
+deepspeed: examples/deepspeed/ds_z0_config.json

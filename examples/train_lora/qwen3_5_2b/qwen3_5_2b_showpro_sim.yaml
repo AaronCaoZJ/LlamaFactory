@@ -1,0 +1,58 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-2B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# 两个仿真器混训 —— 论文 sim-to-real 那一格的训练集（230 集 / 13,523 决策步）：
+#   RoboLab  130 集 7813 samples  12 个任务（彩色方块入碗、左右碗选择、罐头/酸奶、魔方、扔苹果）
+#   ManiSkill 100 集 5940 samples  BlockPAP-v1 木纹桌面，follower 方案
+# 两边共用同一相机契约（rotate/flip -> crop 4:3 -> letterbox 256），wrist 都带 32 行黑边，
+# 所以可以直接混而不需要重缩放。数据即 HF 上的 ShowPro-Data/sim。
+dataset: showpro_sim
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-2b/robot/showpro_sim
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-2b-robot-showpro_sim
+
+### train
+# 13753 samples, 1 H200, batch=4, grad_acc=8 -> eff_bs=32 -> ~430 steps/epoch
+# 40 epochs ≈ 17200 steps。超参与已发布的 qwen3_5_2b_showpro_pt / _robolab 完全一致。
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-0: 2B×bf16=4GB fits easily in H200 141GB, no sharding overhead)
+deepspeed: examples/deepspeed/ds_z0_config.json

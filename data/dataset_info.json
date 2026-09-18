@@ -261,8 +261,44 @@
       "images": "images"
     }
   },
-  "robolab_0805_12task": {
-    "file_name": "agentrobot/MVTOKEN/robolab_0805_12task/rollout_lite.json",
+  "chess_mixup_long_horizon": {
+    "file_name": "agentrobot/MVTOKEN/chess/mixup_long_horizon/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "chess_mixup_single_task": {
+    "file_name": "agentrobot/MVTOKEN/chess/mixup_single_task/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "robolab_0816_12task": {
+    "file_name": "agentrobot/MVTOKEN/robolab_0816_12task/rollout_lite.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "showpro_real": {
+    "file_name": "resolved/showpro_real.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "images": "images"
+    }
+  },
+  "showpro_sim": {
+    "file_name": "resolved/showpro_sim.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",

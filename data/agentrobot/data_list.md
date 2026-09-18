@@ -10,7 +10,7 @@
 - @/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/0622
 - 4 * tasks, ~80 rollouts (3k+ data pairs)
 - Franka data only
-- v0, v1, v2 (not good), v3 correspond to 4 versions of prompts @/workspace1/zhijun/AgentRobot/prompts
+- v0, v1, v2 (not good), v3 correspond to 4 versions of prompts @/workspace1/zhijun/Show-Harness/prompts
 
 ### mix_22_27/v3
 - @/workspace1/zhijun/LlamaFactory/data/agentrobot/MVTOKEN/mix_22_27

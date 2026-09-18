@@ -1,0 +1,80 @@
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-9B
+image_max_pixels: 65536    # 256x256; matches rollout image resolution
+trust_remote_code: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# RoboLab 12 任务混训（v3 prompt），2026-08-12 重新生成，取代 robolab_0805_12task。
+# 12 条不同的自然语言指令：
+#   Put the {orange,red,blue,green,yellow} block in the bowl   颜色/外观泛化
+#   Put the orange block in the {left,right} bowl              空间关系
+#   Put the {cube,soup can} in the bowl                        物体类别
+#   Put the small red yogurt in the red bowl / canned food in the grey bin / Throw away the apple
+#
+# 相对 0805 的两处改动，都会改变每一帧的画面和标签，所以两份数据不可混用：
+#
+# 1) 结尾不再是 RELEASE。0805 那批 130 集里 127 集的最后一个 token 是 RELEASE，而
+#    rollout_to_llamafactory.py 用最后一帧合成终止 DONE 样本 —— 同一张"夹爪闭合、物体还
+#    在手里、悬在容器上方"的图，一份标 RELEASE、一份标 DONE。训出来的模型到目标上方就停。
+#    现在每集以 RELEASE + 两个 MV_UP 收尾（位移逐个校验过），DONE 复用的是"夹爪已张开、
+#    物体已在容器里、机械臂在上升"那一帧。实测：0805 的 DONE 有 127 张图与 RELEASE 撞标签，
+#    0812 的 128 张全部与 MV_UP 共享，零冲突。
+#    松手高度也从物体底面离容器 4cm 降到 2cm（整一个 token）。
+#
+# 2) 夹爪换成真机的短手指。原来是 Franka 原装黑色手指，现在是金属支架 + 黄色打印指尖
+#    （assets/panda_short_finger.stl），visual 和碰撞体都换了。夹爪在 agentview 和 wrist
+#    两个视图里都占可见面积，这是分布内的改动，不是外观微调。
+#
+# 主任务 OrangeBlockInBowl 20 集；CannedFood 和 Yogurt 各 9 集（各有 1 集因搬运途中被
+# 场景物体挡住、超过 5% 的 token 记录了走不动的位移而剔除，见 GEN2/_rejected/）；其余各 10 集。
+dataset: robolab_0812_12task
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/robolab_0812_12task
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-9b-robot-robolab_0812_12task
+
+### train
+# 7912 samples (128 集 x ~61 步,含每集 1 个合成 DONE)。12 个任务的样本分布：
+#   OrangeBlock 1152 (主, 20集) | ThrowAwayApple 1068 | Blue 597 | Green 596
+#   Red 596 | Yellow 594 | CannedFood 577 (9集) | BlockLeft 559 | RubiksCube 550
+#   SoupCan 549 | BlockRight 540 | Yogurt 534 (9集)
+# 2 H200, batch=4, grad_acc=4 -> eff_bs=32 -> ~247 steps/epoch
+# 30 epochs ≈ 7410 steps
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-4
+num_train_epochs: 30.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 9B×bf16=18GB fits in H200 141GB, less comm overhead)
+deepspeed: examples/deepspeed/ds_z2_config.json

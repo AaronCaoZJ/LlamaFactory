@@ -1,6 +1,6 @@
 # 报告 A：vLLM 采样参数 / 确定性可靠性排查
 
-**日期**：2026-07-22 ｜ **vLLM**：0.24.0（`/workspace1/zhijun/AgentRobot/.venv-vllm`）
+**日期**：2026-07-22 ｜ **vLLM**：0.24.0（`/workspace1/zhijun/Show-Harness/.venv-vllm`）
 **评测样本**：`/workspace1/zhijun/LlamaFactory/data/agentrobot/ood_sample/v3/rollout_lite.json`（50 条，`<image><image>` 布局）
 **探针脚本**：`/tmp/claude-3014/-workspace1-zhijun/6a801ac6-4b1b-49b8-98d6-d62501f4249c/scratchpad/probe.py`
 **原始数据**：同目录 `q1_*.json` / `q2_*.json` / `q3_*.json` / `q5_*.json`
@@ -35,7 +35,7 @@
 **客户端覆盖 server。** `--override-generation-config` 写入的是 `default_sampling_params`，仅在客户端**没传**该字段时才生效。同理适用于 `top_p` / `top_k`。
 
 ### 机制（源码证据）
-`/workspace1/zhijun/AgentRobot/.venv-vllm/lib/python3.11/site-packages/vllm/entrypoints/openai/chat_completion/protocol.py` → `ChatCompletionRequest.to_sampling_params()`：
+`/workspace1/zhijun/Show-Harness/.venv-vllm/lib/python3.11/site-packages/vllm/entrypoints/openai/chat_completion/protocol.py` → `ChatCompletionRequest.to_sampling_params()`：
 
 ```python
 if (temperature := self.temperature) is None:
@@ -117,7 +117,7 @@ payload 里**完全不含** `temperature` 字段（`probe.make_payload(temperatu
 
 ### 证据位置
 - `scratchpad/q2_no_temp_raw.json`、`scratchpad/q3_control_8102_s0.json`、`scratchpad/q5_eval_repeat.json`
-- 内置默认值：`/workspace1/zhijun/AgentRobot/.venv-vllm/bin/python -c "from vllm import SamplingParams; p=SamplingParams(); print(p.temperature,p.top_p,p.top_k,p.seed)"` → `1.0 1.0 0 None`
+- 内置默认值：`/workspace1/zhijun/Show-Harness/.venv-vllm/bin/python -c "from vllm import SamplingParams; p=SamplingParams(); print(p.temperature,p.top_p,p.top_k,p.seed)"` → `1.0 1.0 0 None`
 
 ---
 
@@ -347,7 +347,7 @@ RuntimeError: VLLM batch_invariant mode is not supported for GDN_ATTN.
 **注意**：这只改默认值，改完仍然挡不住显式传 `temperature>0` 的客户端（Q1）。
 
 ### R2【高，1 行】给真机 hosted-openai 后端保留 temperature
-`/workspace1/zhijun/AgentRobot/vlm/gemma_client.py:150-152`
+`/workspace1/zhijun/Show-Harness/vlm/gemma_client.py:150-152`
 ```python
             temperature = payload.get("temperature")
             if temperature is not None and float(temperature) == 1.0:
@@ -364,7 +364,7 @@ RuntimeError: VLLM batch_invariant mode is not supported for GDN_ATTN.
 **风险**：某些 OpenAI reasoning 模型会对非 1.0 的 temperature 报 400；上面的写法用 `reasoning_effort` 是否配置来区分，`robot_piper.yaml` 的 `trapi_chatgpt` 配了 `reasoning_effort: medium`，所以行为不变——**要真正生效需要人工确认目标模型是否接受 temperature=0**，建议先手测一次再改。
 
 ### R3【高，配置层】把 `temperature` 显式写进真机 config，别依赖代码默认
-`/workspace1/zhijun/AgentRobot/configs/ShowRobot-VLM.yaml`、`ShowRobot-VLM_piper.yaml`、`robot.yaml`、`robot_piper.yaml` 的 `vlm:` 块（分别在 `ShowRobot-VLM_piper.yaml:34-35`、`robot_piper.yaml:43-44` 附近）加一行：
+`/workspace1/zhijun/Show-Harness/configs/ShowRobot-VLM.yaml`、`ShowRobot-VLM_piper.yaml`、`robot.yaml`、`robot_piper.yaml` 的 `vlm:` 块（分别在 `ShowRobot-VLM_piper.yaml:34-35`、`robot_piper.yaml:43-44` 附近）加一行：
 ```yaml
 vlm:
   base_url: http://localhost:8000/v1

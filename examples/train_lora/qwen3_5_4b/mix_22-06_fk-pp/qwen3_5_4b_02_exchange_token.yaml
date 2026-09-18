@@ -1,0 +1,65 @@
+# Qwen3.5-4B LoRA — mix_22-06_fk-pp / 02_exchange_token
+#
+# 超参与 0.8B / 2B / 9B 那几次逐项对齐，只换模型 —— 这样这一档才是干净的模型规模对照。
+# 数据：7933 samples（2863 piper + 5070 franka）。franka 侧原样复用 mix_22_27_04 的 v3；
+# piper 侧图像不动，但 MV_FWD <-> MV_BACK 对调（输出 token 和 recent_moves 历史一起换），
+# 这样两种机体能共用一份 v3 prompt。部署时 piper 要靠 scripts/piper/mix_swap_wrapper.py
+# 把 token 换回来 —— 换方案就必须同时换部署侧的 wrapper。
+#
+# 跑：
+#   MODEL_PATH=/workspace1/zhijun/hf_download/models/Qwen3.5-4B \
+#   CONFIG=training/configs/qwen3_5_4b_mix_fkpp_exchange.yaml GPU=1 \
+#   WANDB_ENTITY=aaroncaozj_team bash training/scripts/train.sh
+
+### model
+model_name_or_path: ../hf_download/models/Qwen3.5-4B
+image_max_pixels: 65536    # 256x256，与 rollout 存盘分辨率一致
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true            # 只训语言侧
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+dataset: mix_22-06_fk-pp_02_exchange_token
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true      # 图片被原地覆盖时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-4b/robot/mix_22-06_fk-pp/02_exchange_token
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-4b-robot-mix_22-06_fk-pp-02_exchange_token
+
+### train
+# 7933 samples，2 卡 batch=4 x grad_acc=4 x 2 -> eff_bs=32 -> ~248 steps/epoch
+# 20 epochs ≈ 4960 steps。eff_bs 与 9B 那次单卡(4x8)相同，lr 曲线和对照关系不变。
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-4
+num_train_epochs: 40.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 4B x bf16 = 8GB，H200 装得下，通信开销比 ZeRO-3 小)
+deepspeed: examples/deepspeed/ds_z2_config.json

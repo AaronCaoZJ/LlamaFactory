@@ -27,7 +27,7 @@
 grep -rn "eval_mvtoken" /workspace1/zhijun/LlamaFactory   # 排除 saves/
   .ai/espresso/ShowRobot-VLM_HANDOFF.md:251   （只是文档里吐槽它 DATASET 路径不存在）
   scripts/qwen3_5/eval/test_mvtoken.sh:37     python scripts/eval/eval_mvtoken.py …
-grep -rn "eval_mvtoken" /workspace1/zhijun/AgentRobot     # 0 命中
+grep -rn "eval_mvtoken" /workspace1/zhijun/Show-Harness     # 0 命中
 ```
 
 * `scripts/eval/` 这个目录**根本不存在**（`ls: cannot access 'scripts/eval'`），所以

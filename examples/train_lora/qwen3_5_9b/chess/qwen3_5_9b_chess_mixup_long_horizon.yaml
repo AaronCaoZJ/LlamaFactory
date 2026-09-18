@@ -1,0 +1,103 @@
+### model
+# Not the stock Qwen3.5-9B: this is the MVTOKEN policy produced by merging the
+# mix_22-06_fk-pp/02_exchange_token LoRA back into the base (see
+# examples/merge_lora/qwen3_5_9b_mix_22-06_fk-pp_02_exchange_token.yaml). It already speaks
+# the action-token vocabulary, so chess starts from a policy rather than from a VLM.
+#
+# The merged export carries `processor_config.json` (transformers 5.x unified format) instead
+# of `preprocessor_config.json`; the image_mean/std (0.5/0.5) and patch/merge sizes are
+# byte-identical to the stock model, so preprocessing is unchanged. Only the resolved class
+# differs (Qwen2VLImageProcessor vs ...Fast) -- slower preprocessing, same pixels.
+model_name_or_path: ../hf_download/models/Qwen3.5-9B_mix-fk-pp_merged
+image_max_pixels: 65536    # 256x256; matches rollout image resolution (2 views -> ~128 vis tokens)
+trust_remote_code: true
+# flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+# Chinese Xiangqi ("Complete the following Xiangqi tasks in order"), single arm, TWO views per
+# step (agentview + wrist), one action token per sample, TEXT move history in the prompt.
+#
+# The two sets are NOT two batches of data -- they are the SAME 11 rollouts / 1679 frames
+# annotated under two prompt scopes:
+#
+#   chess_mixup_long_horizon  1690 samples  prompt lists all 4 subtasks, DONE only at the end
+#                                           of the whole rollout        -> 11 DONE
+#   chess_mixup_single_task   1723 samples  prompt names only the current subtask, DONE at
+#                                           every subtask boundary      -> 44 DONE
+#
+# Every other action label is identical between the two (MV_LEFT 370, MV_FWD 284, MV_DOWN 280,
+# MV_RIGHT 260, MV_BACK 202, MV_UP 195, GRASP 44, RELEASE 44 -- twice over after the concat).
+#
+# 33 frames therefore carry CONFLICTING labels across the two sets: at the first three subtask
+# boundaries `single_task` says DONE while `long_horizon` says MV_UP (23) / MV_RIGHT (10), i.e.
+# "start the next subtask". That is the point of the mixture, not a defect -- DONE becomes
+# conditional on the task scope stated in the prompt, and the model has to read the instruction
+# to tell "this subtask is finished" from "the whole job is finished". It is also the main risk:
+# if that distinction does not take, closed-loop long-horizon rollouts will emit DONE at a
+# subtask boundary and stop early. Evaluate those boundary frames specifically.
+#
+# concat = equal weight, 1690:1723 (49.5% / 50.5%). This matches what the InternVL run on the
+# same data used (3413 samples / eff_bs 32 -> the 107 steps/epoch quoted there), so the two are
+# comparable. To bias the mixture toward the long-horizon scope instead, swap in:
+#     mix_strategy: interleave_over
+#     interleave_probs: 0.65,0.35
+# (interleave_probs is rejected under concat.)
+dataset: chess_mixup_long_horizon,chess_mixup_single_task
+mix_strategy: concat
+template: qwen3_5_nothink
+cutoff_len: 2048           # measured seq len ~500 (2 views = 128 vis tokens + ~370 text)
+overwrite_cache: true      # 图片被原地覆盖 / json 被重新导出时 fingerprint 察觉不到（只 hash 路径字符串）
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-9b/robot/chess/mixup_long_horizon
+logging_steps: 2
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+project: llamafactory
+wandb_entity: aaroncaozj_team
+run_name: qwen3.5-9b-robot-chess-mixup_long_horizon
+
+### train
+# 3413 samples (1690 + 1723). eff_bs = per_device_bs x grad_acc x world_size = 32
+# -> ceil(3413/32) = 107 steps/epoch, 30 epochs = 3210 steps.
+#
+# For reference, chess/mixup_filtered on this model ran 1690 samples x 40 epochs ~= 2110 steps
+# and converged; 20 epochs here (2140 steps) would have matched that budget over a set twice as
+# large. 30 epochs deliberately spends ~1.5x that -- each frame is seen 30 times per prompt
+# scope -- so watch the loss curve for the point where it flattens, and prefer an earlier
+# checkpoint (save_steps 200) if the tail is flat.
+#
+# grad_acc below is written for TWO cards. world_size multiplies the effective batch, so on
+# ONE card it must become 8. scripts/qwen3_5/train/chess_mixup_train.sh derives it from the
+# GPU count and passes it on the command line, so launch through that script rather than
+# editing this number by hand.
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-4
+num_train_epochs: 30.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+max_grad_norm: 1.0
+bf16: true
+ddp_timeout: 180000000
+
+### distributed (ZeRO-2: 9B×bf16=18GB fits easily in H200 141GB, less comm overhead)
+deepspeed: examples/deepspeed/ds_z2_config.json

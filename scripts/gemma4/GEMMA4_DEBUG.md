@@ -2,7 +2,7 @@
 
 > **机器** showlab15（共享 8×H200）
 > **训练 venv** `.venv-gemma4`（transformers 5.12.1）
-> **服务 venv** `/workspace1/zhijun/AgentRobot/.venv-vllm`（vLLM 0.24.0）
+> **服务 venv** `/workspace1/zhijun/Show-Harness/.venv-vllm`（vLLM 0.24.0）
 
 ---
 
@@ -25,7 +25,7 @@
 export DISABLE_VERSION_CHECK=1        # 不设直接拒绝启动
 
 # 服务（必须 activate，不能直接调 $VENV/bin/vllm）
-source /workspace1/zhijun/AgentRobot/.venv-vllm/bin/activate
+source /workspace1/zhijun/Show-Harness/.venv-vllm/bin/activate
 export CC=/usr/bin/gcc-11 CXX=/usr/bin/g++-11 CUDAHOSTCXX=/usr/bin/g++-11
 ss -lptn "sport = :$PORT"             # 确认端口没被旧 server 占（§5.1）
 vllm serve ... --chat-template scripts/gemma4/eval/chat_template_gemma4n_lf.jinja
