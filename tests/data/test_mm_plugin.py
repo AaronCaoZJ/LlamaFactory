@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -179,7 +180,7 @@ def _check_plugin(
     )
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 def test_base_plugin():
     tokenizer_module = _load_tokenizer_module(model_name_or_path=TINY_LLAMA3)
     base_plugin = get_mm_plugin(name="base")
@@ -187,7 +188,7 @@ def test_base_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.50.0"), reason="Requires transformers>=4.50.0")
 def test_gemma3_plugin():
@@ -210,7 +211,7 @@ def test_gemma3_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("5.6.0"), reason="Requires transformers>=5.6.0")
 def test_gemma4_plugin():
     tokenizer_module = _load_tokenizer_module(model_name_or_path="google/gemma-4-31B-it")
@@ -243,7 +244,7 @@ def test_gemma4_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.52.0"), reason="Requires transformers>=4.52.0")
 def test_internvl_plugin():
     image_seqlen = 256
@@ -262,7 +263,7 @@ def test_internvl_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.51.0"), reason="Requires transformers>=4.51.0")
 def test_llama4_plugin():
     tokenizer_module = _load_tokenizer_module(model_name_or_path=TINY_LLAMA4)
@@ -284,7 +285,7 @@ def test_llama4_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 def test_llava_plugin():
     image_seqlen = 576
     tokenizer_module = _load_tokenizer_module(model_name_or_path="llava-hf/llava-1.5-7b-hf")
@@ -298,7 +299,7 @@ def test_llava_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 def test_llava_next_plugin():
     image_seqlen = 1176
     tokenizer_module = _load_tokenizer_module(model_name_or_path="llava-hf/llava-v1.6-vicuna-7b-hf")
@@ -312,7 +313,7 @@ def test_llava_next_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 def test_llava_next_video_plugin():
     image_seqlen = 1176
     tokenizer_module = _load_tokenizer_module(model_name_or_path="llava-hf/LLaVA-NeXT-Video-7B-hf")
@@ -326,7 +327,7 @@ def test_llava_next_video_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 def test_paligemma_plugin():
     image_seqlen = 256
@@ -346,7 +347,7 @@ def test_paligemma_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.50.0"), reason="Requires transformers>=4.50.0")
 def test_pixtral_plugin():
     image_slice_height, image_slice_width = 2, 2
@@ -369,7 +370,7 @@ def test_pixtral_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.52.0"), reason="Requires transformers>=4.52.0")
 def test_qwen2_omni_plugin():
     image_seqlen, audio_seqlen = 4, 2
@@ -400,7 +401,7 @@ def test_qwen2_omni_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 def test_qwen2_vl_plugin():
     image_seqlen = 4
     tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen2-VL-7B-Instruct")
@@ -417,7 +418,25 @@ def test_qwen2_vl_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+def test_moss_vl_plugin():
+    messages = [
+        {"role": "user", "content": "First <image>, finally <image>."},
+        {"role": "assistant", "content": "Done."},
+    ]
+    expected_messages = [
+        {"role": "user", "content": "First <|image_pad|>, finally <|image_pad|>."},
+        {"role": "assistant", "content": "Done."},
+    ]
+    processor = SimpleNamespace(image_processor=object(), video_processor=object())
+    plugin = get_mm_plugin(name="moss_vl", image_token="<|image_pad|>", video_token="<|video_pad|>")
+
+    processed_messages = plugin.process_messages(messages, [object(), object()], [], [], processor)
+
+    assert processed_messages == expected_messages
+    assert messages[0]["content"] == "First <image>, finally <image>."
+
+
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.57.0"), reason="Requires transformers>=4.57.0")
 def test_qwen3_vl_plugin():
     frame_seqlen = 1
@@ -451,7 +470,7 @@ def test_qwen3_vl_plugin():
     ]
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.57.0"), reason="Requires transformers>=4.57.0")
 @pytest.mark.skipif(not is_pyav_available(), reason="Requires pyav")
 def test_qwen3_vl_plugin_video_path():
@@ -485,7 +504,7 @@ def test_qwen3_vl_plugin_video_path():
     )
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.47.0"), reason="Requires transformers>=4.47.0")
 def test_video_llava_plugin():
     image_seqlen = 256
@@ -500,7 +519,7 @@ def test_video_llava_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.runs_on(["cpu", "mps", "xpu"])
 def test_lfm2_vl_plugin():
     """Test LFM2.5-VL plugin instantiation."""
     # Test plugin can be instantiated with correct tokens

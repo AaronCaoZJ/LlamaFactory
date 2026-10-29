@@ -37,6 +37,10 @@ def apply_liger_kernel(
     if not is_trainable or not model_args.enable_liger_kernel:
         return
 
+    if get_device_name() == "supa":
+        # liger kernels can not run on supa currently.
+        return
+
     model_type = getattr(config, "model_type", None)
     if model_type == "gemma":
         from liger_kernel.transformers import apply_liger_kernel_to_gemma as apply_liger_kernel
@@ -82,8 +86,12 @@ def apply_liger_kernel(
         from liger_kernel.transformers import apply_liger_kernel_to_qwen3_next as apply_liger_kernel
     elif model_type == "qwen3_5":
         from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5 as apply_liger_kernel
+    elif model_type == "qwen3_5_text":
+        from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5_text as apply_liger_kernel
     elif model_type == "qwen3_5_moe":
         from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5_moe as apply_liger_kernel
+    elif model_type == "qwen3_5_moe_text":
+        from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5_moe_text as apply_liger_kernel
     elif model_type == "gpt_oss":
         try:
             from liger_kernel.transformers import apply_liger_kernel_to_gpt_oss as apply_liger_kernel
