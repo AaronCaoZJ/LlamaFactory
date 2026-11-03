@@ -209,3 +209,4 @@ predictions_score.json
 /logs/
 
 /data/resolved/
+/data/ruibench_alter/
