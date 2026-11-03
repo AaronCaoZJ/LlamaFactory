@@ -10,6 +10,9 @@
 #   MODEL_PATH  Qwen3.5-4B (default: the hub id in the config)
 #   CC_SHIM     a folder whose gcc and g++ both compile C++ (default: .cc-shim here, if it has one)
 #   PYTHON      the LlamaFactory environment's python (default .venv/bin/python here)
+#
+#   Further key=value arguments go on to llamafactory-cli after the config and the ones set here,
+#   e.g. report_to=wandb run_name=alter_joint_10, or resume_from_checkpoint=... to continue a run.
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")/../.."           # the LlamaFactory checkout
 RUN=${RUN:?RUN=alter_joint_10 or another config name}
@@ -57,4 +60,4 @@ ARGS=("gradient_accumulation_steps=$ACC" "save_steps=$SAVE")
 [ -n "${MODEL_PATH:-}" ] && ARGS+=("model_name_or_path=$MODEL_PATH")
 [ "$N" -gt 1 ] && export FORCE_TORCHRUN=1
 mkdir -p "saves/qwen3.5-4b/ruibench_alter/$RUN"
-CUDA_VISIBLE_DEVICES=$GPU exec "$(dirname "$PY")/llamafactory-cli" train "$CFG" "${ARGS[@]}"
+CUDA_VISIBLE_DEVICES=$GPU exec "$(dirname "$PY")/llamafactory-cli" train "$CFG" "${ARGS[@]}" "$@"
