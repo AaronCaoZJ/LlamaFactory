@@ -1,0 +1,60 @@
+# Qwen3.5-4B LoRA on RUIKit conversations: alter_joint_1 (30 episodes, 901 rows,
+# 19.9 M tokens an epoch).  Ten epochs, a checkpoint every second epoch.
+#
+# Run it with scripts/ruibench_alter/train_ruibench_alter.sh, which sets
+# gradient_accumulation_steps and save_steps for the number of cards (32 rows a step), the model
+# path, and the compiler that Qwen3.5's linear attention needs.  Made by RUIBench
+# CVPR27/zhijun/AlterReference/train/make_configs.py from the bundle's subsets.json.
+
+### model
+model_name_or_path: Qwen/Qwen3.5-4B       # train_ruibench_alter.sh passes MODEL_PATH
+image_max_pixels: 16777216     # the processor's own range: the pictures as the student sees them
+image_min_pixels: 65536
+trust_remote_code: true
+flash_attn: fa2
+enable_liger_kernel: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+freeze_vision_tower: true            # language side only
+freeze_multi_modal_projector: false
+
+### LoRA
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all
+
+### dataset
+dataset_dir: data/ruibench_alter
+media_dir: data/ruibench_alter       # the rows' pictures are relative to the bundle
+dataset: alter_joint_1
+template: qwen3_5_nothink
+mask_history: true                   # one row is one request: only its reply is trained
+cutoff_len: 65536                    # the longest row is 64580 tokens: none is cut
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 2
+
+### output
+output_dir: saves/qwen3.5-4b/ruibench_alter/alter_joint_1
+logging_steps: 1
+save_strategy: steps
+save_steps: 58               # one card; the script sets it for others
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 32      # one card; the script sets 32 / cards
+gradient_checkpointing: true
+learning_rate: 1.0e-4
+num_train_epochs: 10.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
